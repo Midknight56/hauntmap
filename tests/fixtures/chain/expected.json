@@ -1,0 +1,18 @@
+{
+  "modules": [
+    { "id": "a.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "b.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "c.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "d.ts", "language": "ts", "parseStatus": "ok" }
+  ],
+  "imports": [
+    { "from": "a.ts", "specifier": "./b", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "b.ts", "line": 1, "column": 1 },
+    { "from": "b.ts", "specifier": "./c", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "c.ts", "line": 1, "column": 1 },
+    { "from": "d.ts", "specifier": "./b", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "b.ts", "line": 1, "column": 1 }
+  ],
+  "diagnostics": [],
+  "trace": [
+    { "origin": "a.ts", "direction": "imports", "preset": "static-value", "visited": ["a.ts", "b.ts", "c.ts"], "direct": ["b.ts"], "indirect": ["c.ts"], "predecessor": { "b.ts": "a.ts", "c.ts": "b.ts" }, "distance": { "a.ts": 0, "b.ts": 1, "c.ts": 2 } },
+    { "origin": "c.ts", "direction": "imported-by", "preset": "static-value", "visited": ["a.ts", "b.ts", "c.ts", "d.ts"], "direct": ["b.ts"], "indirect": ["a.ts", "d.ts"], "predecessor": { "b.ts": "c.ts", "a.ts": "b.ts", "d.ts": "b.ts" }, "distance": { "c.ts": 0, "b.ts": 1, "a.ts": 2, "d.ts": 2 } }
+  ]
+}

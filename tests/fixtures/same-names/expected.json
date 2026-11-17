@@ -1,0 +1,14 @@
+{
+  "modules": [
+    { "id": "a/index.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "a/util.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "b/index.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "b/util.ts", "language": "ts", "parseStatus": "ok" }
+  ],
+  "imports": [
+    { "from": "a/index.ts", "specifier": "./util", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "a/util.ts", "line": 1, "column": 1 },
+    { "from": "b/index.ts", "specifier": "./util", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "b/util.ts", "line": 1, "column": 1 },
+    { "from": "b/index.ts", "specifier": "../a/util", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "a/util.ts", "line": 2, "column": 1 }
+  ],
+  "diagnostics": []
+}

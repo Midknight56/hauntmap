@@ -1,0 +1,21 @@
+{
+  "modules": [
+    { "id": "a.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "b.ts", "language": "ts", "parseStatus": "ok" }
+  ],
+  "imports": [
+    { "from": "a.ts", "specifier": "./b", "syntaxKind": "dynamic-literal", "dependencyKind": "value", "resolution": "local", "to": "b.ts", "line": 2, "column": 9 },
+    { "from": "a.ts", "specifier": "name", "syntaxKind": "dynamic-literal", "dependencyKind": "value", "resolution": "unsupported", "to": null, "reason": "nonliteral-dynamic", "line": 3, "column": 10 },
+    { "from": "b.ts", "specifier": "./a", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "a.ts", "line": 1, "column": 1 }
+  ],
+  "diagnostics": [
+    { "code": "unsupported", "module": "a.ts", "line": 3, "column": 10, "specifier": "name" }
+  ],
+  "cycles": {
+    "static-value": [],
+    "type-inclusive": [],
+    "dynamic-inclusive": [
+      { "members": ["a.ts", "b.ts"], "witness": { "modules": ["a.ts", "b.ts"], "relationIds": ["[\"a.ts\",[\"local\",\"b.ts\"],\"dynamic-literal\",\"value\"]", "[\"b.ts\",[\"local\",\"a.ts\"],\"import\",\"value\"]"] } }
+    ]
+  }
+}

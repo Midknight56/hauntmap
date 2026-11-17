@@ -1,0 +1,20 @@
+{
+  "modules": [
+    { "id": "a.ts", "language": "ts", "parseStatus": "ok" }
+  ],
+  "imports": [
+    { "from": "a.ts", "specifier": "./a", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "a.ts", "line": 1, "column": 1 }
+  ],
+  "diagnostics": [],
+  "cycles": {
+    "static-value": [
+      { "members": ["a.ts"], "witness": { "modules": ["a.ts"], "relationIds": ["[\"a.ts\",[\"local\",\"a.ts\"],\"import\",\"value\"]"] } }
+    ],
+    "type-inclusive": [
+      { "members": ["a.ts"], "witness": { "modules": ["a.ts"], "relationIds": ["[\"a.ts\",[\"local\",\"a.ts\"],\"import\",\"value\"]"] } }
+    ],
+    "dynamic-inclusive": [
+      { "members": ["a.ts"], "witness": { "modules": ["a.ts"], "relationIds": ["[\"a.ts\",[\"local\",\"a.ts\"],\"import\",\"value\"]"] } }
+    ]
+  }
+}

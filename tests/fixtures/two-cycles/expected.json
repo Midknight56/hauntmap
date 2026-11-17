@@ -1,0 +1,40 @@
+{
+  "modules": [
+    { "id": "a.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "b.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "c.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "d.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "e.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "f.ts", "language": "ts", "parseStatus": "ok" }
+  ],
+  "imports": [
+    { "from": "a.ts", "specifier": "./b", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "b.ts", "line": 1, "column": 1 },
+    { "from": "b.ts", "specifier": "./a", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "a.ts", "line": 1, "column": 1 },
+    { "from": "c.ts", "specifier": "./d", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "d.ts", "line": 1, "column": 1 },
+    { "from": "d.ts", "specifier": "./e", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "e.ts", "line": 1, "column": 1 },
+    { "from": "e.ts", "specifier": "./c", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "c.ts", "line": 1, "column": 1 },
+    { "from": "f.ts", "specifier": "./a", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "a.ts", "line": 1, "column": 1 }
+  ],
+  "diagnostics": [],
+  "cycles": {
+    "static-value":
+    [
+      { "members": ["a.ts", "b.ts"], "witness": { "modules": ["a.ts", "b.ts"], "relationIds": ["[\"a.ts\",[\"local\",\"b.ts\"],\"import\",\"value\"]", "[\"b.ts\",[\"local\",\"a.ts\"],\"import\",\"value\"]"] } },
+      { "members": ["c.ts", "d.ts", "e.ts"], "witness": { "modules": ["c.ts", "d.ts", "e.ts"], "relationIds": ["[\"c.ts\",[\"local\",\"d.ts\"],\"import\",\"value\"]", "[\"d.ts\",[\"local\",\"e.ts\"],\"import\",\"value\"]", "[\"e.ts\",[\"local\",\"c.ts\"],\"import\",\"value\"]"] } }
+    ],
+    "type-inclusive":
+    [
+      { "members": ["a.ts", "b.ts"], "witness": { "modules": ["a.ts", "b.ts"], "relationIds": ["[\"a.ts\",[\"local\",\"b.ts\"],\"import\",\"value\"]", "[\"b.ts\",[\"local\",\"a.ts\"],\"import\",\"value\"]"] } },
+      { "members": ["c.ts", "d.ts", "e.ts"], "witness": { "modules": ["c.ts", "d.ts", "e.ts"], "relationIds": ["[\"c.ts\",[\"local\",\"d.ts\"],\"import\",\"value\"]", "[\"d.ts\",[\"local\",\"e.ts\"],\"import\",\"value\"]", "[\"e.ts\",[\"local\",\"c.ts\"],\"import\",\"value\"]"] } }
+    ],
+    "dynamic-inclusive":
+    [
+      { "members": ["a.ts", "b.ts"], "witness": { "modules": ["a.ts", "b.ts"], "relationIds": ["[\"a.ts\",[\"local\",\"b.ts\"],\"import\",\"value\"]", "[\"b.ts\",[\"local\",\"a.ts\"],\"import\",\"value\"]"] } },
+      { "members": ["c.ts", "d.ts", "e.ts"], "witness": { "modules": ["c.ts", "d.ts", "e.ts"], "relationIds": ["[\"c.ts\",[\"local\",\"d.ts\"],\"import\",\"value\"]", "[\"d.ts\",[\"local\",\"e.ts\"],\"import\",\"value\"]", "[\"e.ts\",[\"local\",\"c.ts\"],\"import\",\"value\"]"] } }
+    ]
+  },
+  "trace": [
+    { "origin": "a.ts", "direction": "imported-by", "preset": "static-value", "visited": ["a.ts", "b.ts", "f.ts"], "direct": ["b.ts", "f.ts"], "indirect": [], "predecessor": { "b.ts": "a.ts", "f.ts": "a.ts" }, "distance": { "a.ts": 0, "b.ts": 1, "f.ts": 1 } },
+    { "origin": "a.ts", "direction": "imports", "preset": "static-value", "visited": ["a.ts", "b.ts"], "direct": ["b.ts"], "indirect": [], "predecessor": { "b.ts": "a.ts" }, "distance": { "a.ts": 0, "b.ts": 1 } }
+  ]
+}

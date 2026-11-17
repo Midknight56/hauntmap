@@ -1,0 +1,24 @@
+{
+  "modules": [
+    { "id": "m1.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "m2.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "m3.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "m4.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "m5.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "m6.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "m7.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "m8.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "main.ts", "language": "ts", "parseStatus": "ok" }
+  ],
+  "imports": [
+    { "from": "main.ts", "specifier": "./m1", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "m1.ts", "line": 3, "column": 1 },
+    { "from": "main.ts", "specifier": "./m2", "syntaxKind": "import", "dependencyKind": "type", "resolution": "local", "to": "m2.ts", "line": 4, "column": 1 },
+    { "from": "main.ts", "specifier": "./m3", "syntaxKind": "import", "dependencyKind": "mixed", "resolution": "local", "to": "m3.ts", "line": 5, "column": 1 },
+    { "from": "main.ts", "specifier": "./m4", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "m4.ts", "line": 6, "column": 1 },
+    { "from": "main.ts", "specifier": "./m5", "syntaxKind": "re-export", "dependencyKind": "value", "resolution": "local", "to": "m5.ts", "line": 7, "column": 1 },
+    { "from": "main.ts", "specifier": "./m6", "syntaxKind": "re-export", "dependencyKind": "type", "resolution": "local", "to": "m6.ts", "line": 8, "column": 1 },
+    { "from": "main.ts", "specifier": "./m7", "syntaxKind": "re-export", "dependencyKind": "value", "resolution": "local", "to": "m7.ts", "line": 9, "column": 3 },
+    { "from": "main.ts", "specifier": "./m8", "syntaxKind": "re-export", "dependencyKind": "type", "resolution": "local", "to": "m8.ts", "line": 10, "column": 1 }
+  ],
+  "diagnostics": []
+}

@@ -1,0 +1,13 @@
+{
+  "modules": [
+    { "id": "a.ts", "language": "ts", "parseStatus": "ok" }
+  ],
+  "imports": [
+    { "from": "a.ts", "specifier": "@/lib/format", "syntaxKind": "import", "dependencyKind": "value", "resolution": "unresolved", "to": null, "reason": "alias-not-configured", "line": 1, "column": 1 },
+    { "from": "a.ts", "specifier": "~/config/env", "syntaxKind": "import", "dependencyKind": "value", "resolution": "unresolved", "to": null, "reason": "alias-not-configured", "line": 2, "column": 1 }
+  ],
+  "diagnostics": [
+    { "code": "unresolved", "module": "a.ts", "line": 1, "column": 1, "specifier": "@/lib/format" },
+    { "code": "unresolved", "module": "a.ts", "line": 2, "column": 1, "specifier": "~/config/env" }
+  ]
+}

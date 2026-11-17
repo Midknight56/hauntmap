@@ -1,0 +1,15 @@
+{
+  "modules": [
+    { "id": "Util.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "a.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "util.ts", "language": "ts", "parseStatus": "ok" }
+  ],
+  "imports": [
+    { "from": "a.ts", "specifier": "./util", "syntaxKind": "import", "dependencyKind": "value", "resolution": "unresolved", "to": null, "reason": "ambiguous-candidate", "line": 1, "column": 1 }
+  ],
+  "diagnostics": [
+    { "code": "case-collision", "module": "Util.ts" },
+    { "code": "unresolved", "module": "a.ts", "line": 1, "column": 1, "specifier": "./util" },
+    { "code": "case-collision", "module": "util.ts" }
+  ]
+}

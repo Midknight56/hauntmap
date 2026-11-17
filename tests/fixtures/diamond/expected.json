@@ -1,0 +1,19 @@
+{
+  "modules": [
+    { "id": "base.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "left.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "right.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "top.ts", "language": "ts", "parseStatus": "ok" }
+  ],
+  "imports": [
+    { "from": "left.ts", "specifier": "./base", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "base.ts", "line": 1, "column": 1 },
+    { "from": "right.ts", "specifier": "./base", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "base.ts", "line": 1, "column": 1 },
+    { "from": "top.ts", "specifier": "./left", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "left.ts", "line": 1, "column": 1 },
+    { "from": "top.ts", "specifier": "./right", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "right.ts", "line": 2, "column": 1 }
+  ],
+  "diagnostics": [],
+  "trace": [
+    { "origin": "top.ts", "direction": "imports", "preset": "static-value", "visited": ["base.ts", "left.ts", "right.ts", "top.ts"], "direct": ["left.ts", "right.ts"], "indirect": ["base.ts"], "predecessor": { "left.ts": "top.ts", "right.ts": "top.ts", "base.ts": "left.ts" }, "distance": { "top.ts": 0, "left.ts": 1, "right.ts": 1, "base.ts": 2 } },
+    { "origin": "base.ts", "direction": "imported-by", "preset": "static-value", "visited": ["base.ts", "left.ts", "right.ts", "top.ts"], "direct": ["left.ts", "right.ts"], "indirect": ["top.ts"], "predecessor": { "left.ts": "base.ts", "right.ts": "base.ts", "top.ts": "left.ts" }, "distance": { "base.ts": 0, "left.ts": 1, "right.ts": 1, "top.ts": 2 } }
+  ]
+}

@@ -4,7 +4,7 @@ Ownership: this spec creates the files named in `design.md`. Besides the folders
 
 Each task ends with `pnpm verify` green. A task writes its tests first, sees them fail, then implements.
 
-- [ ] 1. Scaffold the repository and the contracts
+- [x] 1. Scaffold the repository and the contracts
   - Create the pnpm workspace with the folder structure of the plan: TypeScript with `strict` on, Vite, Vitest (with `passWithNoTests` until task 2), fast-check, ESLint and a TypeScript script runner for `scripts/*.ts` (*verify* the choice). Pin each version, the Babel parser included, and write each licence in `docs/kiro-log.md`.
   - Add the root scripts `typecheck`, `test`, `verify` and `pack:samples`. `pack:samples` prints `not built yet` and exits 0 until task 13.
   - Create `src/contracts/types.ts` with the contracts from the design, unchanged, including `RelationRef` and `ComparisonResult`, and `src/contracts/options.ts` with `DEFAULT_ANALYSIS_OPTIONS`. 25 MiB is 26,214,400 bytes.
@@ -12,26 +12,26 @@ Each task ends with `pnpm verify` green. A task writes its tests first, sees the
   - Verify: `pnpm verify` exits 0. Save one TypeScript file and write one log row, task cell `Setup: hook observation typecheck-on-save`, in the format of step 5 of `.kiro/hooks/README.md`, saying whether the hook fired. The observation of `verify-on-stop` belongs to `kiro-integration` task 2; do not write it here.
   - _Requirements: 9.1_
 
-- [ ] 2. Unit fixtures with hand written facts
+- [x] 2. Unit fixtures with hand written facts
   - Create the fifteen fixture folders of the design's table under `tests/fixtures/`. Write each `expected.json` by reading the fixture's source files line by line, with the sections `modules`, `imports`, `diagnostics`, `cycles` (for each preset) and `trace` where the design table gives facts. Use the trace table of the design as the expected values. Do not run any analyzer to produce them.
   - Write `tests/fixtures/fixtures.test.ts` with a structure test only: every fixture folder has a parseable `expected.json` with the sections its row needs, and every source file of the folder is accounted for in `modules`.
   - Verify: `pnpm verify` passes, and a copy of one fixture with a deleted source file makes the structure test fail.
   - _Requirements: 8.4_
 
-- [ ] 3. Paths and source selection
+- [x] 3. Paths and source selection
   - Write `tests/analysis/select.test.ts` and `tests/analysis/paths.test.ts` first, with one test for each acceptance criterion of requirement 1, including the NUL rule of 1.1, the first path over the limit of 1.4 and keeping both files in 1.6. See them fail.
   - Implement `paths.ts` and `select.ts`, using `DEFAULT_ANALYSIS_OPTIONS`.
   - Verify: `pnpm verify` passes. The `case` fixture's `case-collision` diagnostics equal its `expected.json`.
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6_
 
-- [ ] 4. Extraction
+- [x] 4. Extraction
   - Read the import and export kind fields of the pinned Babel parser version in its own documentation and write their names in the log. Confirm that the pinned version parses `export type * from`.
   - Write `tests/analysis/extract.test.ts` first. For each fixture it compares `extractImports` with the `specifier`, `syntaxKind`, `dependencyKind`, `line` and `column` of that fixture's `expected.json`, for `kinds`, `parse-fail` and the others that have static imports. Add the test that a file whose top level sets a global flag and throws leaves the flag unset (requirement 2.5). See them fail.
   - Implement `extract.ts` for static imports, side effect imports, `export ... from` and `export * from`, with one based line and column of the declaration's first character, the two kinds and the parser mode of the design.
   - Verify: `pnpm verify` passes with `extract.test.ts` green.
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 5. Resolution
+- [x] 5. Resolution
   - Write `tests/analysis/resolve.test.ts` first. For `resolve-order`, `js-to-ts`, `absent`, `alias`, `external`, `case` and `same-names` it compares `to`, `resolution` and `reason` with `expected.json`. See it fail.
   - Implement `resolve.ts` with the candidate order, the JS to TS fallback (not used when the exact file exists), the bare specifier rule, the ambiguity rule of the design and the reasons.
   - Verify: `pnpm verify` passes with `resolve.test.ts` green.

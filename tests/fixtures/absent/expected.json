@@ -1,0 +1,11 @@
+{
+  "modules": [
+    { "id": "a.ts", "language": "ts", "parseStatus": "ok" }
+  ],
+  "imports": [
+    { "from": "a.ts", "specifier": "./missing", "syntaxKind": "import", "dependencyKind": "value", "resolution": "unresolved", "to": null, "reason": "absent-file", "line": 1, "column": 1 }
+  ],
+  "diagnostics": [
+    { "code": "unresolved", "module": "a.ts", "line": 1, "column": 1, "specifier": "./missing" }
+  ]
+}

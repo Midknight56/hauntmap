@@ -1,0 +1,12 @@
+{
+  "modules": [
+    { "id": "broken.ts", "language": "ts", "parseStatus": "failed" },
+    { "id": "good.ts", "language": "ts", "parseStatus": "ok" }
+  ],
+  "imports": [
+    { "from": "good.ts", "specifier": "./broken", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "broken.ts", "line": 1, "column": 1 }
+  ],
+  "diagnostics": [
+    { "code": "parse-failed", "module": "broken.ts", "line": 2, "column": 14 }
+  ]
+}

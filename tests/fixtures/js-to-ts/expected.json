@@ -1,0 +1,17 @@
+{
+  "modules": [
+    { "id": "a.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "b.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "c.tsx", "language": "tsx", "parseStatus": "ok" },
+    { "id": "d.mts", "language": "ts", "parseStatus": "ok" },
+    { "id": "e.js", "language": "js", "parseStatus": "ok" },
+    { "id": "e.ts", "language": "ts", "parseStatus": "ok" }
+  ],
+  "imports": [
+    { "from": "a.ts", "specifier": "./b.js", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "b.ts", "line": 1, "column": 1 },
+    { "from": "a.ts", "specifier": "./c.js", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "c.tsx", "line": 2, "column": 1 },
+    { "from": "a.ts", "specifier": "./d.mjs", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "d.mts", "line": 3, "column": 1 },
+    { "from": "a.ts", "specifier": "./e.js", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "e.js", "line": 4, "column": 1 }
+  ],
+  "diagnostics": []
+}

@@ -1,0 +1,10 @@
+{
+  "modules": [
+    { "id": "a.ts", "language": "ts", "parseStatus": "ok" }
+  ],
+  "imports": [
+    { "from": "a.ts", "specifier": "react", "syntaxKind": "import", "dependencyKind": "value", "resolution": "external", "to": null, "line": 1, "column": 1 },
+    { "from": "a.ts", "specifier": "@scope/pkg/sub", "syntaxKind": "import", "dependencyKind": "value", "resolution": "external", "to": null, "line": 2, "column": 1 }
+  ],
+  "diagnostics": []
+}
