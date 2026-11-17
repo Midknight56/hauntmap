@@ -102,3 +102,46 @@ export function wingTitleFor(wing: string, moduleCount: number, maxWidth: number
   for (const candidate of [full, wing, last]) if (measure(candidate) <= maxWidth) return candidate;
   return truncate(last, maxWidth, measure);
 }
+export interface Box {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** True when the two rectangles share area (touching edges do not count). */
+export function rectsOverlap(a: Box, b: Box): boolean {
+  return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+}
+
+/**
+ * The wordings a name plate may take, from the longest to the shortest: the file name, the name without its extension, then that
+ * name cut with an ellipsis, never to fewer than `MIN_NAME_LETTERS` letters (the label rule of the room names).
+ */
+export function plateCandidates(label: string, stem: string): string[] {
+  const out = [label];
+  if (stem !== label) out.push(stem);
+  for (let n = stem.length - 1; n >= MIN_NAME_LETTERS; n--) out.push(`${stem.slice(0, n)}\u2026`);
+  return out;
+}
+
+/** The first wording for which `fits` is true, or null: the plate is then not drawn. */
+export function firstPlateFit(candidates: readonly string[], fits: (words: string) => boolean): string | null {
+  for (const words of candidates) if (fits(words)) return words;
+  return null;
+}
+
+/** A plate reaches at most this far, in scene units, past each side of its room before it moves under the room. */
+export const PLATE_REACH = 12;
+
+/**
+ * Where the plate of a room lies, in scene units: over the top of the room when it is at most `2 * PLATE_REACH` wider than the
+ * room, under it otherwise. `s` is the text scale and `textWidth` the width of the words already multiplied by it.
+ */
+export function plateRect(room: Box, zoom: number, s: number, textWidth: number, fontUnits = 12, lineHeight = 1.25): Box {
+  const pad = 3 / zoom;
+  const w = textWidth + 2 * pad;
+  const h = fontUnits * lineHeight * s + 2 * pad;
+  const top = w <= room.w + PLATE_REACH * 2 ? 6 : room.h + 4 / zoom + pad;
+  return { x: room.x + room.w / 2 - textWidth / 2 - pad, y: room.y + top - pad, w, h };
+}

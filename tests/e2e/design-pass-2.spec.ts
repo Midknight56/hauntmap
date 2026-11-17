@@ -108,7 +108,11 @@ for (const size of [
       for (const id of LOOP_ROOMS) {
         const label = labels.get(id);
         expect(label, `${id} has a name`).toBeDefined();
-        expect(label?.text, id).toBe(FULL(id));
+        // The whole file name, unless its plate would cover another drawn name: then the label rule shortens it (design pass 3, 12b).
+        const stem = FULL(id).replace(/\.[^.]+$/, "");
+        const cuts = Array.from({ length: Math.max(0, stem.length - 4) }, (_, k) => stem.slice(0, stem.length - 1 - k) + "\u2026");
+        const allowed = [FULL(id), stem, ...cuts];
+        expect(allowed, id).toContain(label?.text);
         expect(label?.px ?? 0, id).toBeGreaterThanOrEqual(12);
       }
     });

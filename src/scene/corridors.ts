@@ -4,13 +4,10 @@ import { FONT } from "./elements";
 import { pinText, type DrawContext } from "./rooms";
 import type { LayoutResult, Point } from "./layout/types";
 import { TOKENS } from "./styles";
-import { GHOST_PAUSE_MS, GHOST_SPEED_PX_S, ghostAtSpeed, lightProgress, pointOnPolyline, polylineLength, witnessLegs, type Leg } from "./walk";
+import { glowAlphaAt } from "./effects";
+import { bobOffsetPx, createWalker, GHOST_PAUSE_MS, GHOST_SPEED_PX_S, lightProgress, pointOnPolyline, polylineLength, witnessLegs, type Leg } from "./walk";
 
-/** The traveling light of a trace (`Who imports`) crosses one step in 1,200 ms and loops. */
-export const LIGHT_STEP_MS = 1200;
 export const MAX_PARTICLES = 40;
-/** The glow of a looping corridor breathes between 60 and 100 percent of its opacity over 2.4 s. */
-export const GLOW_PERIOD_MS = 2400;
 /** The size of the ghost in the design: 28 by 30 px on a desktop, 0.72 of that on a phone. */
 const GHOST_SCALE_PHONE = 0.72;
 
@@ -80,7 +77,7 @@ function center(r: { x: number; y: number; w: number; h: number }): Point {
  * The ghost of the design, drawn in code at 1 unit = 1 px: a body of 28 by 30 with fully rounded top corners, three
  * round scallops along the hem, two dark eyes and an ecto glow.
  */
-function makeGhost(): Container {
+export function makeGhost(): Container {
   const node = new Container();
   node.label = "ghost";
   const halo = new Graphics();
@@ -183,21 +180,22 @@ function drawLoop(ctx: DrawContext, layout: LayoutResult, route: { modules: stri
   ctx.layers.selected.addChild(ghost);
   const size = ctx.compact === true ? GHOST_SCALE_PHONE : 1;
   let scale = size / Math.max(ctx.zoom, 0.0001);
+  let zoomNow = Math.max(ctx.zoom, 0.0001);
   let clock = 0;
   const first = (legs[0] as Leg).points[0] as Point;
   let state = { leg: 0, x: first.x, y: first.y };
-  // The speed is 60 px per second on screen at the zoom of this pass.
-  const unitsPerSecond = GHOST_SPEED_PX_S / Math.max(ctx.zoom, 0.25);
+  // The ghost walks door to door at 60 px per second on screen at the zoom of every frame, and bobs 3 px every 800 ms.
+  const walker = createWalker(legs, GHOST_PAUSE_MS);
   const place = (): void => {
-    const at = ghostAtSpeed(legs, clock, unitsPerSecond, GHOST_PAUSE_MS);
-    // Bobs 3 px every 800 ms.
-    const bob = ctx.reduced ? 0 : Math.sin((clock / 800) * Math.PI * 2) * 1.5 * scale;
-    state = { leg: at.leg, x: at.at.x, y: at.at.y };
-    ghost.position.set(at.at.x, at.at.y + bob);
+    const at = walker.at;
+    const bob = ctx.reduced ? 0 : bobOffsetPx(clock) * scale;
+    state = { leg: walker.leg, x: at.x, y: at.y };
+    ghost.position.set(at.x, at.y + bob);
     ghost.scale.set(scale);
   };
   const setZoom = (zoom: number): void => {
-    scale = size / Math.max(zoom, 0.0001);
+    zoomNow = Math.max(zoom, 0.0001);
+    scale = size / zoomNow;
     ghost.scale.set(scale);
   };
   setZoom(ctx.zoom);
@@ -228,12 +226,13 @@ function drawLoop(ctx: DrawContext, layout: LayoutResult, route: { modules: stri
   };
   placeDust();
   const breathe = (): void => {
-    glow.alpha = 0.8 + 0.2 * Math.sin((clock / GLOW_PERIOD_MS) * Math.PI * 2);
+    glow.alpha = glowAlphaAt(clock);
   };
   breathe();
   return {
     update(deltaMs) {
       clock += deltaMs;
+      walker.advance(deltaMs, GHOST_SPEED_PX_S / zoomNow);
       place();
       placeDust();
       breathe();
@@ -341,23 +340,18 @@ function drawTrace(ctx: DrawContext, layout: LayoutResult, route: { kind: string
 
   if (ctx.reduced) return { update: () => undefined, setZoom: () => undefined, particleCount: 0, ghost: () => null, glow: false, glowAlpha: () => null, light: EMPTY_LIGHT };
 
-  const segments = points.length - 1;
+  // The light runs the whole dependency path in 900 ms, ease in and out, and starts again every 2.5 s.
+  const total = polylineLength(points);
   const light = new Graphics();
   light.circle(0, 0, 6).fill(TOKENS.light);
   ctx.layers.selected.addChild(light);
-
-  const at = (t: number): Point => {
-    const s = ((t % segments) + segments) % segments;
-    const i = Math.min(segments - 1, Math.floor(s));
-    const f = s - i;
-    const a = points[i] as Point;
-    const b = points[i + 1] as Point;
-    return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
-  };
   let clock = 0;
+  let at: Point | null = null;
   const place = (): void => {
-    const lightPos = at(clock / LIGHT_STEP_MS);
-    light.position.set(lightPos.x, lightPos.y);
+    const progress = lightProgress(clock);
+    light.visible = progress !== null;
+    at = progress === null ? null : pointOnPolyline(points, progress * total);
+    if (at !== null) light.position.set(at.x, at.y);
   };
   place();
   return {
@@ -370,6 +364,6 @@ function drawTrace(ctx: DrawContext, layout: LayoutResult, route: { kind: string
     ghost: () => null,
     glow: false,
     glowAlpha: () => null,
-    light: EMPTY_LIGHT,
+    light: () => (at === null ? null : { ...at }),
   };
 }

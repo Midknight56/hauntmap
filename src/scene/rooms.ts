@@ -1,6 +1,8 @@
 import { CanvasTextMetrics, Container, Graphics, Sprite, Text, TextStyle, type Texture } from "pixi.js";
+import { restingRoomAlpha, SUBDUED_ROOM_ALPHA } from "./effects";
 import { DISPLAY_FONT, FONT } from "./elements";
-import { fitLines, labelScale, roomNameFor, stemOfId, TARGET_LABEL_PX, wingTitleFor } from "./labels";
+import type { SceneFx } from "./fx";
+import { fitLines, firstPlateFit, labelScale, plateCandidates, plateRect, rectsOverlap, roomNameFor, stemOfId, TARGET_LABEL_PX, wingTitleFor, type Box } from "./labels";
 import type { LayerName } from "./layers";
 import type { LayoutResult, Rect } from "./layout/types";
 import type { SceneStates } from "./stateMap";
@@ -20,6 +22,12 @@ export interface SceneLabel {
   visible(): boolean;
   /** True while `layout` must run for a zoom, even when the text is hidden at the zoom now shown. Defaults to `visible`. */
   active?(): boolean;
+  /** The area the drawn text covers in scene units (its plate when it has one); null when it is not drawn. */
+  box?(): Box | null;
+  /** The plate behind a name that is drawn on one (scene units); null when the name is not on a plate. */
+  plate?(): Box | null;
+  /** Run after every label has been laid out: a plate that would cover one of `others` is shortened, or not drawn. */
+  settle?(others: readonly Box[]): void;
 }
 
 /**
@@ -74,6 +82,10 @@ export interface DrawContext {
    * fades. Null when nothing is selected, so nothing fades.
    */
   related: ReadonlySet<string> | null;
+  /** The handles that the effects of the motion pass play on; absent in tests that draw without effects. */
+  fx?: SceneFx;
+  /** The module ID of the selected room, or null: the other rooms rest at 60 percent while one is selected. */
+  selectedRoom?: string | null;
 }
 
 /** `src/orders Ãƒâ€šÃ‚Â· 7 modules`; the same words as the wing tooltip. */
@@ -119,7 +131,7 @@ const PLATE_BOTTOM = 38;
 /** How far, in scene units, the name plate of a loop room may reach past each side of the room before it moves under the room. */
 export const PLATE_OVERHANG = 12;
 /** Rooms that are not in the current traversal are shown at this opacity (the design asks for 45 to 55 percent; text stays above 4.5:1). */
-export const SUBDUED_ALPHA = 0.55;
+export const SUBDUED_ALPHA = SUBDUED_ROOM_ALPHA;
 
 function makeText(text: string, family: string, size: number, color: string, weight: string): Text {
   return new Text({ text, resolution: 2, style: { fontFamily: family, fontSize: size, fill: color, fontWeight: weight as "400" } });
@@ -168,6 +180,7 @@ export function drawWings(ctx: DrawContext, layout: LayoutResult): void {
     const title = makeText(wingLabel(wing.wing, wing.moduleCount), DISPLAY_FONT, WING_FONT, TOKENS.plateInk, "400");
     title.anchor.set(0, 0.5);
     ctx.layers.overlay.addChild(title);
+    let titleBox: Box = { x: wing.x, y: wing.y, w: 0, h: 0 };
     ctx.labels.push({
       kind: "wing",
       id: wing.wing,
@@ -189,7 +202,10 @@ export function drawWings(ctx: DrawContext, layout: LayoutResult): void {
         plate.clear();
         plate.roundRect(wing.x + 12, wing.y + PLATE_BOTTOM - plateH, textW + 20, plateH, 3).fill(TOKENS.plate).stroke({ width: 1, color: TOKENS.wallLine });
         title.position.set(wing.x + 22, wing.y + PLATE_BOTTOM - plateH / 2);
+        titleBox = { x: wing.x + 12, y: wing.y + PLATE_BOTTOM - plateH, w: textW + 20, h: plateH };
       },
+      box: () => (title.visible ? titleBox : null),
+      plate: () => (title.visible ? titleBox : null),
     });
 
     if (!wing.expanded) {
@@ -247,10 +263,14 @@ export function drawRooms(ctx: DrawContext, layout: LayoutResult): Map<string, C
     const node = new Container();
     node.position.set(room.x, room.y);
     const glow = glowOf(state);
-    if (glow !== null) node.addChild(glowAround({ x: 0, y: 0, w: room.w, h: room.h }, glow.color, glow.strength, 3));
+    if (glow !== null) {
+      const lit = glowAround({ x: 0, y: 0, w: room.w, h: room.h }, glow.color, glow.strength, 3);
+      node.addChild(lit);
+      ctx.fx?.glows.set(room.id, lit);
+    }
     node.addChild(new Sprite(ctx.textures.get("room", state)));
     const subdued = state === "subdued";
-    if (subdued) node.alpha = SUBDUED_ALPHA;
+    node.alpha = restingRoomAlpha({ roomSelected: (ctx.selectedRoom ?? null) !== null, isSelected: ctx.selectedRoom === room.id, subdued });
     const ink = subdued ? TOKENS.roomSubduedInk : TOKENS.roomInk;
     const name = makeText(room.label, FONT, ROOM_FONT, ink, "500");
     name.position.set(5, 8);
@@ -278,6 +298,27 @@ export function drawRooms(ctx: DrawContext, layout: LayoutResult): Map<string, C
       holder.addChild(plate, name);
       ctx.layers.overlay.addChild(holder);
     } else node.addChildAt(plate, node.getChildIndex(name));
+    const roomBox: Box = { x: room.x, y: room.y, w: room.w, h: room.h };
+    const measureName = (t: string): number => measureWidth(t, FONT, ROOM_FONT, "500");
+    // Where the name or its plate lies now (scene units), for the labels that must not cover it and for the plate check.
+    let covered: Box | null = null;
+    let onPlate: Box | null = null;
+    let scaleNow = 1;
+    let zoomNow = ctx.zoom;
+    /** Draw the name on its plate: over the top of the room, or under it when the plate is far wider than the room. */
+    const showOnPlate = (words: string): void => {
+      if (name.text !== words) name.text = words;
+      name.visible = true;
+      name.anchor.set(0.5, 0);
+      const pad = 3 / zoomNow;
+      const rect = plateRect(roomBox, zoomNow, scaleNow, measureName(words) * scaleNow);
+      name.position.set(room.w / 2, rect.y + pad - room.y);
+      plate.clear();
+      plate.roundRect(rect.x - room.x, rect.y - room.y, rect.w, rect.h, 3 / zoomNow).fill(TOKENS.plate).stroke({ width: 1 / zoomNow, color: TOKENS.wallLine });
+      plate.visible = true;
+      onPlate = rect;
+      covered = rect;
+    };
     ctx.labels.push({
       kind: "room",
       id: room.id,
@@ -285,39 +326,50 @@ export function drawRooms(ctx: DrawContext, layout: LayoutResult): Map<string, C
       fontUnits: ROOM_FONT,
       visible: () => node.visible && name.visible,
       active: () => node.visible,
+      box: () => (node.visible ? covered : null),
+      plate: () => (node.visible && name.visible ? onPlate : null),
       layout(zoom) {
         if (holder !== null) holder.visible = node.visible;
         const s = labelScale(zoom, ROOM_FONT);
-        const measure = (t: string): number => measureWidth(t, FONT, ROOM_FONT, "500");
+        zoomNow = zoom;
+        scaleNow = s;
         name.scale.set(s);
         plate.clear();
         plate.visible = false;
+        onPlate = null;
+        covered = null;
         const inside = (room.w - 10) / s;
-        const words = plated ? (measure(room.label) <= inside ? room.label : null) : roomNameFor([room.label, stem], inside, measure);
+        const words = plated ? (measureName(room.label) <= inside ? room.label : null) : roomNameFor([room.label, stem], inside, measureName);
         if (words !== null) {
           name.visible = true;
           name.anchor.set(0, 0);
           name.position.set(5, 8);
           if (name.text !== words) name.text = words;
+          covered = { x: room.x + 5, y: room.y + 8, w: measureName(words) * s, h: ROOM_FONT * LINE * s };
           return;
         }
         if (!plated) {
           name.visible = false;
           return;
         }
-        if (name.text !== room.label) name.text = room.label;
-        name.visible = true;
-        name.anchor.set(0.5, 0);
-        const pad = 3 / zoom;
-        const w = measure(room.label) * s;
-        const h = ROOM_FONT * LINE * s;
-        // Over the room when the plate is at most a room gap (about 12 units on each side) wider than the room; under it otherwise.
-        const top = w + 2 * pad <= room.w + PLATE_OVERHANG * 2 ? 6 : room.h + 4 / zoom + pad;
-        name.position.set(room.w / 2, top);
-        plate.roundRect(room.w / 2 - w / 2 - pad, top - pad, w + 2 * pad, h + 2 * pad, 3 / zoom).fill(TOKENS.plate).stroke({ width: 1 / zoom, color: TOKENS.wallLine });
-        plate.visible = true;
+        showOnPlate(room.label);
       },
-    });    ctx.layers.rooms.addChild(node);
+      settle(others) {
+        if (onPlate === null) return;
+        // A plate never covers another drawn name: shorten it by the label rule, or do not draw it.
+        const fits = (words: string): boolean => {
+          const rect = plateRect(roomBox, zoomNow, scaleNow, measureName(words) * scaleNow);
+          return !others.some((o) => rectsOverlap(rect, o));
+        };
+        const chosen = firstPlateFit(plateCandidates(room.label, stem), fits);
+        if (chosen === null) {
+          name.visible = false;
+          plate.visible = false;
+          plate.clear();
+          onPlate = null;
+          covered = null;
+        } else if (chosen !== name.text) showOnPlate(chosen);
+      },    });    ctx.layers.rooms.addChild(node);
     nodes.set(room.id, node);
   }
   for (const group of layout.grouped) {
@@ -344,6 +396,20 @@ export function drawRooms(ctx: DrawContext, layout: LayoutResult): Map<string, C
     ctx.layers.rooms.addChild(node);
   }
   return nodes;
+}
+
+/** After every label is laid out, let each plate that would cover another drawn name shorten itself or go (design pass 3, 12b). */
+export function settleLabels(labels: readonly SceneLabel[]): void {
+  for (const label of labels) {
+    if (label.settle === undefined) continue;
+    const others: Box[] = [];
+    for (const other of labels) {
+      if (other === label) continue;
+      const box = other.box?.();
+      if (box !== null && box !== undefined) others.push(box);
+    }
+    label.settle(others);
+  }
 }
 
 export function haloRect(layout: LayoutResult, id: string): Rect | null {

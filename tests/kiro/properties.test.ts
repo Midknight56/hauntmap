@@ -171,8 +171,20 @@ describe("P4 root containment", () => {
           expect(fs.readdirs.filter((p) => p.startsWith(outsideReal))).toEqual([]);
         }
       }),
-      RUNS,
+      // A fixed example: a Windows drive path under a link that leaves the workspace (it failed some of the time).
+      { ...RUNS, examples: [["link/C:"], ["link/C:/link"], ["src/outside/C:/Users"]] },
     );
+  });
+
+  it("a path on a drive behind a link that leaves the workspace is outside the workspace when it exists, and absent when it does not (link/C:)", async () => {
+    const fs = new RecordingFs();
+    const result = await resolveRoot(workspace, "link/C:", fs);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("root-outside-workspace");
+    expect(fs.reads).toEqual([]);
+    const absent = await resolveRoot(workspace, "link/C:/link", new RecordingFs());
+    expect(absent.ok).toBe(false);
+    if (!absent.ok) expect(absent.error.code).toBe("root-not-found");
   });
 });
 

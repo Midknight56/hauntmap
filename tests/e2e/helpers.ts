@@ -24,13 +24,37 @@ export interface HookSceneDebug {
   drawnDoors: number;
   particleCount: number;
   frames: number;
-  labels: { kind: "wing" | "wing-note" | "room" | "note" | "step" | "glyph" | "count"; id: string; text: string; px: number; rect?: { x: number; y: number; width: number; height: number } }[];
+  labels: { kind: "wing" | "wing-note" | "room" | "note" | "step" | "glyph" | "count"; id: string; text: string; px: number; rect?: { x: number; y: number; width: number; height: number }; plate?: { x: number; y: number; width: number; height: number } }[];
   ghost: { leg: number; x: number; y: number } | null;
   glow: boolean;
   glowAlpha: number | null;
   light: { x: number; y: number } | null;
   wingMarks: { wing: string; kind: "removed" | "added" }[];
   theme: string;
+  /** What the effects of the motion pass drew now (design pass 3). */
+  fx: HookFx;
+}
+
+export interface HookFx {
+  /** The time the scene has animated, in milliseconds: the sum of its frame times (a frame counts at most 100 ms). Durations are measured in it, so that a loaded machine does not change them. */
+  clock: number;
+  /** The camera as drawn this frame (the store holds the target). */
+  camera: { x: number; y: number; zoom: number };
+  motes: { x: number; y: number }[];
+  /** The opacity of each lamp of a changed room. */
+  lamps: number[];
+  /** The opacity of every room by module ID. */
+  roomAlphas: Record<string, number>;
+  /** The opacity of the layer that holds the rooms (it fades in on the first load of a manor). */
+  layerAlpha: number;
+  /** The scale of each added doorway mark (it grows from 0.2 to 1). */
+  addedScales: number[];
+  /** The closing corridor and the ghost that walked it, while they fade; null when nothing fades. */
+  farewell: { corridor: number; ghost: number } | null;
+  /** The opacity of the dashed outline of each removed door and of the solid corridor that it replaces. */
+  removed: { outline: number; solid: number }[];
+  /** The door of the selected relation: how far it has swung open and how far its corridor is drawn (0 to 1); null when no door is selected. */
+  door: { swing: number; draw: number } | null;
 }
 
 export interface HookScene {

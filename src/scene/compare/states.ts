@@ -1,10 +1,11 @@
-import { Graphics, Text, type Container } from "pixi.js";
+import { Container, Graphics, Text } from "pixi.js";
 import { dashedPolyline } from "../doors";
 import { FONT } from "../elements";
 import type { CollapsedMark } from "./collapsed";
 import type { Point, Rect } from "../layout/types";
 import { REMOVED_ALPHA, TOKENS, removedStrokeWidth } from "../styles";
 import { pinText, type SceneLabel } from "../rooms";
+import type { SceneFx } from "../fx";
 import type { ComparisonView } from "./view";
 
 // The comparison marks that the element textures do not carry. PixiJS; called by the scene adapter.
@@ -55,10 +56,34 @@ function ring(g: Graphics, rect: Rect, color: string, dashed: boolean, zoom: num
   g.stroke({ width: removedStrokeWidth(zoom), color, alpha: REMOVED_ALPHA });
 }
 
-export function drawComparisonMarks(layer: Container, view: ComparisonView, pin: { labels: SceneLabel[]; zoom: number }): void {
+export type MarkPin = { labels: SceneLabel[]; zoom: number; fx?: SceneFx };
+
+/** An added doorway: its ring and `+` in one container that grows from its center, and the one green pulse that leaves it. */
+function addedMark(layer: Container, pin: MarkPin, rect: Rect, relationId: string | null): void {
+  const cx = rect.x + rect.w / 2;
+  const cy = rect.y + rect.h / 2;
+  const container = new Container();
+  container.pivot.set(cx, cy);
+  container.position.set(cx, cy);
+  const g = new Graphics();
+  ring(g, rect, TOKENS.added, false, pin.zoom);
+  container.addChild(g);
+  container.addChild(pinText(pin, "glyph", relationId ?? `${cx},${cy}`, plus(rect.x + rect.w + 10, rect.y - 8, 20), 20));
+  const pulse = new Graphics();
+  pulse.circle(cx, cy, 24).stroke({ width: 3, color: TOKENS.added });
+  pulse.pivot.set(cx, cy);
+  pulse.position.set(cx, cy);
+  pulse.visible = false;
+  layer.addChild(container, pulse);
+  pin.fx?.added.push({ relationId, container, cx, cy, scale: 1, pulse });
+}
+
+export function drawComparisonMarks(layer: Container, view: ComparisonView, pin: MarkPin): void {
   const mark = (id: string, node: Text, size: number): Text => pinText(pin, "glyph", id, node, size);
+  // Everything that shows a removed element is one Graphics (and the dashed door lines), so that the ghost outline fades in as one.
   const g = new Graphics();
   let used = false;
+  let lamp = 0;
   for (const room of view.drawn.rooms) {
     const c = view.marks.rooms.get(room.id);
     if (c === undefined) continue;
@@ -68,10 +93,12 @@ export function drawComparisonMarks(layer: Container, view: ComparisonView, pin:
       const r = Math.min(12, Math.max(7, 7 / pin.zoom));
       const cx = room.x + room.w - r * 0.4;
       const cy = room.y + r * 0.4;
-      g.circle(cx, cy, r * 2).fill({ color: TOKENS.changed, alpha: 0.14 });
-      g.circle(cx, cy, r * 1.5).fill({ color: TOKENS.changed, alpha: 0.24 });
-      g.circle(cx, cy, r).fill(TOKENS.changed).stroke({ width: 1.5, color: TOKENS.floor });
-      used = true;
+      const bulb = new Graphics();
+      bulb.circle(cx, cy, r * 2).fill({ color: TOKENS.changed, alpha: 0.14 });
+      bulb.circle(cx, cy, r * 1.5).fill({ color: TOKENS.changed, alpha: 0.24 });
+      bulb.circle(cx, cy, r).fill(TOKENS.changed).stroke({ width: 1.5, color: TOKENS.floor });
+      layer.addChild(bulb);
+      pin.fx?.lamps.push({ node: bulb, seed: lamp++, entrance: 1 });
     } else if (c === "comparison-added" && !own) {
       layer.addChild(mark(room.id, plus(room.x + room.w - 10, room.y + 10), 13));
     } else if (c === "comparison-removed" && !own) {
@@ -81,11 +108,8 @@ export function drawComparisonMarks(layer: Container, view: ComparisonView, pin:
   }
   for (const door of view.drawn.doors) {
     const c = view.marks.doors.get(door.relationId);
-    if (c === "comparison-added") {
-      ring(g, door, TOKENS.added, false, pin.zoom);
-      layer.addChild(mark(door.relationId, plus(door.x + door.w + 10, door.y - 8, 20), 20));
-      used = true;
-    } else if (c === "comparison-removed") {
+    if (c === "comparison-added") addedMark(layer, pin, door, door.relationId);
+    else if (c === "comparison-removed") {
       ring(g, door, TOKENS.removed, true, pin.zoom);
       if (view.states.doors.get(door.relationId)?.state !== c) dashedOutline(g, { x: door.x - 3, y: door.y - 3, w: door.w + 6, h: door.h + 6 }, TOKENS.removed, removedStrokeWidth(pin.zoom));
       used = true;
@@ -93,20 +117,18 @@ export function drawComparisonMarks(layer: Container, view: ComparisonView, pin:
   }
   for (const s of view.drawn.sealed) {
     const c = view.marks.sealed.get(s.relationId);
-    if (c === "comparison-added") {
-      ring(g, s, TOKENS.added, false, pin.zoom);
-      layer.addChild(mark(s.relationId, plus(s.x + s.w + 10, s.y - 8, 20), 20));
-      used = true;
-    } else if (c === "comparison-removed") {
+    if (c === "comparison-added") addedMark(layer, pin, s, null);
+    else if (c === "comparison-removed") {
       ring(g, s, TOKENS.removed, true, pin.zoom);
       if (view.states.sealed.get(s.relationId) !== c) dashedOutline(g, { x: s.x - 3, y: s.y - 3, w: s.w + 6, h: s.h + 6 }, TOKENS.removed, removedStrokeWidth(pin.zoom));
       used = true;
     }
   }
-  if (used) layer.addChild(g);
-  else g.destroy();
+  if (used) {
+    layer.addChild(g);
+    pin.fx?.removedOutlines.push(g);
+  } else g.destroy();
 }
-
 /** The points of an arched doorway: up the left jamb, over the arch, down the right jamb. */
 function archPoints(m: CollapsedMark): Point[] {
   const r = m.w / 2;

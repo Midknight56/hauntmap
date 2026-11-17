@@ -10,9 +10,9 @@ Live app: https://hauntmap.midknight-ent-llc.workers.dev
 
 **Potential Impact.** Circular imports and tangled modules are a daily problem in JavaScript and TypeScript projects, and they are hard to see in a file tree. HauntMap finds every dependency loop and shows the exact import line behind each door, with the source excerpt. Compare two versions and it shows which import was removed or added and whether the loop closed, while every room stays where it was. Everything on the map is also in the Evidence view as plain lists, the whole journey runs with the keyboard alone (`tests/e2e/keyboard-journey.spec.ts`), and it follows reduced motion (`tests/e2e/reduced-motion.spec.ts`). No account, no server, nothing uploaded.
 
-**Technological Implementation.** Kiro wrote the code from four specs (43 requirements, 66 tasks), each reviewed by Kiro before any code. Six steering files hold the rules. HauntMap ships its own MCP server with four tools (`analyze`, `cycles`, `who_imports`, `compare`), and Kiro calls them while it edits: in a recorded session Kiro called `cycles`, removed one import, called `compare`, and reported 1 removed relation and loops 1 to 0. A `Stop` hook then wrote a live snapshot that the app opens. 49 property tests run with fast check. 26 Kiro CLI runs, each logged in `docs/kiro-log.md`.
+**Technological Implementation.** Kiro wrote the code from four specs (43 requirements, 66 tasks), each reviewed by Kiro before any code. Six steering files hold the rules. HauntMap ships its own MCP server with four tools (`analyze`, `cycles`, `who_imports`, `compare`), and Kiro calls them while it edits: in a recorded session Kiro called `cycles`, removed one import, called `compare`, and reported 1 removed relation and loops 1 to 0. A `Stop` hook then wrote a live snapshot that the app opens. 49 property tests run with fast check. 30 Kiro CLI runs, each logged in `docs/kiro-log.md`.
 
-**Design.** A complete product, not a proof of concept: a guided three step tour, search, a loop panel, an inspector with the source line, an Evidence view, a minimap, a comparison of two versions and a live snapshot. The look serves the function: the loop glows and a ghost walks it in step order, a removed door becomes a dashed ghost passage and an added door a green arch. A display face for headings, and every text on the map at least 11 px on screen, measured by a browser test.
+**Design.** A complete product, not a proof of concept: a guided three step tour, search, a loop panel, an inspector with the source line, an Evidence view, a minimap, a comparison of two versions and a live snapshot. The look serves the function: the loop glows and a ghost walks it in step order, a removed door becomes a dashed ghost passage and an added door a green arch. It fits a 360 by 640 phone and a 1920 by 1080 screen, checked by a browser test that fails on any control under 44 px, any overlap and any clipped text. Every text is at least 12 px on screen. The ghost walks, the glow breathes and the doors swing, and with reduced motion all of it stops.
 
 **Innovation/Idea.** The manor is not decoration: it is the data model. A file is a room you can enter, an import is a door with its line number, and a cycle is a corridor that returns to where it began. Rooms keep their place across two versions, so a change reads as one door closing. The same analysis runs in the browser and in the MCP server, so the agent that edits the code and the person who reads the map see the same facts.
 
@@ -45,8 +45,8 @@ pnpm verify:e2e
 
 | Suite | Count | Result |
 | --- | --- | --- |
-| unit, component and property tests (`pnpm verify`) | 1,206 | pass |
-| browser tests, headless Chromium (`pnpm verify:e2e`) | 130 | pass |
+| unit, component and property tests (`pnpm verify`) | 1,300 | pass |
+| browser tests, headless Chromium (`pnpm verify:e2e`) | 187 | pass |
 
 The MCP server and the command line tool:
 

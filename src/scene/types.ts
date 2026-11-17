@@ -48,6 +48,8 @@ export interface DebugLabel {
   px: number;
   /** Where the text is drawn, in client pixels (design pass 2: names are never cut by the edge of the map). */
   rect?: { x: number; y: number; width: number; height: number };
+  /** The plate behind a name that is drawn on one, in client pixels. */
+  plate?: { x: number; y: number; width: number; height: number };
 }
 
 export interface SceneDebug {
@@ -72,6 +74,20 @@ export interface SceneDebug {
   wingMarks: { wing: string; kind: "removed" | "added" }[];
   /** The name of the active palette. */
   theme: string;
+  /** What the effects of the motion pass draw now: the camera as drawn, the motes, the lamps, the opacity of rooms and of the layer that holds them. */
+  fx: {
+    /** The time the scene has animated, in milliseconds (frame times, each at most 100 ms). */
+    clock: number;
+    camera: Camera;
+    motes: { x: number; y: number }[];
+    lamps: number[];
+    roomAlphas: Record<string, number>;
+    layerAlpha: number;
+    addedScales: number[];
+    farewell: { corridor: number; ghost: number } | null;
+    removed: { outline: number; solid: number }[];
+    door: { swing: number; draw: number } | null;
+  };
 }
 
 export interface SceneHandle {

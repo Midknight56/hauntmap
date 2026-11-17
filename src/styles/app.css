@@ -1502,18 +1502,235 @@ button.toolbar-main {
   }
 }
 
+/* ---- The living manor behind the landing title (design pass 3, item 9) ---- */
+.landing {
+  position: relative;
+  overflow: hidden;
+}
+
+.landing > :not(.landing-manor) {
+  position: relative;
+  z-index: 1;
+}
+
+.landing-manor {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.landing-manor svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.landing-candle {
+  position: absolute;
+  left: 8%;
+  bottom: 4%;
+  width: 52vmin;
+  height: 52vmin;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--focus) 14%, transparent), transparent 66%);
+  animation: candle-glow 2800ms ease-in-out infinite;
+}
+
+.manor-wall {
+  fill: none;
+  stroke: var(--wall-line);
+  stroke-width: 2;
+  opacity: 0.4;
+}
+
+.manor-passage {
+  fill: none;
+  stroke: var(--passage);
+  stroke-width: 2;
+  opacity: 0.22;
+}
+
+.manor-room {
+  fill: var(--room);
+  stroke: var(--wall-line);
+  stroke-width: 1;
+  opacity: 0.3;
+}
+
+.manor-window {
+  fill: var(--focus);
+  opacity: 0.12;
+  animation: window-flicker 3400ms ease-in-out infinite;
+}
+
+.manor-drift {
+  animation: ghost-drift 54000ms linear infinite;
+}
+
+.manor-ghost {
+  opacity: 0.17;
+  animation: ghost-float 3200ms ease-in-out infinite alternate;
+}
+
+.manor-ghost-halo {
+  fill: var(--corridor);
+  opacity: 0.12;
+}
+
+.manor-ghost-body {
+  fill: var(--ghost);
+}
+
+.manor-ghost-eye {
+  fill: var(--floor);
+}
+
+@keyframes candle-glow {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+  30% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 0.8;
+  }
+  80% {
+    opacity: 0.95;
+  }
+}
+
+@keyframes window-flicker {
+  0%,
+  100% {
+    opacity: 0.07;
+  }
+  18% {
+    opacity: 0.18;
+  }
+  31% {
+    opacity: 0.1;
+  }
+  47% {
+    opacity: 0.2;
+  }
+  63% {
+    opacity: 0.09;
+  }
+  82% {
+    opacity: 0.16;
+  }
+}
+
+@keyframes ghost-drift {
+  from {
+    transform: translateX(-1000px);
+  }
+  to {
+    transform: translateX(1000px);
+  }
+}
+
+@keyframes ghost-float {
+  from {
+    transform: translateY(-3px);
+  }
+  to {
+    transform: translateY(3px);
+  }
+}
+
+/* ---- The panels slide in, the inspector fades in (design pass 3, item 7) ---- */
+@keyframes panel-slide {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes inspector-fade-a {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes inspector-fade-b {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.loops-panel,
+.who-panel,
+.steps-panel,
+.compare-panel,
+.comparison-dock,
+.legend {
+  animation: panel-slide 200ms ease-out;
+}
+
+/* On the desktop layout a panel that starts 14 px lower must not grow the page: the dock clips its own overflow
+   (the left half and the side column keep their own scroll areas). The phone layout keeps its page scroll. */
+@media (min-width: 721px) {
+  .dock {
+    overflow: hidden;
+  }
+
+  .side-column {
+    overflow-x: hidden;
+  }
+}
+
+.inspector[data-fade="a"] {
+  animation: inspector-fade-a 150ms ease-out;
+}
+
+.inspector[data-fade="b"] {
+  animation: inspector-fade-b 150ms ease-out;
+}
+
+@media (max-width: 720px) {
+  .toolbar-more {
+    animation: panel-slide 200ms ease-out;
+  }
+
+  /* The evidence sheet slides up when a selection opens it. */
+  .inspector[data-fade="a"] {
+    animation:
+      panel-slide 200ms ease-out,
+      inspector-fade-a 150ms ease-out;
+  }
+
+  .inspector[data-fade="b"] {
+    animation:
+      panel-slide 200ms ease-out,
+      inspector-fade-b 150ms ease-out;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    transition: none;
-    animation: none;
+    transition: none !important;
+    animation: none !important;
   }
 }
 
 [data-motion="reduce"] *,
 [data-motion="reduce"] *::before,
 [data-motion="reduce"] *::after {
-  transition: none;
-  animation: none;
+  transition: none !important;
+  animation: none !important;
 }

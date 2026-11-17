@@ -65,6 +65,30 @@ function isInside(workspaceRoot: string, path: string): boolean {
 }
 
 /**
+ * Windows only. A link followed at once by a component that begins with a drive letter and a colon (`link/C:`, `link/C:/x`) is read
+ * by Windows as a path on that drive (a drive-relative target of the link), not as a name inside the link target. Returns the path
+ * as it is read then (the real path of the link, resolved with the rest of the components), or null when the path has no such part.
+ * The caller asks the file system about that path, so that the answer is the one the resolver of the system gives.
+ */
+async function driveTargetBehindLink(workspaceRoot: string, absolute: string, fs: FsLike): Promise<string | null> {
+  if (sep !== "\\" || !isInside(workspaceRoot, absolute)) return null;
+  const parts = absolute.slice(workspaceRoot.length).split(sep).filter((part) => part !== "");
+  let prefix = workspaceRoot;
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i] as string;
+    if (i > 0 && /^[A-Za-z]:/.test(part)) {
+      try {
+        if (!(await fs.lstat(prefix)).isSymbolicLink()) return null;
+        return resolve(await fs.realpath(prefix), parts.slice(i).join(sep));
+      } catch {
+        return null;
+      }
+    }
+    prefix = join(prefix, part);
+  }
+  return null;
+}
+/**
  * Resolves `root` against `workspaceRoot` (itself a real path). Accepted only when the real path is
  * the workspace or below it and is a directory. Nothing outside the workspace is read.
  */
@@ -76,7 +100,15 @@ export async function resolveRoot(workspaceRoot: string, root: string, fs: FsLik
   try {
     real = await fs.realpath(absolute);
   } catch {
-    return { ok: false, error: isInside(workspaceRoot, absolute) ? notFound : outside };
+    const drive = await driveTargetBehindLink(workspaceRoot, absolute, fs);
+    const failed: { ok: false; error: RootError } = { ok: false, error: isInside(workspaceRoot, absolute) ? notFound : outside };
+    if (drive === null) return failed;
+    // `link/C:` reaches the drive C, outside the workspace; `link/C:/absent` reaches nothing.
+    try {
+      real = await fs.realpath(drive);
+    } catch {
+      return failed;
+    }
   }
   if (!isInside(workspaceRoot, real)) return { ok: false, error: outside };
   try {

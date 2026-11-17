@@ -51,4 +51,35 @@ describe("animator (11.5, 9.5)", () => {
     animator.tick(100);
     expect(animator.activeTweens).toBe(0);
   });
+
+  it("drops a tween that throws, in a step or at its end, and keeps the others and the count honest", () => {
+    const error = console.error;
+    console.error = () => undefined;
+    try {
+      const animator = createAnimator({ reduced: false });
+      let fine = 0;
+      animator.tween({ duration: 100, update: () => void (fine += 1) });
+      animator.tween({
+        duration: 100,
+        update: () => {
+          throw new Error("a destroyed node");
+        },
+      });
+      animator.tween({
+        duration: 50,
+        update: (p) => {
+          if (p === 1) throw new Error("a destroyed node at the end");
+        },
+      });
+      animator.tick(25);
+      expect(animator.activeTweens).toBe(2);
+      animator.tick(30);
+      expect(animator.activeTweens).toBe(1);
+      animator.tick(100);
+      expect(animator.activeTweens).toBe(0);
+      expect(fine).toBeGreaterThan(1);
+    } finally {
+      console.error = error;
+    }
+  });
 });

@@ -12,6 +12,7 @@ import { DEVHOOK_ENABLED, devState } from "./devHook";
 import { COMPACT_WIDTH, firstViewPlan } from "./firstFit";
 import { Minimap } from "./Minimap";
 import { Tooltip } from "./Tooltip";
+import { easeNextCamera, takeCameraEase } from "./cameraEase";
 import { useReducedMotion } from "./useReducedMotion";
 import { useViewState } from "./useStore";
 import { getViewportSize, setViewportSize } from "./viewport";
@@ -229,7 +230,7 @@ export function MapView({ store, createScene, forceFailure, comparison }: Props)
     if (scene === null) return;
     const now = scene.getCamera();
     const next = state.camera;
-    if (now.x !== next.x || now.y !== next.y || now.zoom !== next.zoom) scene.setCamera(next, "jump");
+    if (now.x !== next.x || now.y !== next.y || now.zoom !== next.zoom) scene.setCamera(next, takeCameraEase() ? "animate" : "jump");
   }, [scene, state.camera]);
 
   // A scene that starts (or restarts after `Retry map`) draws the camera the store holds. A selection made before it
@@ -321,7 +322,8 @@ export function MapView({ store, createScene, forceFailure, comparison }: Props)
       event.preventDefault();
       const box = wrapper.getBoundingClientRect();
       const factor = Math.pow(1.0015, -event.deltaY);
-      store.actions.setCamera(zoomAround(store.getState().camera, getViewportSize(), factor, { x: event.clientX - box.left, y: event.clientY - box.top }));
+      easeNextCamera();
+    store.actions.setCamera(zoomAround(store.getState().camera, getViewportSize(), factor, { x: event.clientX - box.left, y: event.clientY - box.top }));
     };
     wrapper.addEventListener("wheel", onWheel, { passive: false });
     return () => wrapper.removeEventListener("wheel", onWheel);

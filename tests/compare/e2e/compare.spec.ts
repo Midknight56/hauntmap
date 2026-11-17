@@ -332,7 +332,7 @@ test.describe("comparison scene journeys", () => {
     for (const e of entries) await expect(legend.getByText(e, { exact: true })).toHaveCount(0);
   });
 
-  test("6.3 @scene choosing the manor loop and comparing closes the corridor: tweens back to 0 within 700 ms, rooms unmoved", async ({ page }) => {
+  test("6.3 @scene choosing the manor loop and comparing closes the corridor: tweens back to 0 within 1,250 ms (600 ms corridor, then 400 ms ghost), rooms unmoved", async ({ page }) => {
     await openManor(page);
     await expandAllWings(page);
     await storeAction(page, "openLoops");
@@ -357,11 +357,13 @@ test.describe("comparison scene journeys", () => {
       }
     });
     expect(measured.max, "the closing corridor ran as a tween").toBeGreaterThan(0);
-    expect(measured.ms).toBeLessThanOrEqual(700);
+    // The corridor closes in 600 ms and the ghost that walked it fades last, in 400 ms (design pass 3, item 6).
+    expect(measured.ms).toBeLessThanOrEqual(1250);
     const view = await compareView(page);
     expect(view.closingRelationIds).toEqual([REMOVED]);
     const debug = await sceneDebug(page);
-    expect(debug.particleCount).toBe(0);
+    // No dust of a loop remains; the faint motes of the map light are the only particles (design pass 3, item 8).
+    expect(debug.particleCount).toBe(debug.fx.motes.length);
     expect(await page.evaluate(() => (window as unknown as { __hauntmap: { store: { getState(): { routeFilter: unknown } } } }).__hauntmap.store.getState().routeFilter)).toBeNull();
     expect(await rectangles(page, rooms, wings)).toEqual(first);
     expect((await sceneStates(page))[REMOVED]).toBe("comparison-removed");

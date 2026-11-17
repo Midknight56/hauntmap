@@ -1,5 +1,8 @@
 import { Application, Container, Graphics, type Texture } from "pixi.js";
 import { createAnimator } from "./animation";
+import { candleAlpha, playCameraEase, playCompareEntry, playDoorOpen, playIntro, playRemoved, playSelection, restingRoomAlpha } from "./effects";
+import { createMotes, MAX_MOTES, newFx, type Motes, type SceneFx } from "./fx";
+import { MAX_PARTICLES } from "./corridors";
 import { applyComparison, closingKey, shouldClose, type ComparisonDebug, type ComparisonStyle } from "./compare";
 import { collapsedWingMarks, type CollapsedMark } from "./compare/collapsed";
 import { drawCollapsedMarks, drawComparisonMarks } from "./compare/states";
@@ -9,7 +12,7 @@ import { drawDoors } from "./doors";
 import { createElementTextures, DISPLAY_FONT, FONT } from "./elements";
 import { buildHitTargets, hitTest } from "./hitTest";
 import { relatedRelations } from "./emphasis";
-import { clearMeasureCache, drawRooms, drawWings, haloRect, type DrawContext, type SceneLabel } from "./rooms";
+import { clearMeasureCache, drawRooms, drawWings, haloRect, settleLabels, type DrawContext, type SceneLabel } from "./rooms";
 import { currentTheme, onThemeChange } from "../styles/theme";
 import { deriveStates } from "./stateMap";
 import { TOKENS } from "./styles";
@@ -25,14 +28,26 @@ import type { HitKind, HitTarget, SceneDebug, SceneHandle, SceneInit, SceneOptio
 
 export type { HitTarget, SceneDebug, SceneHandle, SceneInit, SceneOptions, StyleState } from "./types";
 
-/** Duration of an animated camera move; the selection transition stays under 300 ms. */
-const CAMERA_TWEEN_MS = 240;
 /** A wing move is shown as a 300 ms cross-fade of the redrawn layers (no room position tween). */
 const LAYOUT_FADE_MS = 300;
 /** A pointer that moves farther than this between press and release is a drag, not a click. */
 const CLICK_SLOP_PX = 5;
 
 type Listener = (arg?: never) => void;
+
+/** An object whose `alpha` is the one of `node` while it lives, and nothing once a redraw has destroyed it (an effect may outlive the node it plays on). */
+function live(node: { alpha: number; destroyed: boolean }): { alpha: number } {
+  return {
+    get alpha() {
+      return node.alpha;
+    },
+    set alpha(value: number) {
+      if (!node.destroyed) node.alpha = value;
+    },
+  };
+}
+
+const emptyFx = (): SceneDebug["fx"] => ({ clock: 0, camera: { x: 0, y: 0, zoom: 1 }, motes: [], lamps: [], roomAlphas: {}, layerAlpha: 1, addedScales: [], farewell: null, removed: [], door: null });
 
 /** Wait for the committed Almendra SC and Spline Sans Mono files, for at most two seconds; the plaques and names then measure and draw with the real faces. */
 async function ensureDisplayFont(): Promise<void> {
@@ -126,6 +141,18 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
   let comparisonStates: ComparisonDebug["states"] = {};
   let drawnLayout: LayoutResult | null = null;
   let wingMarks: CollapsedMark[] = [];
+  // The effects of the motion pass: what is drawn for them now, and what the last draw showed (so that an effect plays once, when
+  // the thing it shows changes, and not at every redraw).
+  let fx: SceneFx = newFx();
+  let motes: Motes | null = null;
+  let fxClock = 0;
+  /** The time the scene has animated, in milliseconds: the sum of the frame times it used (a slow frame counts at most 100 ms). Development builds report it, so that a test measures a duration in the scene's own time. */
+  let sceneClock = 0;
+  let lastSelectedRoom: string | null = null;
+  let lastOpenedDoor: string | null = null;
+  let lastMarkKey = "";
+  let introNext = false;
+  let farewell: { corridor: number; ghost: number } | null = null;
 
   const gate = createTickerGate({ start: () => app.ticker.start(), stop: () => app.ticker.stop() });
 
@@ -151,6 +178,8 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     particles = 0;
     labels = [];
     drawnLayout = null;
+    fx = newFx();
+    motes = null;
     if (layout === null) return;
     const view = applyComparison(layout, deriveStates(layout, styleState ?? { selection: { kind: "none" }, routeFilter: null }), comparison);
     const drawn = view.drawn;
@@ -164,7 +193,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
       routeFilter: styleState?.routeFilter ?? null,
       marks: view.marks,
     });
-    const ctx: DrawContext = { layers, textures, states, reduced, labels, zoom: displayed.zoom, related, compact: container.clientWidth < 520 };
+    const ctx: DrawContext = { layers, textures, states, reduced, labels, zoom: displayed.zoom, related, compact: container.clientWidth < 520, fx, selectedRoom: states.haloRoom };
     drawWings(ctx, drawn);
     drawCorridors(ctx, drawn);
     roomNodes = drawRooms(ctx, drawn);
@@ -174,6 +203,12 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     drawCollapsedMarks(layers.selected, wingMarks, ctx);
     route = drawRoute(ctx, drawn);
     particles = route?.particleCount ?? 0;
+    // A few faint dust motes drift in the light of the map; they count inside the particle limit, and there are none under reduced motion.
+    const moteCount = reduced ? 0 : Math.max(0, Math.min(MAX_MOTES, MAX_PARTICLES - particles));
+    if (moteCount > 0) {
+      motes = createMotes(layers.particles, drawn.bounds, moteCount, displayed.zoom);
+      particles += moteCount;
+    }
     relayoutLabels();
     if (states.haloRoom !== null) {
       const rect = haloRect(drawn, states.haloRoom);
@@ -184,16 +219,102 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
       }
     }
     applyCulling();
+    playEffects(view, drawn, states.haloRoom);
     if (fade) {
       world.alpha = 0;
       animator.tween({ duration: LAYOUT_FADE_MS, update: (p) => void (world.alpha = p), onDone: () => void (world.alpha = 1) });
     }
   }
 
+  /** Start the effects that the change since the last draw calls for. Drawing only: nothing here reads or writes the graph, the selection or the steps. */
+  function playEffects(view: ReturnType<typeof applyComparison>, drawn: LayoutResult, selectedRoom: string | null): void {
+    if (introNext) {
+      introNext = false;
+      if (drawn.rooms.length > 0) playIntro(animator, layers.rooms);
+    }
+    // Selecting a room: its window lights and the other rooms dim to 60 percent.
+    if (selectedRoom !== lastSelectedRoom) {
+      const others: { node: { alpha: number }; from: number; to: number }[] = [];
+      for (const [id, node] of roomNodes) {
+        const subdued = view.states.rooms.get(id) === "subdued";
+        const from = restingRoomAlpha({ roomSelected: lastSelectedRoom !== null, isSelected: id === lastSelectedRoom, subdued });
+        const to = restingRoomAlpha({ roomSelected: selectedRoom !== null, isSelected: id === selectedRoom, subdued });
+        if (from !== to) others.push({ node: live(node), from, to });
+      }
+      const glow = selectedRoom === null ? null : (fx.glows.get(selectedRoom) ?? null);
+      playSelection(animator, { lit: glow === null ? null : live(glow), others });
+      lastSelectedRoom = selectedRoom;
+    }
+    // Selecting a door: it swings open, and its corridor draws to its target.
+    const open = fx.openDoor;
+    const opened = open?.relationId ?? null;
+    if (opened !== lastOpenedDoor) {
+      lastOpenedDoor = opened;
+      if (open !== null) {
+        open.setDraw(0);
+        playDoorOpen(animator, { swing: (f) => open.setSwing(f), draw: (p) => open.setDraw(p) });
+      }
+    }
+    // Comparing: removed corridors fade to their ghost outline, added doorways grow with one pulse, the lamps flicker on.
+    const markKey = comparison === null ? "" : JSON.stringify([comparison.shown, comparison.changedModules, comparison.removedRelationIds, comparison.addedRelationIds]);
+    if (markKey !== lastMarkKey) {
+      lastMarkKey = markKey;
+      if (markKey !== "") {
+        if (fx.removedOutlines.length > 0) {
+          const solid = new Container();
+          solid.label = "removed-solid";
+          const line = new Graphics();
+          for (const [id, mark] of view.marks.doors) {
+            if (mark !== "comparison-removed") continue;
+            const door = drawn.doors.find((d) => d.relationId === id);
+            if (door === undefined || door.arrow.length < 2) continue;
+            line.moveTo((door.arrow[0] as { x: number }).x, (door.arrow[0] as { y: number }).y);
+            for (const p of door.arrow.slice(1)) line.lineTo(p.x, p.y);
+          }
+          line.stroke({ width: 2, color: TOKENS.passage, alpha: 0.85, join: "round", cap: "round" });
+          solid.addChild(line);
+          layers.selected.addChild(solid);
+          fx.removedSolid = solid;
+          playRemoved(animator, { outline: fx.removedOutlines.map(live), solid: live(solid) });
+          animator.tween({ duration: 650, update: () => undefined, onDone: () => void (!solid.destroyed && solid.destroy({ children: true })) });
+        }
+        playCompareEntry(animator, {
+          added: fx.added.map((a) => {
+            const sprite = a.relationId === null ? undefined : fx.doorSprites.get(a.relationId);
+            const base = sprite === undefined ? null : { x: sprite.x, y: sprite.y, w: sprite.width, h: sprite.height };
+            return {
+              grow: (s: number) => {
+                a.scale = s;
+                if (!a.container.destroyed) a.container.scale.set(s);
+                if (sprite !== undefined && base !== null && !sprite.destroyed) {
+                  sprite.width = base.w * s;
+                  sprite.height = base.h * s;
+                  sprite.position.set(base.x + (base.w * (1 - s)) / 2, base.y + (base.h * (1 - s)) / 2);
+                }
+              },
+              pulse: (p: number) => {
+                if (a.pulse.destroyed) return;
+                a.pulse.visible = p < 1;
+                a.pulse.alpha = 0.7 * (1 - p);
+                a.pulse.scale.set(1 + p);
+              },
+            };
+          }),
+          lamps: fx.lamps.map((lamp) => (on: number) => {
+            lamp.entrance = on;
+            if (!lamp.node.destroyed) lamp.node.alpha = on;
+          }),
+        });
+      }
+    }
+  }
+
   /** Re-choose the words and the scale of every name and title for the camera zoom (never under 12 CSS pixels). */
   function relayoutLabels(): void {
     for (const label of labels) if ((label.active ?? label.visible)()) label.layout(displayed.zoom);
+    settleLabels(labels);
     route?.setZoom(displayed.zoom);
+    motes?.setZoom(displayed.zoom);
   }
 
   function applyCamera(camera: Camera): void {
@@ -216,22 +337,30 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
       emit("camera", next);
       return;
     }
-    animator.tween({
-      duration: CAMERA_TWEEN_MS,
-      update: (p) => {
+    // Zoom, Fit to view and every other animated move: 300 ms, eased out.
+    playCameraEase(
+      animator,
+      (p) => {
         if (token !== cameraToken) return;
         applyCamera({ x: from.x + (next.x - from.x) * p, y: from.y + (next.y - from.y) * p, zoom: from.zoom + (next.zoom - from.zoom) * p });
       },
-      onDone: () => {
+      () => {
         if (token === cameraToken) emit("camera", next);
       },
-    });
+    );
   }
 
   app.ticker.add(() => {
     frames += 1;
+    sceneClock += app.ticker.deltaMS;
     animator.tick(app.ticker.deltaMS);
     route?.update(app.ticker.deltaMS);
+    if (!reduced) {
+      fxClock += app.ticker.deltaMS;
+      motes?.update(fxClock);
+      // The candle flicker of the lamps, multiplied with their flicker-on.
+      for (const lamp of fx.lamps) if (!lamp.node.destroyed) lamp.node.alpha = lamp.entrance * candleAlpha(fxClock, lamp.seed, false);
+    }
   });
 
   const onVisibility = (): void => gate.setDocumentHidden(document.visibilityState === "hidden");
@@ -306,6 +435,9 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     setLayout(next, transition) {
       guard();
       const moved = layout !== null && transition === "animate";
+      // The first load of a manor (or of another one that shares no room with the one shown) fades its rooms in.
+      const known = new Set(next.rooms.map((r) => r.id));
+      if (layout === null || !layout.rooms.some((r) => known.has(r.id))) introNext = true;
       layout = next;
       targets = buildHitTargets(next);
       redraw(moved);
@@ -315,9 +447,22 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
       // An absent `comparison` keeps the last style; `null` clears it.
       if (state.comparison !== undefined) {
         const next = (state.comparison ?? null) as ComparisonStyle | null;
-        const previous = styleState?.routeFilter ?? null;
-        if (shouldClose(next, lastClosing) && previous !== null && previous.kind === "witness" && layout !== null) {
-          closeCorridor({ parent: world, layout, route: previous, animator, reduced, zoom: displayed.zoom });
+        const previousFilter = styleState?.routeFilter ?? null;
+        // The loop that closes: the one the reader chose, or a loop shown from the start that holds a closing relation.
+        const closing = next?.closingRelationIds ?? [];
+        const previous = previousFilter !== null && previousFilter.kind === "witness" ? previousFilter : ((styleState?.loops ?? []).find((l) => l.relationIds.some((id) => closing.includes(id))) ?? null);
+        if (shouldClose(next, lastClosing) && previous !== null && layout !== null) {
+          const ghost = route?.ghost() ?? null;
+          closeCorridor({
+            parent: world,
+            layout,
+            route: previous,
+            animator,
+            reduced,
+            zoom: displayed.zoom,
+            ghost: ghost === null ? null : { at: { x: ghost.x, y: ghost.y }, scale: (container.clientWidth < 520 ? 0.72 : 1) / Math.max(displayed.zoom, 0.0001) },
+            onFade: (state) => void (farewell = state),
+          });
         }
         lastClosing = next === null ? "" : closingKey(next.closingRelationIds);
         comparison = next;
@@ -374,7 +519,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     debug(): SceneDebug {
       guard();
       if (!opts.debug) {
-        return { textureCount: 0, visibleRooms: 0, tickerRunning: false, activeTweens: 0, drawnDoors: 0, particleCount: 0, frames: 0, labels: [], ghost: null, glow: false, glowAlpha: null, light: null, wingMarks: [], theme: "" };
+        return { textureCount: 0, visibleRooms: 0, tickerRunning: false, activeTweens: 0, drawnDoors: 0, particleCount: 0, frames: 0, labels: [], ghost: null, glow: false, glowAlpha: null, light: null, wingMarks: [], theme: "", fx: emptyFx() };
       }
       const counters: SceneDebug & ComparisonDebug = {
         textureCount: textures.size,
@@ -389,7 +534,17 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
           .map((label) => {
             const b = label.node.getBounds();
             const box = container.getBoundingClientRect();
-            return { kind: label.kind, id: label.id, text: label.node.text, px: label.fontUnits * label.node.scale.y * displayed.zoom, rect: { x: box.left + b.x, y: box.top + b.y, width: b.width, height: b.height } };
+            const plate = label.plate?.() ?? null;
+            const vp = viewport();
+            const shown = plate === null ? null : { a: toScreen(displayed, vp, { x: plate.x, y: plate.y }), b: toScreen(displayed, vp, { x: plate.x + plate.w, y: plate.y + plate.h }) };
+            return {
+              kind: label.kind,
+              id: label.id,
+              text: label.node.text,
+              px: label.fontUnits * label.node.scale.y * displayed.zoom,
+              rect: { x: box.left + b.x, y: box.top + b.y, width: b.width, height: b.height },
+              ...(shown === null ? {} : { plate: { x: box.left + shown.a.x, y: box.top + shown.a.y, width: shown.b.x - shown.a.x, height: shown.b.y - shown.a.y } }),
+            };
           }),
         ghost: route?.ghost() ?? null,
         glow: route?.glow ?? false,
@@ -397,6 +552,21 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
         light: route?.light() ?? null,
         wingMarks: wingMarks.map((m) => ({ wing: m.wing, kind: m.kind })),
         theme: currentTheme(),
+        fx: {
+          clock: sceneClock,
+          camera: { ...displayed },
+          motes: motes?.positions() ?? [],
+          lamps: fx.lamps.map((l) => l.node.alpha),
+          roomAlphas: Object.fromEntries([...roomNodes].map(([id, node]) => [id, node.alpha])),
+          layerAlpha: layers.rooms.alpha,
+          addedScales: fx.added.map((a) => a.scale),
+          farewell: farewell === null ? null : { ...farewell },
+          removed:
+            fx.removedOutlines.length === 0
+              ? []
+              : [{ outline: (fx.removedOutlines[0] as { alpha: number }).alpha, solid: fx.removedSolid === null || fx.removedSolid.destroyed ? 0 : fx.removedSolid.alpha }],
+          door: fx.openDoor === null ? null : { swing: fx.openDoor.swing, draw: fx.openDoor.draw },
+        },
         states: { ...comparisonStates },
       };
       return counters;

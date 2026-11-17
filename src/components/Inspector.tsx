@@ -177,6 +177,10 @@ export function Inspector({ store, api = analysisApi }: Props): ReactElement {
   const hasCard = state.investigation !== null && selection.kind !== "none";
   const phone = usePhone();
   const sheetRef = useRef<HTMLElement>(null);
+  // A new selection fades the inspector in over 150 ms: the CSS animation restarts when its name alternates between a and b.
+  const fade = useRef({ key: JSON.stringify(selection), n: 0 });
+  const key = JSON.stringify(selection);
+  if (fade.current.key !== key) fade.current = { key, n: fade.current.n + 1 };
   // On a phone the inspector is the evidence sheet: a new selection opens it at its heading, even when the tap that made it
   // (a trail step at the bottom of the sheet) scrolled the sheet down to the button (design 4d, design pass 2 item 9).
   useLayoutEffect(() => {
@@ -189,7 +193,7 @@ export function Inspector({ store, api = analysisApi }: Props): ReactElement {
     return () => cancelAnimationFrame(frame);
   }, [phone, selection]);
   return (
-    <aside ref={sheetRef} aria-label="Inspector" className="inspector" data-kind={selection.kind}>
+    <aside ref={sheetRef} aria-label="Inspector" className="inspector" data-kind={selection.kind} data-fade={fade.current.n % 2 === 0 ? "a" : "b"}>
       <h2 id={INSPECTOR_HEADING_ID} tabIndex={-1}>
         {inspectorTitle(state)}
       </h2>

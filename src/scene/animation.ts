@@ -28,8 +28,13 @@ export function createAnimator(opts: { reduced: boolean }): Animator {
   let running: Running[] = [];
 
   function finish(entry: Running): void {
-    entry.spec.update(1);
-    entry.spec.onDone?.();
+    try {
+      entry.spec.update(1);
+      entry.spec.onDone?.();
+    } catch (error) {
+      // An effect on a node that a redraw has destroyed must not stop the ticker.
+      console.error("A tween failed at its end.", error);
+    }
   }
 
   return {
@@ -51,8 +56,13 @@ export function createAnimator(opts: { reduced: boolean }): Animator {
         entry.elapsed += Math.max(0, deltaMs);
         if (entry.elapsed >= entry.spec.duration) done.push(entry);
         else {
-          entry.spec.update(entry.elapsed / entry.spec.duration);
-          alive.push(entry);
+          try {
+            entry.spec.update(entry.elapsed / entry.spec.duration);
+            alive.push(entry);
+          } catch (error) {
+            // A tween that fails is dropped, so that one broken effect never stops the ticker and the other tweens.
+            console.error("A tween failed and was dropped.", error);
+          }
         }
       }
       // A tween started inside a callback was pushed to `running`; keep it after the survivors.

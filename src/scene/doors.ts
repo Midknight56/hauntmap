@@ -3,6 +3,7 @@ import { FONT } from "./elements";
 import { pinText, type DrawContext } from "./rooms";
 import type { LayoutResult, Point } from "./layout/types";
 import { REMOVED_ALPHA, SEALED_GLYPH, TOKENS, removedStrokeWidth, type State } from "./styles";
+import { polylineLength, polylinePrefix } from "./walk";
 
 /** The color of a passage: dim by default, so that only the passages of a selection, a loop or a comparison stand out. */
 function passageColor(state: State): string {
@@ -68,44 +69,76 @@ export function drawDoors(ctx: DrawContext, layout: LayoutResult): void {
     const points = door.arrow;
     const shared = info.state === "default";
     const line = shared ? (faded ? dim : plain) : new Graphics();
-    const first = points[0] as Point;
-    const to = points[points.length - 1] as Point;
-    if (info.state === "comparison-removed") {
-      dashedPolyline(line, points, Math.max(7, width * 2.2), Math.max(5, width * 1.4));
-      line.stroke({ width, color, alpha: REMOVED_ALPHA, join: "round", cap: "butt" });
-    } else {
-      line.moveTo(first.x, first.y);
-      for (const p of points.slice(1)) line.lineTo(p.x, p.y);
-      line.stroke({ width, color, alpha: faded ? FADED_PASSAGE_ALPHA : info.state === "default" ? 0.85 : 1, join: "round", cap: "round" });
-    }
-    // The head follows the last segment that has a direction.
-    let before: Point = first;
-    for (let i = points.length - 2; i >= 0; i--) {
-      const p = points[i] as Point;
-      if (Math.hypot(to.x - p.x, to.y - p.y) > 0.5) {
-        before = p;
-        break;
+    /** Stroke the path (or the part of it that is drawn) and, when it is complete, the arrow head. */
+    const paint = (g: Graphics, pts: readonly Point[], withHead: boolean): void => {
+      const first = pts[0] as Point;
+      const to = pts[pts.length - 1] as Point;
+      if (info.state === "comparison-removed") {
+        dashedPolyline(g, pts, Math.max(7, width * 2.2), Math.max(5, width * 1.4));
+        g.stroke({ width, color, alpha: REMOVED_ALPHA, join: "round", cap: "butt" });
+      } else {
+        g.moveTo(first.x, first.y);
+        for (const p of pts.slice(1)) g.lineTo(p.x, p.y);
+        g.stroke({ width, color, alpha: faded ? FADED_PASSAGE_ALPHA : info.state === "default" ? 0.85 : 1, join: "round", cap: "round" });
       }
-    }
-    const angle = Math.atan2(to.y - before.y, to.x - before.x);
-    const head = info.state === "default" ? 6 : 8;
-    line
-      .poly([
+      if (!withHead) return;
+      // The head follows the last segment that has a direction.
+      let before: Point = first;
+      for (let i = pts.length - 2; i >= 0; i--) {
+        const p = pts[i] as Point;
+        if (Math.hypot(to.x - p.x, to.y - p.y) > 0.5) {
+          before = p;
+          break;
+        }
+      }
+      const angle = Math.atan2(to.y - before.y, to.x - before.x);
+      const head = info.state === "default" ? 6 : 8;
+      g.poly([
         to.x,
         to.y,
         to.x - head * Math.cos(angle - 0.45),
         to.y - head * Math.sin(angle - 0.45),
         to.x - head * Math.cos(angle + 0.45),
         to.y - head * Math.sin(angle + 0.45),
-      ])
-      .fill({ color, alpha: faded ? FADED_PASSAGE_ALPHA : 1 });
-    if (!shared) layer.addChild(line);
+      ]).fill({ color, alpha: faded ? FADED_PASSAGE_ALPHA : 1 });
+    };
+    paint(line, points, true);
+    if (info.state === "comparison-removed") ctx.fx?.removedOutlines.push(line);    if (!shared) layer.addChild(line);
     const sprite = new Sprite(ctx.textures.get("door", info.state));
     sprite.position.set(door.x, door.y);
     sprite.width = door.w;
     sprite.height = door.h;
     if (faded) sprite.alpha = FADED_DOOR_ALPHA;
     layer.addChild(sprite);
+    if (ctx.fx !== undefined) {
+      ctx.fx.doorSprites.set(door.relationId, sprite);
+      if (info.state === "selected") {
+        // The door of the selected relation opens: it swings from its left jamb, and its corridor draws toward the target.
+        const state = { swing: 1, draw: 1 };
+        const total = polylineLength(points);
+        ctx.fx.openDoor = {
+          relationId: door.relationId,
+          get swing() {
+            return state.swing;
+          },
+          get draw() {
+            return state.draw;
+          },
+          setSwing(fraction) {
+            state.swing = fraction;
+            // A redraw may have destroyed the door while its effect still runs.
+            if (sprite.destroyed) return;
+            sprite.width = Math.max(1, door.w * (0.15 + 0.85 * fraction));
+          },
+          setDraw(fraction) {
+            state.draw = fraction;
+            if (line.destroyed) return;
+            line.clear();
+            paint(line, fraction >= 1 ? points : polylinePrefix(points, total * fraction), fraction >= 1);
+          },
+        };
+      }
+    }
     if (info.step !== null) layer.addChild(pinText(ctx, "step", String(info.step), stepMark(info.step, door.x + door.w / 2, door.y + door.h / 2 - 14), STEP_FONT));
   }
   for (const sealed of layout.sealed) {
