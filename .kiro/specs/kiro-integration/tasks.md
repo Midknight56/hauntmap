@@ -91,7 +91,7 @@ A task is done only when its Verify line holds and its log row is appended the s
   - _Requirements: 6.1, 6.2, 6.4, 6.5, 6.7, 6.8_
   - _Owner: kiro_
 
-- [ ] 8. The `refactoring.md` steering file
+- [x] 8. The `refactoring.md` steering file
   - `.kiro/steering/refactoring.md` exists (28 lines, `inclusion: always`, the text of `design.md` plus the three logging bullets) and was loaded as an included rule in the Kiro CLI 3.3.0 session of the spec review on 2026-11-16; confirm it contains none of the strings 7.4 forbids and fill `tests/kiro/steering.test.ts` including those strings.
   - In a headless Kiro CLI session with the file active, ask `Add an import of src/orders/summary.ts to src/notifications/receipt.ts in samples/manor and report what changed.` and observe whether Kiro calls `cycles` before and `compare` after without being told (the `compare` placeholder of task 5 answers until task 9; the observation is about the calls, not the result); save the excerpt as `docs/acceptance/steering-observation.md`; revert with `pnpm demo:reset` and `git checkout public/demo/live.json`; log the observation (calls made, in order, credits) in this task's row.
   - Verify: `pnpm verify` passes with `steering.test.ts` green (`(Get-Content .kiro/steering/refactoring.md).Count` under 60; none of `receipt.ts`, `checkout.ts`, `charge.ts`, `exactly one removed`, `1 → 0` in the file); the log row lists `cycles` before the edit and `compare` after it, or records that it did not and what wording changed in the file as a result (then repeat once).
