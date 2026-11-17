@@ -54,3 +54,13 @@ Read on `main` on 2026-11-16, all exported from `src/analysis/index.ts`:
 - Request handlers: setRequestHandler(ListToolsRequestSchema, …) and setRequestHandler(CallToolRequestSchema, …), both from @modelcontextprotocol/sdk/types.js. Transport: StdioServerTransport from @modelcontextprotocol/sdk/server/stdio.js (newline-delimited JSON on stdin and stdout).
 - structuredContent is supported (z.record(string, unknown) in the CallToolResult schema), so a success result carries the one-line JSON text item and the same value as structuredContent.
 - The error flag is isError: true; the text item then holds {"error":{"code":…,"message":…}}.
+
+## Registration in Kiro CLI 3.3.0 (task 6), observed 2026-11-16
+
+Transcript excerpt: `docs/acceptance/mcp-first-use.md`.
+
+- The workspace file `.kiro/settings/mcp.json` is read. No user-level `mcp.json` exists on the machine, and a headless session called `@hauntmap/cycles`.
+- The server starts with the workspace as its current directory: the relative `args` path worked and the tool resolved `samples/manor`. No `cwd` field was needed.
+- The flag that trusts the tools in a headless session is `--trust-all-tools` (with `--trust-workspace`).
+- Not observed: the command that lists MCP servers and tools, and whether `cycles` runs without a prompt while `compare` prompts. The second needs a person in an interactive session.
+- Run `pnpm build:mcp` before the first session; `dist/` is not committed.
