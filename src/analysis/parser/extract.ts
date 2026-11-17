@@ -8,6 +8,8 @@ export interface RawImport {
   dependencyKind: DependencyKind;
   line: number;
   column: number;
+  /** True for `import(x)` whose argument is not a string literal; `specifier` is then the source text of the argument. */
+  nonLiteral?: true;
 }
 
 export interface ExtractResult {
@@ -47,8 +49,10 @@ interface SpecifierNode {
 }
 interface StatementNode {
   type: string;
+  start?: number | null;
+  end?: number | null;
   loc?: { start: Position } | null;
-  source?: { type: string; value?: unknown } | null;
+  source?: { type: string; value?: unknown; start?: number | null; end?: number | null } | null;
   importKind?: string | null;
   exportKind?: string | null;
   specifiers?: SpecifierNode[] | null;
@@ -113,5 +117,50 @@ export function extractImports(path: string, text: string): ExtractResult {
     }
     imports.push({ specifier: source.value, syntaxKind, dependencyKind, line: start.line, column: start.column + 1 });
   }
+  collectDynamicImports(body, text, imports);
+  imports.sort((a, b) => a.line - b.line || a.column - b.column);
   return { language, status: "ok", imports };
+}
+
+// Keys of a syntax tree node that hold no child nodes of interest.
+const SKIPPED_KEYS = new Set(["loc", "start", "end", "extra", "leadingComments", "trailingComments", "innerComments", "range"]);
+
+/**
+ * Finds every `import(...)` expression anywhere in the tree, with an explicit stack so that deeply
+ * nested code cannot overflow the call stack. A string literal argument gives a `dynamic-literal`
+ * value import. Any other argument (a name, a template literal, an expression) gives a record with
+ * `nonLiteral: true` and the argument's source text as the specifier; its target is never guessed.
+ */
+function collectDynamicImports(body: StatementNode[], text: string, out: RawImport[]): void {
+  const stack: unknown[] = [...body];
+  while (stack.length > 0) {
+    const value = stack.pop();
+    if (value === null || typeof value !== "object") continue;
+    if (Array.isArray(value)) {
+      for (const item of value) stack.push(item);
+      continue;
+    }
+    const node = value as StatementNode & Record<string, unknown>;
+    if (node.type === "ImportExpression") {
+      const start = node.loc?.start;
+      const argument = node.source;
+      if (start !== undefined && argument !== null && argument !== undefined) {
+        if (argument.type === "StringLiteral" && typeof argument.value === "string") {
+          out.push({ specifier: argument.value, syntaxKind: "dynamic-literal", dependencyKind: "value", line: start.line, column: start.column + 1 });
+        } else if (typeof argument.start === "number" && typeof argument.end === "number") {
+          out.push({
+            specifier: text.slice(argument.start, argument.end),
+            syntaxKind: "dynamic-literal",
+            dependencyKind: "value",
+            line: start.line,
+            column: start.column + 1,
+            nonLiteral: true,
+          });
+        }
+      }
+    }
+    for (const key of Object.keys(node)) {
+      if (!SKIPPED_KEYS.has(key)) stack.push(node[key]);
+    }
+  }
 }

@@ -29,9 +29,8 @@ interface Expected {
   diagnostics: ExpectedDiagnostic[];
 }
 
-// `dynamic` holds import("...") calls, which task 10 adds to the extraction.
 const FIXTURES = readdirSync(FIXTURES_ROOT, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory() && entry.name !== "dynamic")
+  .filter((entry) => entry.isDirectory())
   .map((entry) => entry.name)
   .sort();
 
@@ -49,7 +48,8 @@ describe("extractImports against the fixtures' expected.json", () => {
         const wanted = expected.imports
           .filter((i) => i.from === file.path)
           .map(({ specifier, syntaxKind, dependencyKind, line, column }) => ({ specifier, syntaxKind, dependencyKind, line, column }));
-        expect(result.imports, file.path).toEqual(wanted);
+        const found = result.imports.map(({ specifier, syntaxKind, dependencyKind, line, column }) => ({ specifier, syntaxKind, dependencyKind, line, column }));
+        expect(found, file.path).toEqual(wanted);
       }
     });
   }
@@ -171,5 +171,74 @@ describe("extractImports, requirement 2.5: never executes the source", () => {
     expect(result.status).toBe("ok");
     expect(result.imports.map((i) => i.specifier)).toEqual(["./x"]);
     expect(flags[key]).toBeUndefined();
+  });
+});
+describe("extractImports, requirement 10: literal dynamic imports", () => {
+  const dynamic = (text: string, path = "a.ts") =>
+    extractImports(path, text).imports.map((i) => [i.specifier, i.syntaxKind, i.dependencyKind, i.line, i.column, i.nonLiteral === true]);
+
+  it("records a string literal import() as dynamic-literal and value, at the import keyword", () => {
+    expect(dynamic('await import("./b");\n')).toEqual([["./b", "dynamic-literal", "value", 1, 7, false]]);
+  });
+
+  it("finds import() at any depth: functions, arrows, classes, conditions and JSX attributes", () => {
+    const text = [
+      'export function f() { return import("./a"); }',
+      'export const g = () => import("./b");',
+      'export class C { m() { return import("./c"); } }',
+      'export const h = true ? import("./d") : null;',
+      'export const j = <button onClick={() => import("./e")} />;',
+    ].join("\n");
+    expect(dynamic(text, "a.tsx").map((r) => r[0])).toEqual(["./a", "./b", "./c", "./d", "./e"]);
+  });
+
+  it("works in every supported extension", () => {
+    for (const path of ["a.js", "a.jsx", "a.mjs", "a.ts", "a.mts", "a.tsx"]) {
+      expect(dynamic('import("./x");\n', path).map((r) => r[0]), path).toEqual(["./x"]);
+    }
+  });
+
+  it("keeps an import() with an options argument literal", () => {
+    expect(dynamic('import("./x", { with: { type: "json" } });\n').map((r) => [r[0], r[5]])).toEqual([["./x", false]]);
+  });
+
+  it("marks a non literal argument and gives its source text as the specifier", () => {
+    expect(dynamic("import(name);\nimport(`./t`);\nimport(base + '/x');\n")).toEqual([
+      ["name", "dynamic-literal", "value", 1, 1, true],
+      ["`./t`", "dynamic-literal", "value", 2, 1, true],
+      ["base + '/x'", "dynamic-literal", "value", 3, 1, true],
+    ]);
+  });
+
+  it("lists static and dynamic imports together in source order", () => {
+    const text = 'import a from "./a";\nconst x = () => import("./b");\nexport * from "./c";\n';
+    expect(extractImports("m.ts", text).imports.map((i) => [i.specifier, i.line])).toEqual([
+      ["./a", 1],
+      ["./b", 2],
+      ["./c", 3],
+    ]);
+  });
+
+  it("does not record import.meta, require(), strings or comments that contain import(", () => {
+    const text = [
+      'const u = import.meta.url;',
+      'const r = require("./r");',
+      'const s = "import(\'./s\')";',
+      '// import("./c")',
+      '/* import("./d") */',
+    ].join("\n");
+    expect(dynamic(text)).toEqual([]);
+  });
+
+  it("records a static import with no nonLiteral flag", () => {
+    expect(extractImports("m.ts", 'import "./x";\n').imports[0]?.nonLiteral).toBeUndefined();
+  });
+
+  it("finds an import() in a very deeply nested expression without a stack overflow", () => {
+    const depth = 3000;
+    const text = `export const x = ${"(".repeat(depth)}import("./deep")${")".repeat(depth)};\n`;
+    const result = extractImports("a.ts", text);
+    if (result.status === "ok") expect(result.imports.map((i) => i.specifier)).toEqual(["./deep"]);
+    else expect(result.imports).toEqual([]);
   });
 });

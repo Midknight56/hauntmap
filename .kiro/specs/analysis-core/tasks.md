@@ -37,31 +37,31 @@ Each task ends with `pnpm verify` green. A task writes its tests first, sees the
   - Verify: `pnpm verify` passes with `resolve.test.ts` green.
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
 
-- [ ] 6. Identifiers and the investigation
+- [x] 6. Identifiers and the investigation
   - Write the `modules`, `imports` and `diagnostics` sections of `fixtures.test.ts` for every fixture except `dynamic`, calling `selectSources` and then `analyze` with the selection diagnostics. Add the determinism test of the design (shuffled file order, Web Crypto hash and `node:crypto` hash, no source text in the JSON). See them fail.
   - Implement `ids.ts` and `analyze.ts`: records, hashes through the passed hash function, sorting by code unit order, diagnostics, progress calls.
   - Verify: `pnpm verify` passes, and the same input gives equal JSON text twice.
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 9.2_
 
-- [ ] 7. Presets and cycles
+- [x] 7. Presets and cycles
   - Write `tests/analysis/cycles.test.ts` first for the `self-loop`, `two-cycles` and `type-cycle` fixtures, and add the `cycles` section of `fixtures.test.ts`. See them fail.
   - Implement `presets.ts` and `cycles.ts` with Tarjan's algorithm and the witness walk from the design.
   - Verify: `pnpm verify` passes.
   - _Requirements: 5.1, 5.2, 5.3, 5.4_
 
-- [ ] 8. Trace
+- [x] 8. Trace
   - Write `tests/analysis/trace.test.ts` first, with every row of the design's trace table (`chain`, `diamond`, `two-cycles`) and the unknown origin case, and add the `trace` section of `fixtures.test.ts`. See it fail.
   - Implement `trace.ts`.
   - Verify: `pnpm verify` passes.
   - _Requirements: 6.1, 6.2, 6.3_
 
-- [ ] 9. Properties
+- [x] 9. Properties
   - Write `tests/analysis.properties.test.ts` with the seven properties from the design, using fast-check generators that write small sets of files with known imports.
   - Fix every failure in the code, never in the property.
   - Verify: `pnpm verify` passes, and the properties file runs in under 90 seconds.
   - _Requirements: 2.2, 3.1, 4.4, 5.1, 5.3, 5.4, 6.2_
 
-- [ ] 10. Literal dynamic imports
+- [x] 10. Literal dynamic imports
   - Write the `dynamic` fixture tests first: the `modules`, `imports`, `diagnostics` and `cycles` sections, with the three presets. See them fail. Run this task after tasks 4 to 9 pass.
   - Extend `extract.ts` for `import("...")` and for the non literal case, and `presets.ts` for `dynamic-inclusive`.
   - Verify: the `dynamic` fixture passes and `pnpm verify` passes.
