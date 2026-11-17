@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "resolverMode": "documented-source-subset",
+  "sourceLabel": "triad",
+  "modules": [
+    {
+      "id": "src/a.ts",
+      "sourceHash": "072fc23b941d05af2383888f292b78e406e0e82a4a3f8ee698113dd9bcc79e5f",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/b.ts",
+      "sourceHash": "363f5941f4d8df68d4bd5a6a9fa72f57f452e7ea9880d3a622cdaae065f1b5fb",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/c.ts",
+      "sourceHash": "15e6fde2f92fb1046b74289914adae4ea200fa03e2d195ab04d237c0899c2b1c",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/d.ts",
+      "sourceHash": "b1b2e48a852b545a78b4beace2c58c494e614184d203f31c5aff30edb9dfbdb1",
+      "language": "ts",
+      "parseStatus": "ok"
+    }
+  ],
+  "imports": [
+    {
+      "occurrenceId": "[\"src/a.ts\",1,1,\"./b\"]",
+      "relationId": "[\"src/a.ts\",[\"local\",\"src/b.ts\"],\"import\",\"value\"]",
+      "from": "src/a.ts",
+      "to": "src/b.ts",
+      "specifier": "./b",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local",
+      "line": 1,
+      "column": 1
+    },
+    {
+      "occurrenceId": "[\"src/b.ts\",1,1,\"./c\"]",
+      "relationId": "[\"src/b.ts\",[\"local\",\"src/c.ts\"],\"import\",\"value\"]",
+      "from": "src/b.ts",
+      "to": "src/c.ts",
+      "specifier": "./c",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local",
+      "line": 1,
+      "column": 1
+    },
+    {
+      "occurrenceId": "[\"src/d.ts\",1,1,\"./b\"]",
+      "relationId": "[\"src/d.ts\",[\"local\",\"src/b.ts\"],\"import\",\"value\"]",
+      "from": "src/d.ts",
+      "to": "src/b.ts",
+      "specifier": "./b",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local",
+      "line": 1,
+      "column": 1
+    }
+  ],
+  "diagnostics": [],
+  "options": {
+    "preset": "static-value",
+    "includeExtensions": [
+      ".js",
+      ".jsx",
+      ".ts",
+      ".tsx",
+      ".mjs",
+      ".mts"
+    ],
+    "excludeDirectories": [
+      ".git",
+      "node_modules",
+      "dist",
+      "build",
+      "out",
+      ".next",
+      "coverage"
+    ],
+    "excludeFilePatterns": [
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key",
+      "id_rsa*"
+    ],
+    "maxFiles": 1000,
+    "maxFileBytes": 1048576,
+    "maxTotalBytes": 26214400,
+    "jsToTsFallback": true
+  }
+}

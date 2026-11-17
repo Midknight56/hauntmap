@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "resolverMode": "documented-source-subset",
+  "sourceLabel": "cycle",
+  "modules": [
+    {
+      "id": "src/x.ts",
+      "sourceHash": "83a19c77e7954c108e43a7dcb2cb2f945bc36feabfd5528e00df90a0e60a9331",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/y.ts",
+      "sourceHash": "4ea8095c4d08e012caba4ee16b6a5cb59a27764205fb1e7a24d300a9da462d82",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/z.ts",
+      "sourceHash": "60e93bde9accac717d7a9f46fb63b11825bcb0c9f1d958de7a9324e6aa77a8e0",
+      "language": "ts",
+      "parseStatus": "ok"
+    }
+  ],
+  "imports": [
+    {
+      "occurrenceId": "[\"src/x.ts\",1,1,\"./y\"]",
+      "relationId": "[\"src/x.ts\",[\"local\",\"src/y.ts\"],\"import\",\"value\"]",
+      "from": "src/x.ts",
+      "to": "src/y.ts",
+      "specifier": "./y",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local",
+      "line": 1,
+      "column": 1
+    },
+    {
+      "occurrenceId": "[\"src/y.ts\",1,1,\"./x\"]",
+      "relationId": "[\"src/y.ts\",[\"local\",\"src/x.ts\"],\"import\",\"value\"]",
+      "from": "src/y.ts",
+      "to": "src/x.ts",
+      "specifier": "./x",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local",
+      "line": 1,
+      "column": 1
+    },
+    {
+      "occurrenceId": "[\"src/z.ts\",1,1,\"./z\"]",
+      "relationId": "[\"src/z.ts\",[\"local\",\"src/z.ts\"],\"import\",\"value\"]",
+      "from": "src/z.ts",
+      "to": "src/z.ts",
+      "specifier": "./z",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local",
+      "line": 1,
+      "column": 1
+    }
+  ],
+  "diagnostics": [],
+  "options": {
+    "preset": "static-value",
+    "includeExtensions": [
+      ".js",
+      ".jsx",
+      ".ts",
+      ".tsx",
+      ".mjs",
+      ".mts"
+    ],
+    "excludeDirectories": [
+      ".git",
+      "node_modules",
+      "dist",
+      "build",
+      "out",
+      ".next",
+      "coverage"
+    ],
+    "excludeFilePatterns": [
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key",
+      "id_rsa*"
+    ],
+    "maxFiles": 1000,
+    "maxFileBytes": 1048576,
+    "maxTotalBytes": 26214400,
+    "jsToTsFallback": true
+  }
+}

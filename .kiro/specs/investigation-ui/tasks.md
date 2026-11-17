@@ -10,7 +10,7 @@ Ownership. `.kiro/steering/ownership.md` gives this spec `src/scene/**`, `src/fe
   - _Requirements: 3.1_
   - _Owner: Kiro_
 
-- [ ] 1a. Fixtures, IDs and generators
+- [x] 1a. Fixtures, IDs and generators
   - Confirm the facts above against `main` and record them at the top of `tests/ui/README.md`: the export names and signatures read, the analysis client shape, the `expected.json` fields, the committed `sources.json` shape for the three samples (and that all three files exist), and the versions already in `package.json` (Vitest 5.1.0, Vite 8.3.8, TypeScript 6.0.3, fast-check 4.10.2, Node 24 or later, pnpm 12.3.4). React, PixiJS, dagre, Playwright, jsdom and React Testing Library are not installed; task 1c pins them and appends their versions to the README.
   - Write `tests/ui/ids.ts` (re-exports `relationId` and `occurrenceId` from `src/analysis` and adds `relationIdFor(from, to, syntaxKind, dependencyKind)` for local keys), the seven fixtures of `design.md` (`triad.json`, `escaped.json`, `boundary.json`, `cycle.json`, `two-wings.json`, `mixed-presets.json`, `long-name.json`) with the exact modules, specifiers, lines and kinds listed there, and `tests/ui/generators.ts` (`makeInvestigation` with the mulberry32 PRNG, three-digit zero-padded module names, distinct targets per module; `wide`, `perf200`, `perf1000`).
   - Write `tests/ui/fixtures.test.ts`: each fixture has `schemaVersion: 1` and the module and relation counts of the table; `perf200` has 200 modules and 600 relations, `perf1000` 1,000 and 3,000, `wide` 125 modules with `src/big/m000.ts` … `m119.ts`; and the hand-written expectations of `triad.json` and `cycle.json` equal what the real `trace` and `findCycles` return (a check of the fixtures, not of the UI).
@@ -18,7 +18,7 @@ Ownership. `.kiro/steering/ownership.md` gives this spec `src/scene/**`, `src/fe
   - _Requirements: 1.4, 6.6_
   - _Owner: Kiro_
 
-- [ ] 1c. Root configuration, dependencies and the Playwright projects
+- [x] 1c. Root configuration, dependencies and the Playwright projects
   - Gate: unless `.kiro/steering/ownership.md` contains an exception that lets `investigation-ui` edit `package.json`, `tsconfig.json`, `vitest.config.ts`, `eslint.config.js`, `.gitignore` and create `index.html`, `vite.config.ts` and `.env.devhook` (the way `kiro-integration` has one), stop here and report; do not edit `ownership.md` and do not skip the gate. The owner adds the exception.
   - With the exception: add, with exact pinned versions (`pnpm add -E`), `react`, `react-dom`, `pixi.js` (8.x), `dagre` or `@dagrejs/dagre` (record which), `@vitejs/plugin-react`, `@types/react`, `@types/react-dom`, `jsdom`, `@testing-library/react`, `@testing-library/user-event`, `@playwright/test`; run `pnpm exec playwright install chromium`; append the versions to `tests/ui/README.md`.
   - Edit: `tsconfig.json` (`jsx: "react-jsx"`, `vite/client` types, include `tests/e2e`), `vitest.config.ts` (two projects: `node` for `tests/**/*.test.ts` and `jsdom` for `tests/**/*.test.tsx` and the DOM-touching `tests/ui` files; keep every existing include of `analysis-core`; *verify* the project syntax on Vitest 5.1.0), `eslint.config.js` (ignore `dist-devhook/**`, `playwright-report/**`, `test-results/**`), `.gitignore` (the same folders), `package.json` scripts `dev`, `build`, `build:devhook` (`vite build --mode devhook --outDir dist-devhook`), `preview` (`vite preview`), `verify:e2e` (`pnpm build && pnpm build:devhook && playwright test --pass-with-no-tests`, so that extra arguments reach `playwright test`; *verify* the forwarding). Never change or remove an entry that `analysis-core` added.
@@ -27,27 +27,27 @@ Ownership. `.kiro/steering/ownership.md` gives this spec `src/scene/**`, `src/fe
   - _Requirements: 11.6 (tooling for every browser case)_
   - _Owner: Kiro (root files only after the owner's exception)_
 
-- [ ] 1b. Browser helpers
+- [x] 1b. Browser helpers
   - Write `tests/e2e/helpers.ts` (`openManor`, `openFixture`, `tabTo`, `assertFocusVisibleAndUnobscured`, `readStatus`, `inspectorHeading`, `sceneDebug`, `expected` with the `orders` → `src/orders` wing mapping, `clickDoor`, `expandAllWings`, `shot` that writes a screenshot only when `HAUNTMAP_SHOTS=1`), using local structural types for `window.__hauntmap` and no import from `src/scene`.
   - Verify: `pnpm verify` (typecheck and lint of the file) and `pnpm verify:e2e` still pass.
   - _Requirements: 11.1, 11.3 (helpers)_
   - _Owner: Kiro_
 
-- [ ] 2a. Store, seams and the layout client
+- [x] 2a. Store, seams and the layout client
   - Create `src/scene/layout/types.ts` (types only, as in `design.md`), `src/features/investigation/analysisApi.ts` (`findCycles`, `trace` from `src/analysis`; `includesRelation` and `presetRelations` from `src/analysis/graph/presets`; `inPreset` applies the shared rule to `{ ...record, resolution: "local" }`; `presetMembership` tries the three presets in order), `prefs.ts`, `wings.ts`, `layoutClient.ts` (`createLayoutClient` with the revision guard, `terminate()` and recreate on cancel or supersede, the `layout` message protocol of `design.md`), `selection.ts`, `store.ts` (`createInvestigationStore` with every action; a layout request only from `openInvestigation`, `setPreset`, `expandWing`, `collapseWing`, `retryLayout`, through the builder when one is set; revision guard in `layoutResult`; `applyLayout`; `replaceInvestigation` with the rule list of `design.md`; `setLayoutRequestBuilder`; `chooseLoop`, `chooseImporter`, `focusModule`; `expandWing(wing, bring)` with the 80-slot rule; `restart()` keeping `legendOpen` and `motion`; the 10,000 ms layout timeout) and `handoffs.ts` (`callCompareHandoff` over a structural `getHandoff` lookup; no import of `registry.ts`).
   - Write `tests/ui/store.test.ts` (every case of the `design.md` row), `layout-client.test.ts` (a stale reply is dropped, `cancel()` terminates and recreates, a worker error rejects without touching the last layout, with a fake worker), `prefs.test.ts`, `analysis-api.test.ts` (the three presets on `mixed-presets.json`, `presetMembership` values, a boundary record judged by its kinds), a throwing `tests/ui/fakeAnalysisApi.ts`, and the P5, P10, P11, P13, P14 runs in `tests/ui/properties.test.ts`, with the real analysis functions and a fake layout client that resolves out of order.
   - Verify: `pnpm verify` passes with these files and the five properties green.
   - _Requirements: 1.7, 3.2, 3.7, 3.9, 4.4, 4.6, 5.6, 6.1, 7.2, 7.5, 7.8, 8.4, 10.2, 10.4_
   - _Owner: Kiro_
 
-- [ ] 2b. Registry and search
+- [x] 2b. Registry and search
   - Create `registry.ts` (`createRegistry`, the one `registry` instance, the `compare` and `export` handoffs, the three slots, the legend provider; no `intake`) and `search.ts` (`searchModules`).
   - Write `tests/ui/registry.test.ts` (10.1 slot rendering and absence; 10.4 the `compare` handoff receives `layoutKey`; 10.6 API shape; 5.1 legend entries appended only when the provider returns them), `search.test.ts`, `feature-boundary.test.ts` (the I9 half: no `cycles`, `trace` or `inPreset` definition outside `src/analysis/**` and `analysisApi.ts`; task 12 adds the 10.6 import half) and the P6 run.
   - Verify: `pnpm verify` passes with these files and P6 green.
   - _Requirements: 4.1, 4.3, 5.1, 10.1, 10.6_
   - _Owner: Kiro_
 
-- [ ] 3. Layout engine and the layout worker entry
+- [x] 3. Layout engine and the layout worker entry
   - Create in `src/scene/layout/`: `dagre.ts` (the `LayoutEngine` over the pinned dagre package, options confirmed on that version), `key.ts` (`layoutKey` over the canonical JSON of the request, including boundary relation IDs and the shown module IDs of each expanded wing, with Web Crypto), `doorsPlacement.ts` (side by the larger vector component, 24-unit spacing, overflow to the clockwise side, `hit` at least 24 × 24 and clipped) and `engine.ts` (`async layoutInvestigation`: the wing graph with the size formula of `design.md`, the interior run per expanded wing with the 24/32/24 padding and the grid fallback, the grouped room last, corridors between nearest boundary points, `bounds` with 32 padding, `stats.ms`, `nodeCount = req.modules.length`, `edgeCount = req.relations.length`). Create `src/workers/layout.worker.ts` with an exported `runLayoutRequest(request, post)` that never throws (an error becomes an `error` reply) and registers `onmessage` only inside a real worker, the pattern of `analysis.worker.ts`.
   - Write `tests/ui/layout-engine.test.ts` (including the 3.6 rank-map and no-intersection assertions and the `long-name.json` label), `layout-cap.test.ts`, `layout-key.test.ts`, `layout-worker.test.ts` (reply echoes `requestId` and `revision`; a bad request gives an `error` reply) and the P1, P2, P3 runs in `properties.test.ts`.
   - Verify: `pnpm verify` passes with these files and P1 to P3 green; `layout-engine.test.ts` asserts `stats.nodeCount` 200 and 1,000 for `perf200` and `perf1000` (shape only, no timing).

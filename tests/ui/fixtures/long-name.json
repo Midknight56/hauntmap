@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "resolverMode": "documented-source-subset",
+  "sourceLabel": "long-name",
+  "modules": [
+    {
+      "id": "src/long/aVeryLongModuleName.ts",
+      "sourceHash": "b7b3ccff6001d5ce34675851ca3d2118cfeeaa8d0dddf0ad8c11cf3a93ffc552",
+      "language": "ts",
+      "parseStatus": "ok"
+    }
+  ],
+  "imports": [],
+  "diagnostics": [],
+  "options": {
+    "preset": "static-value",
+    "includeExtensions": [
+      ".js",
+      ".jsx",
+      ".ts",
+      ".tsx",
+      ".mjs",
+      ".mts"
+    ],
+    "excludeDirectories": [
+      ".git",
+      "node_modules",
+      "dist",
+      "build",
+      "out",
+      ".next",
+      "coverage"
+    ],
+    "excludeFilePatterns": [
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key",
+      "id_rsa*"
+    ],
+    "maxFiles": 1000,
+    "maxFileBytes": 1048576,
+    "maxTotalBytes": 26214400,
+    "jsToTsFallback": true
+  }
+}

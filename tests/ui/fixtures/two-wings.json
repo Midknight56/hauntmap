@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "resolverMode": "documented-source-subset",
+  "sourceLabel": "two-wings",
+  "modules": [
+    {
+      "id": "src/orders/a.ts",
+      "sourceHash": "19d5f7d091df811a257ce40e4635fe7c76d6e1a0fedf6eca7d767228c41bb934",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/orders/b.ts",
+      "sourceHash": "155ac6b87b25cae1f418317870ba9da210c709d9b67cf917fb79a02498356b6b",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/orders/c.ts",
+      "sourceHash": "6fd69df62d8df8301b09bc822d232347fae33f0a6c5d4b9b7dfe72e6f437ddac",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/payments/p.ts",
+      "sourceHash": "8ce9d959a3289ffe4d6780379fd6e6067c0f14b8c4780bbdf0e664b1ffee6efb",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/payments/q.ts",
+      "sourceHash": "9151550542f3406a591cbf3a2a90d9c51ed96942c33c78a428d5de90e8ab11b3",
+      "language": "ts",
+      "parseStatus": "ok"
+    }
+  ],
+  "imports": [
+    {
+      "occurrenceId": "[\"src/orders/a.ts\",1,1,\"../payments/p\"]",
+      "relationId": "[\"src/orders/a.ts\",[\"local\",\"src/payments/p.ts\"],\"import\",\"value\"]",
+      "from": "src/orders/a.ts",
+      "to": "src/payments/p.ts",
+      "specifier": "../payments/p",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local",
+      "line": 1,
+      "column": 1
+    },
+    {
+      "occurrenceId": "[\"src/orders/b.ts\",1,1,\"../payments/p\"]",
+      "relationId": "[\"src/orders/b.ts\",[\"local\",\"src/payments/p.ts\"],\"import\",\"value\"]",
+      "from": "src/orders/b.ts",
+      "to": "src/payments/p.ts",
+      "specifier": "../payments/p",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local",
+      "line": 1,
+      "column": 1
+    },
+    {
+      "occurrenceId": "[\"src/payments/q.ts\",1,1,\"../orders/c\"]",
+      "relationId": "[\"src/payments/q.ts\",[\"local\",\"src/orders/c.ts\"],\"import\",\"value\"]",
+      "from": "src/payments/q.ts",
+      "to": "src/orders/c.ts",
+      "specifier": "../orders/c",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local",
+      "line": 1,
+      "column": 1
+    }
+  ],
+  "diagnostics": [],
+  "options": {
+    "preset": "static-value",
+    "includeExtensions": [
+      ".js",
+      ".jsx",
+      ".ts",
+      ".tsx",
+      ".mjs",
+      ".mts"
+    ],
+    "excludeDirectories": [
+      ".git",
+      "node_modules",
+      "dist",
+      "build",
+      "out",
+      ".next",
+      "coverage"
+    ],
+    "excludeFilePatterns": [
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key",
+      "id_rsa*"
+    ],
+    "maxFiles": 1000,
+    "maxFileBytes": 1048576,
+    "maxTotalBytes": 26214400,
+    "jsToTsFallback": true
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "resolverMode": "documented-source-subset",
+  "sourceLabel": "boundary",
+  "modules": [
+    {
+      "id": "src/app.ts",
+      "sourceHash": "841254fe75488c1bd4cd7f68f00b4be0e48dcfbc4a16b45847b68295e0e3b27b",
+      "language": "ts",
+      "parseStatus": "ok"
+    }
+  ],
+  "imports": [
+    {
+      "occurrenceId": "[\"src/app.ts\",1,1,\"zod\"]",
+      "relationId": "[\"src/app.ts\",[\"external\",\"zod\"],\"import\",\"value\"]",
+      "from": "src/app.ts",
+      "to": null,
+      "specifier": "zod",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "external",
+      "line": 1,
+      "column": 1
+    },
+    {
+      "occurrenceId": "[\"src/app.ts\",2,1,\"./ghosts/missing\"]",
+      "relationId": "[\"src/app.ts\",[\"unresolved\",\"./ghosts/missing\"],\"import\",\"value\"]",
+      "from": "src/app.ts",
+      "to": null,
+      "specifier": "./ghosts/missing",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "unresolved",
+      "line": 2,
+      "column": 1,
+      "reason": "absent-file"
+    },
+    {
+      "occurrenceId": "[\"src/app.ts\",3,1,\"@/lib/format\"]",
+      "relationId": "[\"src/app.ts\",[\"unresolved\",\"@/lib/format\"],\"import\",\"value\"]",
+      "from": "src/app.ts",
+      "to": null,
+      "specifier": "@/lib/format",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "unresolved",
+      "line": 3,
+      "column": 1,
+      "reason": "alias-not-configured"
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "unresolved",
+      "module": "src/app.ts",
+      "line": 2,
+      "column": 1,
+      "specifier": "./ghosts/missing",
+      "message": "Cannot resolve \"./ghosts/missing\" from src/app.ts: absent-file."
+    },
+    {
+      "code": "unresolved",
+      "module": "src/app.ts",
+      "line": 3,
+      "column": 1,
+      "specifier": "@/lib/format",
+      "message": "Cannot resolve \"@/lib/format\" from src/app.ts: alias-not-configured."
+    }
+  ],
+  "options": {
+    "preset": "static-value",
+    "includeExtensions": [
+      ".js",
+      ".jsx",
+      ".ts",
+      ".tsx",
+      ".mjs",
+      ".mts"
+    ],
+    "excludeDirectories": [
+      ".git",
+      "node_modules",
+      "dist",
+      "build",
+      "out",
+      ".next",
+      "coverage"
+    ],
+    "excludeFilePatterns": [
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key",
+      "id_rsa*"
+    ],
+    "maxFiles": 1000,
+    "maxFileBytes": 1048576,
+    "maxTotalBytes": 26214400,
+    "jsToTsFallback": true
+  }
+}
