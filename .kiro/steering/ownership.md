@@ -29,3 +29,12 @@ inclusion: always
 
 - It also owns `index.html`, `vite.config.ts`, `.env.devhook` and the Playwright configuration.
 - It may add its own entries to the root configuration files of `analysis-core` (`package.json` scripts and dependencies, `vitest.config.ts`, `eslint.config.js`, `tsconfig.json`, `.gitignore`). It never changes or removes an entry that another spec added.
+
+## Exceptions for `snapshot-comparison`
+
+These are the four gated changes named in the header of its `tasks.md`, one each, logged in the task row.
+
+- G1: the `dev` project of the Playwright configuration may match `tests/compare/e2e/**`.
+- G2: `src/components/App.tsx` and `src/components/MapView.tsx` may get the `comparison` prop and the compare store wiring.
+- G3: `src/scene/styles.ts`, `src/scene/adapter.ts` and `src/styles/tokens.css` may get the three comparison tokens, `outlineStyle` and the `comparison-*` style entries.
+- G4: the one change its header names for `src/components/Inspector.tsx`, if task 8 needs it.

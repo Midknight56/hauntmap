@@ -342,7 +342,7 @@ export interface LiveDeps {
   defaults: AnalysisOptions;                              // DEFAULT_ANALYSIS_OPTIONS from src/analysis/index.ts (includes preset "static-value")
   validate: typeof validateInvestigation;
 }
-export const msgSampleAnalyzeFailed = (message: string) => `The manor sample could not be analyzed (${message}). Reload the page or analyze a local folder.`;
+export const msgSampleAnalyzeFailed = (message: string) => `The manor sample could not be analyzed (${message}). Reload the page.`;
 export type LiveOutcome = "missing" | "fetch-failed" | "malformed" | "no-compare" | "sample-failed" | "compare-failed" | "loaded";
 export async function openLiveSnapshot(deps: LiveDeps): Promise<LiveOutcome>;
 // 1. if a run is pending → return the pending promise (no second fetch);
@@ -544,7 +544,7 @@ Every failure is a typed value (`ToolResult`, `LiveFetch`, `LiveOutcome`, an exi
 | Live snapshot fetch rejected or other status (8.5) | status region | `The live snapshot could not be fetched (<error name or status>). The current view is unchanged.` | `fetch-failed` | whole view |
 | No `compare` handoff (8.5) | status region | `Comparison is not available in this build.` | `no-compare` | whole view |
 | Sample load fails in the no-investigation path (8.8) | status region | `investigation-ui` 1.6 text | `sample-failed` | landing screen |
-| Analysis of `manor/before` rejects in the no-investigation path (8.11) | status region | `The manor sample could not be analyzed (<message>). Reload the page or analyze a local folder.` | `sample-failed` | landing screen |
+| Analysis of `manor/before` rejects in the no-investigation path (8.11) | status region | `The manor sample could not be analyzed (<message>). Reload the page.` | `sample-failed` | landing screen |
 | Compare handoff rejects (8.11) | nothing from this spec (the handoff wrote its message) | — | `compare-failed` | whatever the handoff preserved (snapshot-comparison 10.1–10.4: the earlier investigation) |
 | `demo:live` finds `dist/cli.js` absent or the sample unchanged (6.8) | hook output | `demo:live: skipped (<reason>)` | exit 0 | `public/demo/live.json` untouched |
 | Activation while pending (8.2) | — | nothing; button `aria-disabled="true"` | — | — |
