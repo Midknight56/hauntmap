@@ -1,6 +1,6 @@
 import { CanvasTextMetrics, Container, Graphics, NineSliceSprite, Sprite, Text, TextStyle, type Texture } from "pixi.js";
 import { DISPLAY_FONT, FONT } from "./elements";
-import { fitLines, labelScale, stemOfId, wingTitleFor } from "./labels";
+import { fitLines, labelScale, stemOfId, TARGET_LABEL_PX, wingTitleFor } from "./labels";
 import type { LayerName } from "./layers";
 import type { LayoutResult, Rect } from "./layout/types";
 import type { SceneStates } from "./stateMap";
@@ -9,15 +9,43 @@ import type { TextureCache } from "./textures";
 
 /** One drawn name or title. Its words and its scale follow the zoom, so that it never drops under 11 CSS pixels. */
 export interface SceneLabel {
-  kind: "wing" | "wing-note" | "room" | "note";
+  kind: "wing" | "wing-note" | "room" | "note" | "step" | "glyph" | "count";
   id: string;
   node: Text;
   /** The font size of the text object before scaling, in scene units. */
   fontUnits: number;
   /** Choose the words and the scale for a camera zoom. */
   layout(zoom: number): void;
-  /** False for a room that is outside the view (culled). */
+  /** False for a text that is not drawn: its room is outside the view (culled), or it waits for a closer view. */
   visible(): boolean;
+  /** True while `layout` must run for a zoom, even when the text is hidden at the zoom now shown. Defaults to `visible`. */
+  active?(): boolean;
+}
+
+/**
+ * Register a text that sits in the world (a step number, a `+`, a `?`, an import count) so that it is never under 11
+ * CSS pixels on screen: it grows with the zoom out, and a `hide` text is not drawn until the zoom lets it be 11.5 px
+ * at its own size. Returns the node so the caller adds it to a layer.
+ */
+export function pinText(ctx: { labels: SceneLabel[]; zoom: number }, kind: SceneLabel["kind"], id: string, node: Text, fontUnits: number, mode: "grow" | "hide" = "grow"): Text {
+  const label: SceneLabel = {
+    kind,
+    id,
+    node,
+    fontUnits,
+    visible: () => !node.destroyed && node.visible,
+    active: () => !node.destroyed,
+    layout(zoom) {
+      if (node.destroyed) return;
+      if (mode === "hide") {
+        node.visible = zoom * fontUnits >= TARGET_LABEL_PX;
+        node.scale.set(1);
+      } else node.scale.set(labelScale(zoom, fontUnits));
+    },
+  };
+  ctx.labels.push(label);
+  label.layout(ctx.zoom);
+  return node;
 }
 
 export interface DrawContext {
@@ -69,11 +97,9 @@ export function clearMeasureCache(): void {
 const LINE = 1.25;
 const ROOM_FONT = 11;
 const WING_FONT = 12;
-const NOTE_FONT = 8;
-/** The note `Not in this traversal` is drawn at about 7 CSS pixels at the first view; it is a companion of the subdued room, not a name. */
-const NOTE_PX = 7;
-/** The plate is 30 units high; a title may grow to 34 units so it still sits between the top edge and the first row. */
-const WING_FONT_CAP = 34;
+const NOTE_FONT = ROOM_FONT;
+/** The plate is 30 units high; a title may grow to 40 units (its capital letters are then about 29 units high) so it still sits on the plate. Below the zoom where 40 units are 11 CSS pixels the title is not drawn. */
+const WING_FONT_CAP = 40;
 const PLATE_TOP = 6;
 const PLATE_H = 30;
 
@@ -105,9 +131,11 @@ export function drawWings(ctx: DrawContext, layout: LayoutResult): void {
       id: wing.wing,
       node: title,
       fontUnits: WING_FONT,
-      visible: () => true,
+      visible: () => title.visible,
+      active: () => true,
       layout(zoom) {
         const s = Math.min(labelScale(zoom, WING_FONT), WING_FONT_CAP / WING_FONT);
+        title.visible = WING_FONT * s * zoom >= TARGET_LABEL_PX - 0.5;
         const words = wingTitleFor(wing.wing, wing.moduleCount, (plateW - 12) / s, (t) => measureWidth(t, DISPLAY_FONT, WING_FONT, "700"));
         if (title.text !== words) title.text = words;
         title.scale.set(s);
@@ -157,6 +185,13 @@ export function drawRooms(ctx: DrawContext, layout: LayoutResult): Map<string, C
     const name = makeText(room.label, FONT, ROOM_FONT, ink, "400");
     name.position.set(6, 7);
     node.addChild(name);
+    const glyph = STATE_STYLES[state].glyph;
+    if (glyph !== null) {
+      const mark = new Text({ text: glyph, style: { fontFamily: FONT, fontSize: 14, fill: TOKENS.roomInk, fontWeight: "700" } });
+      mark.anchor.set(0.5);
+      mark.position.set(room.w - 12, 11);
+      node.addChild(pinText(ctx, "glyph", room.id, mark, 14));
+    }
     const stem = stemOfId(room.id);
     // Where the name ends, so that the note under it never overlaps it.
     let nameBottom = 7 + ROOM_FONT * LINE;
@@ -187,19 +222,23 @@ export function drawRooms(ctx: DrawContext, layout: LayoutResult): Map<string, C
         id: room.id,
         node: note,
         fontUnits: NOTE_FONT,
-        visible: () => node.visible,
+        // The note is a text like any other: 11 CSS pixels or more on screen, or not drawn at that zoom.
+        visible: () => node.visible && note.visible,
+        active: () => node.visible,
         layout(zoom) {
-          const wanted = Math.max(1, NOTE_PX / (NOTE_FONT * Math.max(zoom, 0.0001)));
+          const wanted = labelScale(zoom, NOTE_FONT);
           const lines = fitLines([words], (room.w - 12) / wanted, (t) => measureWidth(t, FONT, NOTE_FONT, "400"), 2);
-          // The note takes the space the name leaves; it shrinks before it would touch the name.
-          const room_left = room.h - 4 - nameBottom - 2;
-          const s = Math.max(0.8, Math.min(wanted, room_left / (lines.length * NOTE_FONT * LINE)));
           const text = lines.join("\n");
+          const needed = lines.length * NOTE_FONT * LINE * wanted;
+          const roomLeft = room.h - 4 - nameBottom - 2;
+          // The words fit only when they are whole (no ellipsis) and leave the name its space; otherwise they wait for a closer view.
+          note.visible = !text.includes("\u2026") && needed <= roomLeft;
           if (note.text !== text) note.text = text;
-          note.scale.set(s);
+          note.scale.set(wanted);
         },
       });
-    }    ctx.layers.rooms.addChild(node);
+    }
+    ctx.layers.rooms.addChild(node);
     nodes.set(room.id, node);
   }
   for (const group of layout.grouped) {

@@ -1,5 +1,5 @@
-import { Container, Graphics, Rectangle, Text, type Renderer, type Texture } from "pixi.js";
-import { SEALED_GLYPH, STATE_STYLES, TOKENS, type State } from "./styles";
+import { Container, Graphics, Rectangle, type Renderer, type Texture } from "pixi.js";
+import { STATE_STYLES, TOKENS, type State } from "./styles";
 import type { TextureRenderer } from "./textures";
 
 // The texture of one element kind in one state. Each is drawn once and reused (see textures.ts), and drawn in
@@ -55,9 +55,7 @@ function noise(row: number, col: number): number {
 }
 
 /** A dashed rectangle outline (the removed-in-the-newer-snapshot ghost). */
-function dashedRect(g: Graphics, x: number, y: number, w: number, h: number, width: number, color: string): void {
-  const dash = 6;
-  const gap = 4;
+function dashedRect(g: Graphics, x: number, y: number, w: number, h: number, width: number, color: string, dash = 6, gap = 4): void {
   const edge = (x1: number, y1: number, x2: number, y2: number): void => {
     const length = Math.hypot(x2 - x1, y2 - y1);
     const dx = (x2 - x1) / length;
@@ -120,6 +118,8 @@ function chamber(width: number, height: number, fill: string, state: State, base
   // The shadow the wall throws on the floor.
   g.roundRect(half + 1, half + 1, width - style.outlineWidth - 2, height - style.outlineWidth - 2, 3).stroke({ width: 3, color: TOKENS.floor, alpha: 0.45 });
   g.roundRect(half, half, width - style.outlineWidth, height - style.outlineWidth, 4).stroke({ width: style.outlineWidth, color: outlineColor(state, baseOutline) });
+  // A subdued room also has a dotted inner rail, so that it differs from a lit room by shape when its words are not drawn.
+  if (state === "subdued") dashedRect(g, inner.x + 3, inner.y + 3, inner.w - 6, inner.h - 6, 2, TOKENS.roomSubduedInk, 1, 4);
   return g;
 }
 
@@ -169,10 +169,6 @@ function arch(fill: string, state: State, baseOutline: string, mark: string | nu
   return g;
 }
 
-function glyphText(glyph: string, size: number, color: string): Text {
-  return new Text({ text: glyph, style: { fontFamily: FONT, fontSize: size, fill: color, fontWeight: "700" } });
-}
-
 /** The display object to render into the texture of `(kind, state)`, and its pixel frame. */
 function draw(kind: string, stateName: string): { node: Container; frame: Rectangle } {
   const state = stateOf(stateName);
@@ -181,11 +177,7 @@ function draw(kind: string, stateName: string): { node: Container; frame: Rectan
   switch (kind) {
     case "room": {
       node.addChild(chamber(ROOM_W, ROOM_H, style.fill, state, TOKENS.wall));
-      if (style.glyph !== null) {
-        const glyph = glyphText(style.glyph, 14, TOKENS.roomInk);
-        glyph.position.set(ROOM_W - glyph.width - 6, 4);
-        node.addChild(glyph);
-      }
+      // The `+` of an added room is a text of the scene (rooms.ts), so that it keeps 11 CSS pixels at every zoom.
       return { node, frame: new Rectangle(0, 0, ROOM_W, ROOM_H) };
     }
     case "grouped": {
@@ -203,9 +195,7 @@ function draw(kind: string, stateName: string): { node: Container; frame: Rectan
     }
     case "sealed": {
       node.addChild(arch(TOKENS.panel, state, TOKENS.sealed, TOKENS.sealed));
-      const mark = glyphText(SEALED_GLYPH, 10, TOKENS.sealed);
-      mark.position.set((DOOR_BASE - mark.width) / 2, 5);
-      node.addChild(mark);
+      // The `?` is a text of the scene (doors.ts), so that it keeps 11 CSS pixels at every zoom.
       return { node, frame: new Rectangle(0, 0, DOOR_BASE, DOOR_BASE) };
     }
     default: {

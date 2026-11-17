@@ -2,6 +2,7 @@ import { Graphics, Text, type Container } from "pixi.js";
 import { FONT } from "../elements";
 import type { Rect } from "../layout/types";
 import { TOKENS } from "../styles";
+import { pinText, type SceneLabel } from "../rooms";
 import type { ComparisonView } from "./view";
 
 // The comparison marks that the element textures do not carry. PixiJS; called by the scene adapter.
@@ -52,7 +53,8 @@ function ring(g: Graphics, rect: Rect, color: string, dashed: boolean): void {
   g.stroke({ width: 3, color });
 }
 
-export function drawComparisonMarks(layer: Container, view: ComparisonView): void {
+export function drawComparisonMarks(layer: Container, view: ComparisonView, pin: { labels: SceneLabel[]; zoom: number }): void {
+  const mark = (id: string, node: Text, size: number): Text => pinText(pin, "glyph", id, node, size);
   const g = new Graphics();
   let used = false;
   for (const room of view.drawn.rooms) {
@@ -65,7 +67,7 @@ export function drawComparisonMarks(layer: Container, view: ComparisonView): voi
       g.rect(cx - 3, room.y + 5, 6, 3).fill(TOKENS.changed);
       used = true;
     } else if (c === "comparison-added" && !own) {
-      layer.addChild(plus(room.x + room.w - 10, room.y + 10));
+      layer.addChild(mark(room.id, plus(room.x + room.w - 10, room.y + 10), 13));
     } else if (c === "comparison-removed" && !own) {
       dashedOutline(g, { x: room.x - 3, y: room.y - 3, w: room.w + 6, h: room.h + 6 }, TOKENS.removed);
       used = true;
@@ -75,7 +77,7 @@ export function drawComparisonMarks(layer: Container, view: ComparisonView): voi
     const c = view.marks.doors.get(door.relationId);
     if (c === "comparison-added") {
       ring(g, door, TOKENS.added, false);
-      layer.addChild(plus(door.x + door.w + 10, door.y - 8, 20));
+      layer.addChild(mark(door.relationId, plus(door.x + door.w + 10, door.y - 8, 20), 20));
       used = true;
     } else if (c === "comparison-removed") {
       ring(g, door, TOKENS.removed, true);
@@ -87,7 +89,7 @@ export function drawComparisonMarks(layer: Container, view: ComparisonView): voi
     const c = view.marks.sealed.get(s.relationId);
     if (c === "comparison-added") {
       ring(g, s, TOKENS.added, false);
-      layer.addChild(plus(s.x + s.w + 10, s.y - 8, 20));
+      layer.addChild(mark(s.relationId, plus(s.x + s.w + 10, s.y - 8, 20), 20));
       used = true;
     } else if (c === "comparison-removed") {
       ring(g, s, TOKENS.removed, true);

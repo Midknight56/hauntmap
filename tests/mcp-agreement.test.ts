@@ -84,3 +84,14 @@ describe("row 27 programmatic", () => {
     }
   });
 });
+
+describe("row 27 recorded", () => {
+  const SESSION = join(REPO, "docs", "acceptance", "h9-session");
+  it("the removed and added relations of mcp-compare.json equal those the app saved in app-comparison.json", () => {
+    const mcp = JSON.parse(readFileSync(join(SESSION, "mcp-compare.json"), "utf8")) as ComparisonResult;
+    const app = JSON.parse(readFileSync(join(SESSION, "app-comparison.json"), "utf8")) as { comparison: { result: ComparisonResult } };
+    expect(mcp.removedRelations).toEqual(app.comparison.result.removedRelations);
+    expect(mcp.addedRelations).toEqual(app.comparison.result.addedRelations);
+    expect(mcp.removedRelations.map((r) => r.relationId)).toEqual([DEMO_RELATION_ID]);
+  });
+});

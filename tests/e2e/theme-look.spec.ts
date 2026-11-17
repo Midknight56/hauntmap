@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
-import { openManor, sceneDebug, settled, storeAction } from "./helpers";
+import { compareAction } from "../compare/e2e/scene";
+import { expandAllWings, openManor, sceneDebug, settled, storeAction } from "./helpers";
 
 // The theme pass (Costume Contest look), checked in the dev build at 1,280 x 720 with the scene's debug data:
 // item 5 (names at least 11 CSS pixels), item 6 (titles under no room, a right column that hides nothing),
@@ -180,3 +181,72 @@ test.describe("the three palettes and the texture cache (items 1 and 3)", () => 
     }
   });
 });
+
+// Every text the scene draws, not only names: wing titles, room names, the words under a subdued room, the import counts on
+// the corridors, the step numbers, and the `+` and `?` marks. Each is at least 11 CSS pixels on screen or is not drawn at that zoom.
+/** The `0` key on the focused map fits every wing in the view. */
+async function fitMap(page: Page): Promise<void> {
+  await page.getByRole("application", { name: "Haunted map" }).focus();
+  await page.keyboard.press("0");
+  await expect.poll(async () => (await sceneDebug(page)).activeTweens).toBe(0);
+}
+
+async function everyTextAtLeast11(page: Page, what: string): Promise<Awaited<ReturnType<typeof sceneDebug>>["labels"]> {
+  await expect.poll(async () => (await sceneDebug(page)).activeTweens).toBe(0);
+  const labels = (await sceneDebug(page)).labels;
+  for (const label of labels) expect(label.px, `${what}: ${label.kind} ${label.id} "${label.text}" is ${label.px} px`).toBeGreaterThanOrEqual(11);
+  return labels;
+}
+
+for (const size of [
+  { width: 1280, height: 720 },
+  { width: 1920, height: 1080 },
+]) {
+  test.describe(`every drawn text at ${size.width} x ${size.height} (item 5)`, () => {
+    test.use({ viewport: size });
+
+    test("subdued rooms: no text under 11 px at the fitted view and the words come back when zoomed in", async ({ page }) => {
+      await openManor(page);
+      await expandAllWings(page);
+      await settled(page);
+      await storeAction(page, "focusModule", "src/shared/money.ts");
+      await settled(page);
+      await expect.poll(async () => (await sceneDebug(page)).activeTweens).toBe(0);
+      await fitMap(page);
+      const fitted = await everyTextAtLeast11(page, "fitted");
+      expect(fitted.filter((l) => l.kind === "room").length).toBeGreaterThan(0);
+      // Not drawn at the fitted zoom: the words would be about 6 px there.
+      expect(fitted.filter((l) => l.kind === "note")).toEqual([]);
+      const layout = await layoutOf(page);
+      const sample = layout.rooms[0] as { x: number; y: number; w: number; h: number };
+      await storeAction(page, "setCamera", { x: sample.x + sample.w / 2, y: sample.y + sample.h / 2, zoom: 2.5 });
+      const near = await everyTextAtLeast11(page, "zoomed in");
+      const notes = near.filter((l) => l.kind === "note");
+      expect(notes.length, "the words of a subdued room are drawn once the view is close").toBeGreaterThan(0);
+      for (const note of notes) expect(note.text.replace("\n", " ")).toBe("Not in this traversal");
+    });
+
+    test("a loop shown and a comparison: step numbers, import counts and the + and ? marks are 11 px or more, or not drawn", async ({ page }) => {
+      await openManor(page);
+      await settled(page);
+      await revealLoop(page);
+      const loop = await everyTextAtLeast11(page, "loop view");
+      expect(loop.filter((l) => l.kind === "step").length, "step numbers are drawn").toBeGreaterThan(0);
+      await fitMap(page);
+      const fitted = await everyTextAtLeast11(page, "loop at the fitted view");
+      expect(fitted.filter((l) => l.kind === "step").length, "step numbers are drawn at the fitted view too").toBeGreaterThan(0);
+      const wing = (await layoutOf(page)).wings[0] as { x: number; y: number; w: number; h: number };
+      await storeAction(page, "setCamera", { x: wing.x + wing.w / 2, y: wing.y + wing.h / 2, zoom: 1.6 });
+      const near = await everyTextAtLeast11(page, "loop zoomed in");
+      expect(near.filter((l) => l.kind === "count").length, "import counts are drawn when zoomed in").toBeGreaterThan(0);
+      await compareAction(page, "compareWithSample");
+      await page.waitForFunction(() => /^Comparison ready/.test(document.querySelector('[role="status"]')?.textContent ?? ""));
+      await expandAllWings(page);
+      await fitMap(page);
+      const compared = await everyTextAtLeast11(page, "comparison at the fitted view");
+      const glyphs = compared.filter((l) => l.kind === "glyph").map((l) => l.text);
+      expect(glyphs, "the + of the added door is drawn").toContain("+");
+      expect(glyphs, "the ? of a sealed doorway is drawn").toContain("?");
+    });
+  });
+}

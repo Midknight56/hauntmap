@@ -1,7 +1,7 @@
 import { Container, Graphics, Sprite, Text } from "pixi.js";
-import { stepMark } from "./doors";
+import { stepMark, STEP_FONT } from "./doors";
 import { FONT } from "./elements";
-import type { DrawContext } from "./rooms";
+import { pinText, type DrawContext } from "./rooms";
 import type { LayoutResult, Point } from "./layout/types";
 import { TOKENS } from "./styles";
 import { ghostAt, pointOnPolyline, polylineLength, witnessLegs, type Leg } from "./walk";
@@ -46,11 +46,12 @@ export function drawCorridors(ctx: DrawContext, layout: LayoutResult): void {
     badge.position.set(mid.x, mid.y);
     if (faded) badge.alpha = 0.5;
     ctx.layers.corridors.addChild(badge);
-    const text = new Text({ text: importsLabel(corridor.count), style: { fontFamily: FONT, fontSize: 10, fill: TOKENS.ink } });
+    // The count is drawn only where its words are 11 CSS pixels or more; the badge and the Evidence view carry it otherwise.
+    const text = new Text({ text: importsLabel(corridor.count), style: { fontFamily: FONT, fontSize: 11, fill: TOKENS.ink } });
     text.anchor.set(0.5);
     text.position.set(mid.x, mid.y);
     if (faded) text.alpha = 0.5;
-    ctx.layers.corridors.addChild(text);
+    ctx.layers.corridors.addChild(pinText(ctx, "count", `${corridor.fromWing}\u2192${corridor.toWing}`, text, 11, "hide"));
   }
 }
 
@@ -136,7 +137,7 @@ function drawLoop(ctx: DrawContext, layout: LayoutResult, route: { modules: stri
   const drawnDoors = new Set(layout.doors.map((d) => d.relationId));
   route.relationIds.forEach((id, k) => {
     const start = legs[k]?.points[0];
-    if (!drawnDoors.has(id) && start !== undefined) ctx.layers.selected.addChild(stepMark(k + 1, start.x, start.y));
+    if (!drawnDoors.has(id) && start !== undefined) ctx.layers.selected.addChild(pinText(ctx, "step", String(k + 1), stepMark(k + 1, start.x, start.y), STEP_FONT));
   });
   const ghost = makeGhost();
   ctx.layers.selected.addChild(ghost);
@@ -217,7 +218,7 @@ function drawTrace(ctx: DrawContext, layout: LayoutResult, route: { kind: string
     const b = points[i + 1];
     const at: Point | null = door !== undefined ? center(door) : a !== undefined && b !== undefined ? { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } : null;
     if (at === null) return;
-    if (door === undefined) ctx.layers.selected.addChild(stepMark(i + 1, at.x, at.y));
+    if (door === undefined) ctx.layers.selected.addChild(pinText(ctx, "step", String(i + 1), stepMark(i + 1, at.x, at.y), STEP_FONT));
     if (ctx.reduced) {
       const ring = new Graphics();
       ring.circle(at.x, at.y, 11).stroke({ width: 2, color: TOKENS.light });

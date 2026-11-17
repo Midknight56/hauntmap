@@ -1,0 +1,24 @@
+{
+  "preset": "static-value",
+  "components": [
+    {
+      "members": [
+        "src/notifications/receipt.ts",
+        "src/orders/checkout.ts",
+        "src/payments/charge.ts"
+      ],
+      "witness": {
+        "modules": [
+          "src/notifications/receipt.ts",
+          "src/orders/checkout.ts",
+          "src/payments/charge.ts"
+        ],
+        "relationIds": [
+          "[\"src/notifications/receipt.ts\",[\"local\",\"src/orders/checkout.ts\"],\"import\",\"value\"]",
+          "[\"src/orders/checkout.ts\",[\"local\",\"src/payments/charge.ts\"],\"import\",\"value\"]",
+          "[\"src/payments/charge.ts\",[\"local\",\"src/notifications/receipt.ts\"],\"import\",\"value\"]"
+        ]
+      }
+    }
+  ]
+}

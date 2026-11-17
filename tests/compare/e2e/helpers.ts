@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expandAllWings, readStatus, sceneDebug, type HookRect } from "../../e2e/helpers";
+import { expandAllWings, readStatus, sceneDebug, withScene, type HookRect } from "../../e2e/helpers";
 
 export { expandAllWings, readStatus, sceneDebug };
 
@@ -39,6 +39,7 @@ export async function waitForStatusStart(page: Page, prefix: string, timeout = 2
 }
 
 async function rects(page: Page, kind: "room" | "wing", ids: readonly string[]): Promise<Record<string, HookRect | null>> {
+  await withScene(page, () => true);
   return page.evaluate(
     ([k, list]) => {
       const scene = (window as unknown as HookWindow).__hauntmap?.scene();
@@ -73,10 +74,5 @@ export async function wingNames(page: Page): Promise<string[]> {
 
 /** The comparison-state map of the scene (`id` to state), read through `sceneDebug().states` (task 9). */
 export async function sceneStates(page: Page): Promise<Record<string, string>> {
-  return page.evaluate(() => {
-    const scene = (window as unknown as HookWindow).__hauntmap?.scene();
-    if (scene === null || scene === undefined) throw new Error("There is no scene to read");
-    const states = scene.debug()["states"];
-    return (states ?? {}) as Record<string, string>;
-  });
+  return withScene(page, (scene) => ((scene as unknown as Scene).debug()["states"] ?? {}) as Record<string, string>);
 }

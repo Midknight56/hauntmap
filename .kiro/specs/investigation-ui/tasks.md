@@ -137,7 +137,7 @@ Ownership. `.kiro/steering/ownership.md` gives this spec `src/scene/**`, `src/fe
   - _Requirements: 12.1, 12.2, 12.3, 12.4_
   - _Owner: Kiro_
 
-- [ ] 15. Final check and the evidence list
+- [x] 15. Final check and the evidence list
   - Confirm every component is rendered from `App.tsx`, then run `pnpm verify`, `pnpm verify:e2e` and `pnpm build` on the branch, and confirm that `tests/analysis-boundary.test.ts`, `tests/ui/feature-boundary.test.ts`, `tests/ui/no-html-injection.test.ts` and `tests/ui/vocabulary.test.ts` ran and passed. Record the elapsed time of `pnpm verify` (`Measure-Command { pnpm verify }`).
   - Check that every task 1a to 14 has its row in `docs/kiro-log.md` (task, files, verify results, what changed because of a failure or `none`, credits): `(Select-String -Path docs/kiro-log.md -Pattern "investigation-ui").Count` is at least 19 (18 task rows for 1a, 1b, 1c, 2a, 2b, 3, 4, 5, 6a, 6b, 7, 8, 9, 10, 11, 12, 13 and 14, and this task's row).
   - In this task's row, list for each requirement 1 to 12 its evidence (a test name or a screenshot written by a headless run) or `left for the owner` or `not built`, in particular: 1.5 withdrawn, 1.8, 1.9, 3.8, 4.8, 9.6, 12.5, 12.6 left for the owner, 10.7 tested with a stub only, task 0 not done; and the facts settled from the older *verify* marks (dagre package name, Playwright argument forwarding, the two projects' flags, WebGL in headless Chromium, `WEBGL_lose_context`, the Vite devhook mode, pinned versions) and those still open. State that the tool was not tested with users.

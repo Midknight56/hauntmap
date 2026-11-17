@@ -93,7 +93,8 @@ export async function sampleTweens(page: Page, totalMs: number, stepMs: number):
         const read = (): void => {
           const scene = (window as unknown as { __hauntmap?: { scene(): { debug(): { activeTweens: number } } | null } }).__hauntmap?.scene();
           out.push(scene?.debug().activeTweens ?? -1);
-          if (performance.now() - started >= (total as number)) resolve(out);
+          // A busy main thread (a comparison being computed) delays a timer; keep taking samples until the count a quiet page gives in `totalMs` is reached, so a stall cannot shorten the run.
+          if (performance.now() - started >= (total as number) && out.length >= Math.floor((total as number) / (step as number)) + 1) resolve(out);
           else setTimeout(read, step as number);
         };
         read();

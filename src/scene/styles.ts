@@ -28,14 +28,14 @@ export interface StateStyle {
   outlineWidth: number;
   glyph: string | null;
   label: string | null;
-  /** `dashed` for the ghost outline of `comparison-removed`; absent means `solid`. */
-  outlineStyle?: "solid" | "dashed";
+  /** `dashed` for the ghost outline of `comparison-removed`, `dotted` for the inner rail of a subdued room; absent means `solid`. */
+  outlineStyle?: "solid" | "dashed" | "dotted";
 }
 
 export const STATE_STYLES: Record<State, StateStyle> = {
   default: { get fill() { return TOKENS.room; }, outlineWidth: 1, glyph: null, label: null },
   selected: { get fill() { return TOKENS.room; }, outlineWidth: 3, glyph: null, label: null },
-  subdued: { get fill() { return TOKENS.roomSubdued; }, outlineWidth: 1, glyph: null, label: "Not in this traversal" },
+  subdued: { get fill() { return TOKENS.roomSubdued; }, outlineWidth: 1, outlineStyle: "dotted", glyph: null, label: "Not in this traversal" },
   witness: { get fill() { return TOKENS.room; }, outlineWidth: 2, glyph: null, label: "Step number" },
   trace: { get fill() { return TOKENS.room; }, outlineWidth: 2, glyph: null, label: "Step number" },
   focusHalo: { get fill() { return TOKENS.room; }, outlineWidth: 4, glyph: null, label: "Focus" },

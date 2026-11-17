@@ -162,7 +162,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     drawCorridors(ctx, drawn);
     roomNodes = drawRooms(ctx, drawn);
     drawDoors(ctx, drawn);
-    drawComparisonMarks(layers.selected, view);
+    drawComparisonMarks(layers.selected, view, ctx);
     route = drawRoute(ctx, drawn);
     particles = route?.particleCount ?? 0;
     relayoutLabels();
@@ -183,7 +183,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
 
   /** Re-choose the words and the scale of every name and title for the camera zoom (item 5: never under 11 CSS pixels). */
   function relayoutLabels(): void {
-    for (const label of labels) if (label.visible()) label.layout(displayed.zoom);
+    for (const label of labels) if ((label.active ?? label.visible)()) label.layout(displayed.zoom);
     route?.setZoom(displayed.zoom);
   }
 
@@ -307,7 +307,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
         const next = (state.comparison ?? null) as ComparisonStyle | null;
         const previous = styleState?.routeFilter ?? null;
         if (shouldClose(next, lastClosing) && previous !== null && previous.kind === "witness" && layout !== null) {
-          closeCorridor({ parent: world, layout, route: previous, animator, reduced });
+          closeCorridor({ parent: world, layout, route: previous, animator, reduced, zoom: displayed.zoom });
         }
         lastClosing = next === null ? "" : closingKey(next.closingRelationIds);
         comparison = next;

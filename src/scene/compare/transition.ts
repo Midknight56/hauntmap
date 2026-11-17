@@ -1,6 +1,7 @@
 import { Container, Graphics } from "pixi.js";
 import type { Animator } from "../animation";
-import { stepMark } from "../doors";
+import { stepMark, STEP_FONT } from "../doors";
+import { labelScale } from "../labels";
 import type { LayoutResult, Point, Rect } from "../layout/types";
 import { witnessLegs } from "../walk";
 import { TOKENS } from "../styles";
@@ -19,6 +20,8 @@ export function closeCorridor(opts: {
   route: { modules: readonly string[]; relationIds: readonly string[] };
   animator: Animator;
   reduced: boolean;
+  /** The camera zoom when the corridor starts to fade; its step numbers keep 11 CSS pixels at that zoom for the 600 ms. */
+  zoom: number;
 }): void {
   if (opts.reduced) return;
   const legs = witnessLegs(opts.layout, opts.route);
@@ -37,9 +40,13 @@ export function closeCorridor(opts: {
   opts.route.relationIds.forEach((id, i) => {
     const door = doors.get(id);
     const start = legs[i]?.points[0];
-    if (door !== undefined) fading.addChild(stepMark(i + 1, center(door).x, center(door).y - 14));
-    else if (start !== undefined) fading.addChild(stepMark(i + 1, start.x, start.y));
-  });  opts.parent.addChild(fading);
+    const at = door !== undefined ? { x: center(door).x, y: center(door).y - 14 } : start;
+    if (at === undefined) return;
+    const mark = stepMark(i + 1, at.x, at.y);
+    mark.scale.set(labelScale(opts.zoom, STEP_FONT));
+    fading.addChild(mark);
+  });
+  opts.parent.addChild(fading);
   opts.animator.tween({
     duration: CLOSING_MS,
     update: (p) => {

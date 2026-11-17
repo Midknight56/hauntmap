@@ -1,8 +1,8 @@
 import { Graphics, Sprite, Text } from "pixi.js";
 import { FONT } from "./elements";
-import type { DrawContext } from "./rooms";
+import { pinText, type DrawContext } from "./rooms";
 import type { LayoutResult, Point } from "./layout/types";
-import { TOKENS, type State } from "./styles";
+import { SEALED_GLYPH, TOKENS, type State } from "./styles";
 
 /** The color of a passage: dim by default, so that only the passages of a selection, a loop or a comparison stand out. */
 function passageColor(state: State): string {
@@ -105,7 +105,7 @@ export function drawDoors(ctx: DrawContext, layout: LayoutResult): void {
     sprite.height = door.h;
     if (faded) sprite.alpha = FADED_DOOR_ALPHA;
     layer.addChild(sprite);
-    if (info.step !== null) layer.addChild(stepMark(info.step, door.x + door.w / 2, door.y + door.h / 2 - 14));
+    if (info.step !== null) layer.addChild(pinText(ctx, "step", String(info.step), stepMark(info.step, door.x + door.w / 2, door.y + door.h / 2 - 14), STEP_FONT));
   }
   for (const sealed of layout.sealed) {
     const state = ctx.states.sealed.get(sealed.relationId) ?? "default";
@@ -114,13 +114,21 @@ export function drawDoors(ctx: DrawContext, layout: LayoutResult): void {
     sprite.width = sealed.w;
     sprite.height = sealed.h;
     if (ctx.related !== null && state === "default" && !ctx.related.has(sealed.relationId)) sprite.alpha = FADED_DOOR_ALPHA;
-    (state === "default" ? ctx.layers.rooms : ctx.layers.selected).addChild(sprite);
+    const layer = state === "default" ? ctx.layers.rooms : ctx.layers.selected;
+    layer.addChild(sprite);
+    // The `?` that marks the sealed doorway is a text of the scene, so that it keeps 11 CSS pixels at every zoom.
+    const mark = new Text({ text: SEALED_GLYPH, style: { fontFamily: FONT, fontSize: 12, fill: TOKENS.sealed, fontWeight: "700" } });
+    mark.anchor.set(0.5);
+    mark.position.set(sealed.x + sealed.w / 2, sealed.y + sealed.h * 0.42);
+    if (sprite.alpha < 1) mark.alpha = sprite.alpha;
+    layer.addChild(pinText(ctx, "glyph", sealed.relationId, mark, 12));
   }
 }
 
 /** A step number: the number itself is the companion to the route color. */
+export const STEP_FONT = 13;
 export function stepMark(step: number, x: number, y: number): Text {
-  const text = new Text({ text: String(step), style: { fontFamily: FONT, fontSize: 13, fill: TOKENS.ink, fontWeight: "700", stroke: { color: TOKENS.panel, width: 4 } } });
+  const text = new Text({ text: String(step), style: { fontFamily: FONT, fontSize: STEP_FONT, fill: TOKENS.ink, fontWeight: "700", stroke: { color: TOKENS.panel, width: 4 } } });
   text.anchor.set(0.5);
   text.position.set(x, y);
   return text;

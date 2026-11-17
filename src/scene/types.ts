@@ -32,7 +32,7 @@ export interface HitTarget {
 
 /** One drawn name or title as the camera shows it: `px` is its font size on screen in CSS pixels. */
 export interface DebugLabel {
-  kind: "wing" | "wing-note" | "room" | "note";
+  kind: "wing" | "wing-note" | "room" | "note" | "step" | "glyph" | "count";
   id: string;
   text: string;
   px: number;

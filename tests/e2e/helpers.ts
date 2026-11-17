@@ -24,7 +24,7 @@ export interface HookSceneDebug {
   drawnDoors: number;
   particleCount: number;
   frames: number;
-  labels: { kind: "wing" | "wing-note" | "room" | "note"; id: string; text: string; px: number }[];
+  labels: { kind: "wing" | "wing-note" | "room" | "note" | "step" | "glyph" | "count"; id: string; text: string; px: number }[];
   ghost: { leg: number; x: number; y: number } | null;
   glow: boolean;
   theme: string;
@@ -152,11 +152,28 @@ export function inspectorHeading(page: Page): Locator {
 
 /** The scene's debug counters (development hook only). */
 export async function sceneDebug(page: Page): Promise<HookSceneDebug> {
-  return page.evaluate(() => {
-    const scene = (window as HookWindow).__hauntmap?.scene();
-    if (scene === null || scene === undefined) throw new Error("There is no scene to read");
-    return scene.debug();
-  });
+  return withScene(page, (scene) => scene.debug());
+}
+
+/**
+ * Run `read` against the live scene. The scene is created asynchronously after the map mounts and is destroyed and
+ * rebuilt by `Retry map`, so the handle is looked up again inside the page on every try, for up to 10 s, and the read
+ * runs in the same task as the lookup. A scene that never appears still fails with the same message.
+ */
+export async function withScene<T>(page: Page, read: (scene: HookScene) => T): Promise<Awaited<T>> {
+  return page.evaluate(
+    async ([source]) => {
+      const run = new Function("scene", `return (${source as string})(scene);`) as (scene: unknown) => unknown;
+      const deadline = performance.now() + 10_000;
+      for (;;) {
+        const scene = (window as HookWindow).__hauntmap?.scene();
+        if (scene !== null && scene !== undefined) return (await run(scene)) as never;
+        if (performance.now() > deadline) throw new Error("There is no scene to read");
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+    },
+    [read.toString()] as const,
+  );
 }
 
 export interface ManorExpected {
