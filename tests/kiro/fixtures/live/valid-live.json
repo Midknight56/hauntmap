@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "resolverMode": "documented-source-subset",
-  "sourceLabel": "live:samples/manor",
+  "sourceLabel": "live:haunts/manor",
   "modules": [
     {
       "id": "src/catalog/catalogService.ts",

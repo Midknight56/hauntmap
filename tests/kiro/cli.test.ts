@@ -38,7 +38,7 @@ function hasTextProperty(value: unknown): boolean {
 }
 
 describe("5.1 usage", () => {
-  it.each([[[]], [["frobnicate"]], [["analyze"]], [["analyze", "samples/manor"]], [["analyze", "samples/manor", "--out"]], [["compare", "only-one", "--out", "x.json"]]])(
+  it.each([[[]], [["frobnicate"]], [["analyze"]], [["analyze", "haunts/manor"]], [["analyze", "haunts/manor", "--out"]], [["compare", "only-one", "--out", "x.json"]]])(
     "%j prints the two usage lines and exits 2",
     async (argv) => {
       const result = await run(argv);
@@ -51,7 +51,7 @@ describe("5.1 usage", () => {
 
   it("an unknown preset exits 2 with its own message", async () => {
     const dir = repoOut();
-    const result = await run(["analyze", "samples/manor", "--out", join(dir, "o.json"), "--preset", "bogus"]);
+    const result = await run(["analyze", "haunts/manor", "--out", join(dir, "o.json"), "--preset", "bogus"]);
     expect(result.code).toBe(2);
     expect(result.stderr).toBe("hauntmap: Preset \"bogus\" is not one of static-value, type-inclusive, dynamic-inclusive.\n");
     expect(existsSync(join(dir, "o.json"))).toBe(false);
@@ -63,7 +63,7 @@ describe("5.2 and 5.6 analyze", () => {
     const dir = repoOut();
     const out = join(dir, "live.json");
     const rel = relative(REPO, out).replace(/\\/g, "/");
-    const result = await run(["analyze", "samples/manor", "--out", rel]);
+    const result = await run(["analyze", "haunts/manor", "--out", rel]);
     expect(result.code).toBe(0);
     expect([expected.modules.length, expected.imports.length, expected.diagnostics.length]).toEqual([40, 72, 1]);
     expect(result.stdout).toBe(`analyze: 40 modules, 72 relations, 1 diagnostics → ${rel}\n`);
@@ -73,7 +73,7 @@ describe("5.2 and 5.6 analyze", () => {
     expect(existsSync(`${out}.tmp`)).toBe(false);
     const value = JSON.parse(text) as { sourceLabel: string; modules: unknown[] };
     expect(validateInvestigation(value)).toEqual({ ok: true });
-    expect(value.sourceLabel).toBe("live:samples/manor");
+    expect(value.sourceLabel).toBe("live:haunts/manor");
     expect(value.modules).toHaveLength(40);
     expect(hasTextProperty(value)).toBe(false);
     expect(text).not.toContain("\\nimport ");
@@ -83,15 +83,15 @@ describe("5.2 and 5.6 analyze", () => {
     const dir = repoOut();
     const a = join(dir, "a.json");
     const b = join(dir, "b.json");
-    expect((await run(["analyze", "samples/manor", "--out", a])).code).toBe(0);
-    expect((await run(["analyze", "samples/manor", "--out", b])).code).toBe(0);
+    expect((await run(["analyze", "haunts/manor", "--out", a])).code).toBe(0);
+    expect((await run(["analyze", "haunts/manor", "--out", b])).code).toBe(0);
     expect(readFileSync(a).equals(readFileSync(b))).toBe(true);
   });
 
   it("--preset is recorded in the options", async () => {
     const dir = repoOut();
     const out = join(dir, "t.json");
-    expect((await run(["analyze", "samples/manor", "--out", out, "--preset", "type-inclusive"])).code).toBe(0);
+    expect((await run(["analyze", "haunts/manor", "--out", out, "--preset", "type-inclusive"])).code).toBe(0);
     expect((JSON.parse(readFileSync(out, "utf8")) as { options: { preset: string } }).options.preset).toBe("type-inclusive");
   });
 });
@@ -125,15 +125,15 @@ describe("5.4 exit codes leave --out untouched", () => {
     const outside = await run(["analyze", "..", "--out", out]);
     expect(outside.code).toBe(4);
     expect(outside.stderr.startsWith("hauntmap: Root \"..\" resolves outside the working directory ")).toBe(true);
-    const missing = await run(["analyze", "samples/missing", "--out", out]);
-    expect(missing).toMatchObject({ code: 4, stderr: 'hauntmap: Root "samples/missing" does not exist or is not a directory.\n' });
+    const missing = await run(["analyze", "haunts/missing", "--out", out]);
+    expect(missing).toMatchObject({ code: 4, stderr: 'hauntmap: Root "haunts/missing" does not exist or is not a directory.\n' });
     expect(readFileSync(out, "utf8")).toBe("old");
   });
 
   it("exit 5 when the produced value fails validation", async () => {
     const { out } = oldOut();
     const failing = createContext(REPO, { validate: { investigation: () => ({ ok: false, errors: ["sourceLabel must be a string"] }), comparison: () => ({ ok: true }) } });
-    const result = await run(["analyze", "samples/manor", "--out", out], REPO, { context: failing });
+    const result = await run(["analyze", "haunts/manor", "--out", out], REPO, { context: failing });
     expect(result.code).toBe(5);
     expect(result.stderr).toBe("hauntmap: internal error, output failed validation: sourceLabel must be a string\n");
     expect(readFileSync(out, "utf8")).toBe("old");
@@ -142,7 +142,7 @@ describe("5.4 exit codes leave --out untouched", () => {
   it("exit 6 when the file cannot be written, with <out> untouched and the .tmp removed", async () => {
     const { out } = oldOut();
     mkdirSync(`${out}.tmp`);
-    const result = await run(["analyze", "samples/manor", "--out", out]);
+    const result = await run(["analyze", "haunts/manor", "--out", out]);
     expect(result.code).toBe(6);
     expect(result.stderr).toMatch(/^hauntmap: cannot write .+ \(\w+\)\.\n$/);
     expect(readFileSync(out, "utf8")).toBe("old");
@@ -154,7 +154,7 @@ describe("5.5 run from the repository root", () => {
     const dir = mkdtempSync(join(tmpdir(), "hauntmap-cli-"));
     temporary.push(dir);
     writeFileSync(join(dir, "package.json"), JSON.stringify({ name: "other" }));
-    const result = await run(["analyze", "samples/manor", "--out", join(dir, "o.json")], dir);
+    const result = await run(["analyze", "haunts/manor", "--out", join(dir, "o.json")], dir);
     expect(result.code).toBe(4);
     expect(result.stderr).toBe(`hauntmap: run from the HauntMap repository root (no package.json named hauntmap in ${dir}).\n`);
     expect(existsSync(join(dir, "o.json"))).toBe(false);

@@ -16,7 +16,7 @@ import type { ToolContext } from "./tools";
 const VERSION = "0.0.0";
 
 const PRESET_SCHEMA = { type: "string", enum: ["static-value", "type-inclusive", "dynamic-inclusive"], default: "static-value" };
-const ROOT_SCHEMA = { type: "string", description: "Directory relative to the workspace root, e.g. samples/manor" };
+const ROOT_SCHEMA = { type: "string", description: "Directory relative to the workspace root, e.g. haunts/manor" };
 
 interface ToolDefinition {
   name: string;

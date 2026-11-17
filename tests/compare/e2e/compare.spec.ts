@@ -56,14 +56,14 @@ async function rectangles(page: Page, rooms: string[], wings: string[]) {
 // The comparison journeys run in the `dev` project (the build made with `--mode devhook`). Tasks 11 and 12
 // of the snapshot-comparison spec fill the scene, panel, keyboard and failure cases.
 
-/** A live-shaped snapshot: the open investigation with the label `live:samples/manor` and one changed hash. */
+/** A live-shaped snapshot: the open investigation with the label `live:haunts/manor` and one changed hash. */
 async function compareWithLive(page: Page): Promise<void> {
   await page.evaluate(async () => {
     type Hook = { store: { getState(): { investigation: { sourceLabel: string; modules: { id: string; sourceHash: string }[] } } }; compareWith(after: unknown, layoutKey?: string | null): Promise<void> };
     const hook = (window as unknown as { __hauntmap?: Hook }).__hauntmap;
     if (hook === undefined) throw new Error("window.__hauntmap is missing");
     const inv = hook.store.getState().investigation;
-    const live = { ...inv, sourceLabel: "live:samples/manor", modules: inv.modules.map((m, i) => (i === 0 ? { ...m, sourceHash: "d".repeat(64) } : m)) };
+    const live = { ...inv, sourceLabel: "live:haunts/manor", modules: inv.modules.map((m, i) => (i === 0 ? { ...m, sourceHash: "d".repeat(64) } : m)) };
     await hook.compareWith(live);
   });
 }
@@ -108,7 +108,7 @@ async function openAnnex(page: Page): Promise<void> {
 }
 
 test.describe("comparison panel, keyboard and failure journeys", () => {
-  test("1.1 the panel on the manor offers Revised manor sample; on the annex Bundled manor pair", async ({ page }) => {
+  test("1.1 the panel on the manor offers Revised manor; on the annex Bundled manor pair", async ({ page }) => {
     await openManor(page);
     const control = page.getByRole("button", { name: "Compare revisions" });
     await expect(control).toHaveAttribute("aria-expanded", "false");
@@ -116,7 +116,7 @@ test.describe("comparison panel, keyboard and failure journeys", () => {
     await expect(control).toHaveAttribute("aria-expanded", "true");
     const panel = page.getByRole("region", { name: "Compare revisions" });
     await expect(panel.getByText("Compare manor/before with a newer snapshot.", { exact: true })).toBeVisible();
-    await expect(panel.getByRole("button")).toHaveText(["Revised manor sample"]);
+    await expect(panel.getByRole("button")).toHaveText(["Revised manor"]);
     await openAnnex(page);
     await page.getByRole("button", { name: "Compare revisions" }).click();
     await expect(panel.getByText("Compare annex with a newer snapshot.", { exact: true })).toBeVisible();
@@ -124,12 +124,12 @@ test.describe("comparison panel, keyboard and failure journeys", () => {
     await expect(panel.getByText(PAIR_SENTENCE, { exact: true })).toBeVisible();
   });
 
-  test("1.2 and 6.1 Revised manor sample: one sources.json request, nothing fetched after it, the exact ready status", async ({ page }) => {
+  test("1.2 and 6.1 Revised manor: one sources.json request, nothing fetched after it, the exact ready status", async ({ page }) => {
     await openManor(page);
     await page.getByRole("button", { name: "Compare revisions" }).click();
     const requests: string[] = [];
     page.on("request", (request) => requests.push(request.url()));
-    await page.getByRole("button", { name: "Revised manor sample" }).click();
+    await page.getByRole("button", { name: "Revised manor" }).click();
     await waitForStatus(page, READY_MANOR_PAIR);
     const paths = requests.map((url) => new URL(url).pathname);
     expect(paths.filter((p) => p.endsWith("/demo/manor/after/sources.json"))).toHaveLength(1);
@@ -154,7 +154,7 @@ test.describe("comparison panel, keyboard and failure journeys", () => {
   test("6.2 the loops panel reads 1 loop for the earlier snapshot and 0 loops for the newer one; 6.6 End comparison", async ({ page }) => {
     await openManor(page);
     await page.getByRole("button", { name: "Compare revisions" }).click();
-    await page.getByRole("button", { name: "Revised manor sample" }).click();
+    await page.getByRole("button", { name: "Revised manor" }).click();
     await waitForStatus(page, READY_MANOR_PAIR);
     await storeAction(page, "openLoops");
     const loops = page.getByRole("region", { name: "Dependency loops (static-value)" });
@@ -176,7 +176,7 @@ test.describe("comparison panel, keyboard and failure journeys", () => {
     await openManor(page);
     await tabWithRing(page, "Compare revisions");
     await page.keyboard.press("Enter");
-    await tabWithRing(page, "Revised manor sample");
+    await tabWithRing(page, "Revised manor");
     await page.keyboard.press("Enter");
     await waitForStatus(page, READY_MANOR_PAIR);
     await tabWithRing(page, "Newer (manor/after)");
@@ -200,7 +200,7 @@ test.describe("comparison panel, keyboard and failure journeys", () => {
     await openManor(page);
     await expandAllWings(page);
     await page.getByRole("button", { name: "Compare revisions" }).click();
-    await page.getByRole("button", { name: "Revised manor sample" }).click();
+    await page.getByRole("button", { name: "Revised manor" }).click();
     await waitForStatus(page, READY_MANOR_PAIR);
     await page.keyboard.press("Escape");
     await page.waitForFunction(() => (window as unknown as { __hauntmap: { scene(): { debug(): { activeTweens: number } } } }).__hauntmap.scene().debug().activeTweens === 0);
@@ -233,7 +233,7 @@ test.describe("comparison panel, keyboard and failure journeys", () => {
     await page.getByRole("button", { name: "Compare revisions" }).click();
     await page.waitForTimeout(400);
     const before = await kept(page);
-    const button = page.getByRole("button", { name: "Revised manor sample" });
+    const button = page.getByRole("button", { name: "Revised manor" });
     await button.click();
     await waitForStatus(page, "The revised manor sample could not be loaded (500). The current investigation is unchanged.");
     expect(await kept(page)).toEqual(before);
@@ -415,7 +415,7 @@ test.describe("comparison scene journeys", () => {
     const first = await rectangles(page, rooms, wings);
     await compareAction(page, "compareWithSample");
     await waitForStatus(page, READY_MANOR_PAIR);
-    const live = await liveFromNewer(page, "live:samples/manor");
+    const live = await liveFromNewer(page, "live:haunts/manor");
     expect(await hookCompareWith(page, live)).toBeNull();
     const view = await compareView(page);
     expect(view.status).toBe("active");

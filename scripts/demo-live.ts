@@ -7,13 +7,13 @@ import { treesEqual } from "./sampleTree";
 
 // pnpm demo:live, the command of the analyze-live hook. Idempotent:
 //   1. packages/hauntmap-mcp/dist/cli.js absent            -> skip line, exit 0
-//   2. samples/manor equals public/demo/manor/before       -> skip line, exit 0, nothing written
-//   3. otherwise run the CLI on samples/manor and exit with its code.
+//   2. haunts/manor equals public/demo/manor/before       -> skip line, exit 0, nothing written
+//   3. otherwise run the CLI on haunts/manor and exit with its code.
 // The runner of step 3 is injected so that tests/kiro/demo-live.test.ts needs no built CLI.
 // Usage: tsx scripts/demo-live.ts
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const CLI_COMMAND = "analyze samples/manor --out public/demo/live.json";
+const CLI_COMMAND = "analyze haunts/manor --out public/demo/live.json";
 
 export interface DemoLiveIo {
   stdout(text: string): void;
@@ -26,8 +26,8 @@ export function runDemoLive(repoRoot: string, io: DemoLiveIo): number {
     io.stdout("demo:live: skipped (dist/cli.js absent; run pnpm build:mcp)\n");
     return 0;
   }
-  if (treesEqual(join(repoRoot, "samples", "manor"), join(repoRoot, "public", "demo", "manor", "before"))) {
-    io.stdout("demo:live: skipped (samples/manor is identical to public/demo/manor/before)\n");
+  if (treesEqual(join(repoRoot, "haunts", "manor"), join(repoRoot, "public", "demo", "manor", "before"))) {
+    io.stdout("demo:live: skipped (haunts/manor is identical to public/demo/manor/before)\n");
     return 0;
   }
   return io.runner(CLI_COMMAND.split(" "));

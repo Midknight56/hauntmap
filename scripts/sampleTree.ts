@@ -2,7 +2,7 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync } from "
 import { dirname, join } from "node:path";
 import { DEFAULT_ANALYSIS_OPTIONS } from "../src/analysis/index";
 
-// The shared walker of samples/manor and public/demo/manor/before. Only files with one of the six
+// The shared walker of haunts/manor and public/demo/manor/before. Only files with one of the six
 // included extensions count (the extension list is the analysis default, never copied here).
 // Used by scripts/demo-reset.ts, scripts/demo-live.ts and tests/kiro/sample-copy.test.ts.
 

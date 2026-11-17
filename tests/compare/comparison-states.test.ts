@@ -85,7 +85,7 @@ describe("comparisonStateOf (5.1, 5.2)", () => {
     ]) {
       for (const shown of ["before", "after"] as const) {
         const a = comparisonStateOf(style({ shown }), target);
-        const b = comparisonStateOf(style({ shown, earlierLabel: "live:samples/manor", newerLabel: "<img src=x>" }), target);
+        const b = comparisonStateOf(style({ shown, earlierLabel: "live:haunts/manor", newerLabel: "<img src=x>" }), target);
         expect(b).toBe(a);
       }
     }

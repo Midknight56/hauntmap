@@ -10,6 +10,6 @@ Read on 2026-11-16 with `Get-CimInstance Win32_Processor` and `Win32_ComputerSys
 
 | Date | Check | Figure | Target |
 | --- | --- | --- | --- |
-| 2026-11-16 | `pnpm vitest run tests/kiro/server.test.ts --silent=false -t "response time"`: one `tools/call` of `analyze` for `samples/manor` (40 modules) over stdio, measured in the test from the request to the response, with the server already started | 59 ms, one run | 2,000 ms |
+| 2026-11-16 | `pnpm vitest run tests/kiro/server.test.ts --silent=false -t "response time"`: one `tools/call` of `analyze` for `haunts/manor` (40 modules) over stdio, measured in the test from the request to the response, with the server already started | 59 ms, one run | 2,000 ms |
 
 The figure is one run on the machine above, after the server had started and answered `initialize`. It does not include process start-up and says nothing about other folders or other machines.

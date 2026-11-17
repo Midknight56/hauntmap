@@ -39,15 +39,15 @@ describe("status region (10.2, 10.3)", () => {
     const { container } = render(<StatusRegion store={store} />);
     act(() =>
       store.actions.setStatus(
-        "No live snapshot yet. Run `pnpm hauntmap analyze samples/manor --out public/demo/live.json`, or let the Kiro hook write it.",
+        "No live snapshot yet. Run `pnpm hauntmap analyze haunts/manor --out public/demo/live.json`, or let the Kiro hook write it.",
       ),
     );
     const region = container.querySelector('[role="status"]')!;
     expect(region.textContent).toBe(
-      "No live snapshot yet. Run pnpm hauntmap analyze samples/manor --out public/demo/live.json, or let the Kiro hook write it.",
+      "No live snapshot yet. Run pnpm hauntmap analyze haunts/manor --out public/demo/live.json, or let the Kiro hook write it.",
     );
     expect(region.querySelectorAll("code")).toHaveLength(1);
-    expect(region.querySelector("code")?.textContent).toBe("pnpm hauntmap analyze samples/manor --out public/demo/live.json");
+    expect(region.querySelector("code")?.textContent).toBe("pnpm hauntmap analyze haunts/manor --out public/demo/live.json");
   });
 
   it("renders markup in a message as text, never as elements", () => {

@@ -14,7 +14,7 @@ const OUT = join(REPO, "docs", "acceptance", "h9-session");
 const RECEIPT = "src/notifications/receipt.ts";
 const CHECKOUT = "src/orders/checkout.ts";
 const DEMO_RELATION = JSON.stringify([RECEIPT, ["local", CHECKOUT], "import", "value"]);
-const LOADED = "Live snapshot loaded: live:samples/manor (40 modules) is the newer snapshot; manor/before is the older one.";
+const LOADED = "Live snapshot loaded: live:haunts/manor (40 modules) is the newer snapshot; manor/before is the older one.";
 
 type Result = { removedRelations: { relationId: string }[]; addedRelations: unknown[] };
 

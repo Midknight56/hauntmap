@@ -27,10 +27,10 @@ async function cliAnalyze(root: string, out: string): Promise<Investigation> {
 }
 
 describe("row 26", () => {
-  it("the CLI on samples/manor and the app path on manor/before sources agree on module IDs, hashes and relation IDs", async () => {
+  it("the CLI on haunts/manor and the app path on manor/before sources agree on module IDs, hashes and relation IDs", async () => {
     const dir = repoTemp("agree-");
     temporary.push(dir);
-    const node = await cliAnalyze("samples/manor", join(dir, "live.json"));
+    const node = await cliAnalyze("haunts/manor", join(dir, "live.json"));
     const app = await appInvestigation(packedFiles("manor/before"), "manor/before");
 
     const nodeIds = node.modules.map((m) => m.id);

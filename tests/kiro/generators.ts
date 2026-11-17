@@ -85,17 +85,17 @@ export const arbArgs: fc.Arbitrary<unknown> = fc.oneof(
   fc.jsonValue(),
   fc.record(
     {
-      root: fc.oneof(fc.string(), fc.integer(), fc.constant(null), fc.constant("samples/manor"), fc.constant("")),
+      root: fc.oneof(fc.string(), fc.integer(), fc.constant(null), fc.constant("haunts/manor"), fc.constant("")),
       preset: fc.oneof(fc.string(), fc.integer(), fc.constant("static-value"), fc.constant("type-inclusive"), fc.constant(null)),
       module: fc.oneof(fc.string(), fc.integer(), fc.constant("src/orders/checkout.ts"), fc.constant(null)),
       rootBefore: fc.oneof(fc.string(), fc.constant("public/demo/manor/before"), fc.constant(null)),
-      rootAfter: fc.oneof(fc.string(), fc.constant("samples/manor"), fc.constant(null)),
+      rootAfter: fc.oneof(fc.string(), fc.constant("haunts/manor"), fc.constant(null)),
     },
     { requiredKeys: [] },
   ),
 );
 
-const PATH_PARTS = [".", "..", "src", "link", "outside", "samples", "manor", "x.ts", "C:", "Users", "node_modules"];
+const PATH_PARTS = [".", "..", "src", "link", "outside", "haunts", "manor", "x.ts", "C:", "Users", "node_modules"];
 
 /** Root strings with `..`, absolute prefixes, backslashes and link names. */
 export const arbPath: fc.Arbitrary<string> = fc
@@ -166,7 +166,7 @@ const arbDiagnostics: fc.Arbitrary<Diagnostic[]> = fc.array(
 
 /** A valid investigation with 1 to 50 modules; every import starts at a module of the same investigation. */
 export const arbInvestigation: fc.Arbitrary<Investigation> = fc
-  .tuple(arbModules, fc.array(arbImportDraft, { maxLength: 80 }), arbDiagnostics, fc.constantFrom(...PRESETS), fc.constantFrom("live:samples/manor", "manor/before"))
+  .tuple(arbModules, fc.array(arbImportDraft, { maxLength: 80 }), arbDiagnostics, fc.constantFrom(...PRESETS), fc.constantFrom("live:haunts/manor", "manor/before"))
   .map(([modules, drafts, diagnostics, preset, sourceLabel]): Investigation => {
     const imports = drafts.map((draft, index): ImportRecord => {
       const from = (modules[draft.from % modules.length] as ModuleRecord).id;
@@ -265,9 +265,9 @@ export function makeCapBytesWorkspace(dir: string): string {
   return dir;
 }
 
-/** `demo-live`: public/demo/manor/before (three .ts files and expected.json), samples/manor as its copy and, optionally, a dist/cli.js marker. */
+/** `demo-live`: public/demo/manor/before (three .ts files and expected.json), haunts/manor as its copy and, optionally, a dist/cli.js marker. */
 export function makeDemoLiveWorkspace(dir: string, withCli: boolean): string {
-  for (const base of ["public/demo/manor/before", "samples/manor"]) {
+  for (const base of ["public/demo/manor/before", "haunts/manor"]) {
     writeText(dir, `${base}/src/a.ts`, 'import { b } from "./b";\nexport const a = b;\n');
     writeText(dir, `${base}/src/b.ts`, "export const b = 1;\n");
     writeText(dir, `${base}/src/c.ts`, "export const c = 2;\n");
@@ -278,14 +278,14 @@ export function makeDemoLiveWorkspace(dir: string, withCli: boolean): string {
 }
 
 /**
- * `manor-after-removal`: a copy of samples/manor at `destination` in which the demo relation's import line and its one use line
+ * `manor-after-removal`: a copy of haunts/manor at `destination` in which the demo relation's import line and its one use line
  * of src/notifications/receipt.ts are deleted. The two line numbers come from `receiptToCheckout` in expected.json.
  */
 export function makeManorAfterRemoval(repoRoot: string, destination: string): string {
   const expected = JSON.parse(readFileSync(join(repoRoot, "public", "demo", "manor", "before", "expected.json"), "utf8")) as {
     receiptToCheckout: { importLine: number; useLine: number };
   };
-  cpSync(join(repoRoot, "samples", "manor"), destination, { recursive: true });
+  cpSync(join(repoRoot, "haunts", "manor"), destination, { recursive: true });
   const target = join(destination, "src", "notifications", "receipt.ts");
   const lines = readFileSync(target, "utf8").split("\n");
   const drop = new Set([expected.receiptToCheckout.importLine, expected.receiptToCheckout.useLine]);

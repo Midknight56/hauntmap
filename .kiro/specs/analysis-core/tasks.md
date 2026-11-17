@@ -1,6 +1,6 @@
 # Implementation Plan
 
-Ownership: this spec creates the files named in `design.md`. Besides the folders of its row in `.kiro/steering/ownership.md`, it creates the root configuration files (task 1), `docs/kiro-log.md` rows, `tests/analysis/`, `tests/workers/`, `tests/analysis.properties.test.ts`, `tests/analysis.spec-properties.test.ts` and `tests/analysis-boundary.test.ts`. None of these belongs to another spec. It writes nothing under `samples/`, `packages/`, `.kiro/hooks/`, `src/scene/`, `src/features/` or `src/components/`.
+Ownership: this spec creates the files named in `design.md`. Besides the folders of its row in `.kiro/steering/ownership.md`, it creates the root configuration files (task 1), `docs/kiro-log.md` rows, `tests/analysis/`, `tests/workers/`, `tests/analysis.properties.test.ts`, `tests/analysis.spec-properties.test.ts` and `tests/analysis-boundary.test.ts`. None of these belongs to another spec. It writes nothing under `haunts/`, `packages/`, `.kiro/hooks/`, `src/scene/`, `src/features/` or `src/components/`.
 
 Each task ends with `pnpm verify` green. A task writes its tests first, sees them fail, then implements.
 
@@ -79,7 +79,7 @@ Each task ends with `pnpm verify` green. A task writes its tests first, sees the
   - Copy it to `public/demo/manor/after` and make the three changes of requirement 8.2 and nothing else: remove the import of `checkout.ts` and its use in `receipt.ts`, add an import of `src/orders/summary.ts` to `receipt.ts`, and insert one comment line above the first import of `checkout.ts`.
   - Write `expected.json` for both by reading the files. List every module and every import with its line, column, kinds and resolution, the wings with their module counts, the cyclic components for each preset, the diagnostics, and for `before` the specifier and the two lines of the `receipt.ts` to `checkout.ts` relation. For `after`, list the one removed relation, the one added relation and the changed modules.
   - Write `tests/fixtures/samples.test.ts` for the pair: the analysis equals `expected.json`, `findCycles` gives one component for `before` and none for `after` under `static-value`, and the removed, added and changed sets equal requirement 8.2.
-  - Do not create `samples/manor`. `kiro-integration` task 1a copies it from `before`.
+  - Do not create `haunts/manor`. `kiro-integration` task 1a copies it from `before`.
   - Verify: `pnpm verify` passes with the pair's tests green.
   - _Requirements: 8.1, 8.2, 8.4_
 

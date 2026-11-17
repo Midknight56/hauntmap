@@ -147,7 +147,7 @@ export function ComparePanel({ cs, compare, host, onClose, onEnded }: Props): Re
       <>
         <p>{`Compare ${label} with a newer snapshot.`}</p>
         <button type="button" aria-disabled={busy} onClick={start}>
-          {isManor ? "Revised manor sample" : "Bundled manor pair"}
+          {isManor ? "Revised manor" : "Bundled manor pair"}
         </button>
         {isManor ? null : <p>{PAIR_NOTE}</p>}
       </>

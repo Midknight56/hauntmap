@@ -15,9 +15,9 @@ const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures",
 const fixture = (name: string): string => readFileSync(join(FIXTURES, name), "utf8");
 
 // The status region renders the backtick segment as <code>, so its text has no backticks.
-const MISSING = "No live snapshot yet. Run pnpm hauntmap analyze samples/manor --out public/demo/live.json, or let the Kiro hook write it.";
-const MISSING_COMMAND = "pnpm hauntmap analyze samples/manor --out public/demo/live.json";
-const LOADED = "Live snapshot loaded: live:samples/manor (40 modules) is the newer snapshot; manor/before is the older one.";
+const MISSING = "No live snapshot yet. Run pnpm hauntmap analyze haunts/manor --out public/demo/live.json, or let the Kiro hook write it.";
+const MISSING_COMMAND = "pnpm hauntmap analyze haunts/manor --out public/demo/live.json";
+const LOADED = "Live snapshot loaded: live:haunts/manor (40 modules) is the newer snapshot; manor/before is the older one.";
 const NO_SOURCE = "Source not included in this snapshot; evidence is path, line and specifier.";
 const RECEIPT = "src/notifications/receipt.ts";
 const CHECKOUT = "src/orders/checkout.ts";
@@ -205,7 +205,7 @@ test.describe("Open live snapshot", () => {
     await openLive(page);
     await expect(status(page)).toHaveText(LOADED);
     await openComparePanel(page);
-    await page.getByRole("radio", { name: /^Newer \(live:samples\/manor\)/ }).check();
+    await page.getByRole("radio", { name: /^Newer \(live:haunts\/manor\)/ }).check();
     await page.keyboard.press("Escape");
     await page.getByRole("tab", { name: "Evidence" }).click();
     const relations = page.getByRole("list", { name: /^Relations \(/ });
@@ -236,7 +236,7 @@ test.describe("Open live snapshot", () => {
     const removedCount = committed.imports.some((r) => r.relationId === DEMO_RELATION) ? 0 : 1;
     await openManor(page);
     await openLive(page);
-    await expect(status(page)).toContainText("Live snapshot loaded: live:samples/manor");
+    await expect(status(page)).toContainText("Live snapshot loaded: live:haunts/manor");
     await openComparePanel(page);
     await expect(page.getByRole("heading", { name: `Removed relations (${removedCount})` })).toBeVisible();
   });

@@ -19,7 +19,7 @@ describe("6.7 public/demo/live.json", () => {
     expect(existsSync(LIVE)).toBe(true);
     const live = JSON.parse(readFileSync(LIVE, "utf8")) as Investigation;
     expect(validateInvestigation(live)).toEqual({ ok: true });
-    expect(live.sourceLabel).toBe("live:samples/manor");
+    expect(live.sourceLabel).toBe("live:haunts/manor");
     expect(live.modules).toHaveLength(expectedManor().modules.length);
     const wings = Object.keys(expectedManor().wings);
     for (const module of live.modules) {
@@ -32,8 +32,11 @@ describe("6.7 public/demo/live.json", () => {
 });
 
 describe("9.5 the recorded session", () => {
-  it.skipIf(!existsSync(join(SESSION, "live.json")))("the session copy equals the committed live.json byte for byte", () => {
-    expect(readFileSync(join(SESSION, "live.json")).equals(readFileSync(LIVE))).toBe(true);
+  // The session copy is a record: it keeps the sourceLabel it was written with, from before the working folder was renamed. Every other field must still match.
+  it.skipIf(!existsSync(join(SESSION, "live.json")))("the session copy equals the committed live.json in every field except sourceLabel", () => {
+    const record = JSON.parse(readFileSync(join(SESSION, "live.json"), "utf8")) as Investigation;
+    const live = JSON.parse(readFileSync(LIVE, "utf8")) as Investigation;
+    expect({ ...record, sourceLabel: live.sourceLabel }).toEqual(live);
   });
 
   it.skipIf(!existsSync(join(SESSION, "live.json")))("comparing the analysis of manor/before with the committed file removes exactly the demo relation", async () => {

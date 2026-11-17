@@ -438,7 +438,7 @@ This spec persists one record (`Prefs`) and holds everything else in memory or d
 
 | Record | Where | Identity and version | Content |
 | --- | --- | --- | --- |
-| `Investigation` | store (memory), consumed | `schemaVersion: 1`, `sourceLabel` (`manor/before`, `annex`, `live:samples/manor`) | modules, imports, diagnostics, options; module IDs, relation IDs and occurrence IDs are opaque strings here |
+| `Investigation` | store (memory), consumed | `schemaVersion: 1`, `sourceLabel` (`manor/before`, `annex`, `live:haunts/manor`) | modules, imports, diagnostics, options; module IDs, relation IDs and occurrence IDs are opaque strings here |
 | `ViewState` | store (memory) | `viewStateVersion: 1`; one instance per app | the fields listed in Components and Interfaces; reset by `restart()` except `legendOpen` and `motion` |
 | `Selection` | `ViewState.selection` | by kind: module ID, relation ID (+ optional occurrence ID), wing path | the one value every surface renders |
 | `RouteFilter` | `ViewState.routeFilter` | `kind` + ordered IDs | witness: `relationIds.length === modules.length` and the walk closes on `modules[0]`; trace: `relationIds.length === modules.length − 1`, last module is the origin; focus: sets, sorted |

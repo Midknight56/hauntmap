@@ -3,19 +3,19 @@ inclusion: always
 ---
 # Refactoring with HauntMap
 
-HauntMap's own analysis is available to you as the MCP server `hauntmap` (tools `analyze`, `cycles`, `who_imports`, `compare`). Roots are directories relative to the repository root, such as `samples/manor`.
+HauntMap's own analysis is available to you as the MCP server `hauntmap` (tools `analyze`, `cycles`, `who_imports`, `compare`). Roots are directories relative to the repository root, such as `haunts/manor`.
 
 ## Before changing imports
 - Before you add, remove, change or move any import, re-export or module file in an analyzed root, call `cycles(root, "static-value")` and keep the component list in your notes.
 - If you need to know who depends on a module you are about to change, call `who_imports(root, module, "static-value")` and read `direct` and `indirect`.
 
 ## After changing imports
-- Call `compare(rootBefore, rootAfter)` with the untouched copy as `rootBefore`. For `samples/manor`, `rootBefore` is `public/demo/manor/before`. For any other root, copy it to `.hauntmap/before/<name>` before your first edit (the folder is git-ignored) and use that copy.
+- Call `compare(rootBefore, rootAfter)` with the untouched copy as `rootBefore`. For `haunts/manor`, `rootBefore` is `public/demo/manor/before`. For any other root, copy it to `.hauntmap/before/<name>` before your first edit (the folder is git-ignored) and use that copy.
 - End your final message with: every `relationId` in `removedRelations` under the heading `Removed relations`, every `relationId` in `addedRelations` under `Added relations`, the two labels, and `cyclicComponentsBefore → cyclicComponentsAfter`, copied from the tool result. If you did not run `compare`, write `compare was not run`.
 
 ## What you may edit
 - `public/demo/manor/before`, `public/demo/manor/after` and `public/demo/annex` are fixtures owned by `analysis-core`. Never edit them.
-- Live edits for a demonstration go to `samples/manor`; `pnpm demo:reset` restores it from `public/demo/manor/before`.
+- Live edits for a demonstration go to `haunts/manor`; `pnpm demo:reset` restores it from `public/demo/manor/before`.
 - Do not run `hauntmap` tools on directories outside this repository.
 
 ## What the result means

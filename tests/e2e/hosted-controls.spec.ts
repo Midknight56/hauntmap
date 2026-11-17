@@ -62,7 +62,7 @@ test.describe("hosted controls (dev build)", () => {
 
   test("10.3 a stub control's message with a backtick segment is rendered verbatim with the segment in <code>", async ({ page }) => {
     await openFixture(page, "triad");
-    const message = "No live snapshot yet. Run `pnpm hauntmap analyze samples/manor --out public/demo/live.json`, or let the Kiro hook write it.";
+    const message = "No live snapshot yet. Run `pnpm hauntmap analyze haunts/manor --out public/demo/live.json`, or let the Kiro hook write it.";
     await page.evaluate((text) => {
       const hook = (window as unknown as StubWindow).__hauntmap;
       hook.registry.registerControl("live-snapshot", (props) =>
@@ -73,7 +73,7 @@ test.describe("hosted controls (dev build)", () => {
     const region = page.locator('[role="status"]');
     await expect(region).toHaveText(message.replaceAll("`", ""));
     await expect(region.locator("code")).toHaveCount(1);
-    await expect(region.locator("code")).toHaveText("pnpm hauntmap analyze samples/manor --out public/demo/live.json");
+    await expect(region.locator("code")).toHaveText("pnpm hauntmap analyze haunts/manor --out public/demo/live.json");
   });
 
   test("10.4 the steps panel calls a stub compare handoff with the layoutKey and leaves camera, selection, route filter and wings unchanged", async ({ page }) => {

@@ -6,12 +6,12 @@ import { afterEach, describe, expect, it } from "vitest";
 import { resetSample, runReset } from "../../scripts/demo-reset";
 import { listIncluded, treesEqual } from "../../scripts/sampleTree";
 
-// Requirement 1.4 and 1.5. samples/manor is a byte-identical copy of the included files of
+// Requirement 1.4 and 1.5. haunts/manor is a byte-identical copy of the included files of
 // public/demo/manor/before, and pnpm demo:reset restores it.
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const FIXTURE = join(REPO, "public", "demo", "manor", "before");
-const SAMPLE = join(REPO, "samples", "manor");
+const SAMPLE = join(REPO, "haunts", "manor");
 
 const temporary: string[] = [];
 function makeTemp(): string {
@@ -72,7 +72,7 @@ describe("listIncluded and treesEqual", () => {
   });
 });
 
-describe("samples/manor (requirement 1.4)", () => {
+describe("haunts/manor (requirement 1.4)", () => {
   it("holds 40 included files, each byte-identical to public/demo/manor/before, and no other file", () => {
     const fixtureFiles = listIncluded(FIXTURE);
     expect(fixtureFiles).toHaveLength(40);
@@ -98,21 +98,21 @@ describe("demo:reset (requirement 1.5)", () => {
 
   it("restores a modified copy, copies only included files and returns the file count", () => {
     const repo = fakeRepo();
-    write(repo, "samples/manor/src/a.ts", "changed\n");
-    write(repo, "samples/manor/src/stale.ts", "stale\n");
+    write(repo, "haunts/manor/src/a.ts", "changed\n");
+    write(repo, "haunts/manor/src/stale.ts", "stale\n");
     expect(resetSample(repo)).toBe(2);
-    const copy = join(repo, "samples", "manor");
+    const copy = join(repo, "haunts", "manor");
     expect(listIncluded(copy)).toEqual(["src/a.ts", "src/b.ts"]);
     expect(treesEqual(copy, join(repo, "public", "demo", "manor", "before"))).toBe(true);
     expect(() => readFileSync(join(copy, "expected.json"))).toThrow();
     expect(() => readFileSync(join(copy, "sources.json"))).toThrow();
   });
 
-  it("creates the copy when samples/manor is absent, and a second run gives the same tree", () => {
+  it("creates the copy when haunts/manor is absent, and a second run gives the same tree", () => {
     const repo = fakeRepo();
     expect(resetSample(repo)).toBe(2);
     expect(resetSample(repo)).toBe(2);
-    expect(listIncluded(join(repo, "samples", "manor"))).toEqual(["src/a.ts", "src/b.ts"]);
+    expect(listIncluded(join(repo, "haunts", "manor"))).toEqual(["src/a.ts", "src/b.ts"]);
   });
 
   it("prints the exact line and returns 0", () => {
@@ -120,7 +120,7 @@ describe("demo:reset (requirement 1.5)", () => {
     const out: string[] = [];
     const err: string[] = [];
     expect(runReset(repo, (s) => out.push(s), (s) => err.push(s))).toBe(0);
-    expect(out).toEqual(["demo:reset: samples/manor restored from public/demo/manor/before (2 files)\n"]);
+    expect(out).toEqual(["demo:reset: haunts/manor restored from public/demo/manor/before (2 files)\n"]);
     expect(err).toEqual([]);
   });
 

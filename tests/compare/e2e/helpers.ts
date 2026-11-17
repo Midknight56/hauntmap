@@ -21,8 +21,8 @@ export async function openComparePanel(page: Page): Promise<void> {
   await page.getByRole("region", { name: "Compare revisions" }).waitFor();
 }
 
-/** Open the panel and activate the one acquisition button (`Revised manor sample` or `Bundled manor pair`). */
-export async function compareWithSample(page: Page, button: "Revised manor sample" | "Bundled manor pair" = "Revised manor sample"): Promise<void> {
+/** Open the panel and activate the one acquisition button (`Revised manor` or `Bundled manor pair`). */
+export async function compareWithSample(page: Page, button: "Revised manor" | "Bundled manor pair" = "Revised manor"): Promise<void> {
   await openComparePanel(page);
   await page.getByRole("button", { name: button }).click();
 }

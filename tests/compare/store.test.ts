@@ -48,7 +48,7 @@ afterEach(() => {
 });
 
 describe("acquisition (1.2, 1.4, 1.6)", () => {
-  it("Revised manor sample: one sources.json request, analyzed with the earlier options, compared at run time", async () => {
+  it("Revised manor: one sources.json request, analyzed with the earlier options, compared at run time", async () => {
     const h = createHarness();
     await openManorBefore(h);
     h.store.actions.setPreset("type-inclusive");
@@ -76,14 +76,14 @@ describe("acquisition (1.2, 1.4, 1.6)", () => {
     const cs = compareStoreFor(h);
     const calls = h.analysisClient.calls.length;
     const changed = before.modules[0]?.id as string;
-    const live: Investigation = { ...before, sourceLabel: "live:samples/manor", modules: before.modules.map((m) => (m.id === changed ? { ...m, sourceHash: "d".repeat(64) } : m)) };
+    const live: Investigation = { ...before, sourceLabel: "live:haunts/manor", modules: before.modules.map((m) => (m.id === changed ? { ...m, sourceHash: "d".repeat(64) } : m)) };
     await cs.actions.compareWith({ kind: "investigation", snapshot: { label: live.sourceLabel, investigation: live, sourceText: null } }, h.store.getState().layout?.layoutKey ?? null);
     expect(h.analysisClient.calls.length).toBe(calls);
     const state = cs.getState();
     expect(state.before?.investigation).toBe(before);
     expect(state.before?.sourceText).toBe(sourceText);
     expect(state.after?.sourceText).toBeNull();
-    expect(state.after?.label).toBe("live:samples/manor");
+    expect(state.after?.label).toBe("live:haunts/manor");
     expect(h.store.getState().investigation).toBe(live);
     expect(h.store.getState().sourceText).toBeNull();
     expect(state.result?.changedModules).toEqual([changed]);
@@ -492,10 +492,10 @@ describe("restart, replacement and memory (6.7, 6.8, 1.8)", () => {
     const cs = compareStoreFor(h);
     await cs.actions.compareWithSample();
     const rooms = new Map(h.store.getState().layout?.rooms.map((r) => [r.id, [r.x, r.y, r.w, r.h]]));
-    const live: Investigation = { ...before, sourceLabel: "live:samples/manor", modules: [...before.modules, { id: "src/orders/extra.ts", sourceHash: "f".repeat(64), language: "ts", parseStatus: "ok" }] };
+    const live: Investigation = { ...before, sourceLabel: "live:haunts/manor", modules: [...before.modules, { id: "src/orders/extra.ts", sourceHash: "f".repeat(64), language: "ts", parseStatus: "ok" }] };
     await cs.actions.compareWith({ kind: "investigation", snapshot: { label: live.sourceLabel, investigation: live, sourceText: null } }, h.store.getState().layout?.layoutKey ?? null);
     expect(cs.getState().before?.investigation).toBe(before);
-    expect(cs.getState().after?.label).toBe("live:samples/manor");
+    expect(cs.getState().after?.label).toBe("live:haunts/manor");
     expect(cs.getState().layoutPath).toBe("extended");
     const now = h.store.getState().layout;
     for (const id of before.modules.map((m) => m.id)) {

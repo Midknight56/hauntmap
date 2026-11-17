@@ -58,7 +58,7 @@ describe("6.1 and 6.2 analyze-live.json", () => {
     const save = file.hooks.find((h) => h.name === "analyze-live-on-save");
     if (save !== undefined) {
       expect(save.trigger).toBe("PostFileSave");
-      expect(save.matcher).toBe("^samples/manor/.*\\.(js|jsx|ts|tsx|mjs|mts)$");
+      expect(save.matcher).toBe("^haunts/manor/.*\\.(js|jsx|ts|tsx|mjs|mts)$");
     }
   });
 
@@ -97,7 +97,7 @@ describe("6.5 observation before citation", () => {
 describe("6.7 scripts/demo-live.ts", () => {
   it("names the one command and the one output verbatim", () => {
     const source = readFileSync(join(REPO, "scripts", "demo-live.ts"), "utf8");
-    expect(source.split("analyze samples/manor --out public/demo/live.json")).toHaveLength(2);
+    expect(source.split("analyze haunts/manor --out public/demo/live.json")).toHaveLength(2);
     expect([...source.matchAll(/--out\s+(\S+)/g)].map((m) => m[1]?.replace(/["';,)]+$/, ""))).toEqual(["public/demo/live.json"]);
   });
 });

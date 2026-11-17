@@ -16,10 +16,10 @@ The product has a second front door for the same analysis code that the app runs
 
 Measured results, each from the log or an acceptance file:
 
-- `analyze` on the sample folder `samples/manor` returns 40 modules, 72 relations and 1 diagnostic [log, `kiro-integration, task 4c`].
+- `analyze` on the sample folder `haunts/manor` returns 40 modules, 72 relations and 1 diagnostic [log, `kiro-integration, task 4c`].
 - One `analyze` call over stdio answered in 59 ms, one run, with the server already started, on one machine [`docs/performance.md`]. This says nothing about other folders or other machines.
-- In a headless session on 16 November, Kiro called `cycles` on `samples/manor` with the default relation preset. It returned one component with the three modules `src/notifications/receipt.ts`, `src/orders/checkout.ts` and `src/payments/charge.ts` [log, `kiro-integration, task 6`; `docs/acceptance/mcp-first-use.md`].
-- In the recorded session on 17 November, Kiro removed one import and the one statement that used it from `samples/manor/src/notifications/receipt.ts`, then called `compare`. The result: 1 removed relation, 0 added relations, 1 changed module, relations 72 to 71, cyclic components 1 to 0 [`docs/acceptance/h9-session/app-comparison.json`; `docs/acceptance/h9-session/transcript.md`].
+- In a headless session on 16 November, Kiro called `cycles` on `haunts/manor` with the default relation preset. It returned one component with the three modules `src/notifications/receipt.ts`, `src/orders/checkout.ts` and `src/payments/charge.ts` [log, `kiro-integration, task 6`; `docs/acceptance/mcp-first-use.md`].
+- In the recorded session on 17 November, Kiro removed one import and the one statement that used it from `haunts/manor/src/notifications/receipt.ts`, then called `compare`. The result: 1 removed relation, 0 added relations, 1 changed module, relations 72 to 71, cyclic components 1 to 0 [`docs/acceptance/h9-session/app-comparison.json`; `docs/acceptance/h9-session/transcript.md`].
 - The app then opened the live snapshot that the hook had written, and the closing corridor was recorded in a headless browser [`docs/acceptance/h9-session/app-recording.webm`; log, `kiro-integration, task 12`].
 
 How the session artifacts were made: the headless output shows tool names but not raw tool results. The files `mcp-cycles.json` and `mcp-compare.json` in `docs/acceptance/h9-session/` were therefore written afterwards from the same tool code on the same inputs. They are not cuts from the transcript, and `recording.md` in that folder says so. The recorded app files were made before the last change to text sizes on the map and were not recorded again [`docs/acceptance/h9-session/recording.md`].
@@ -38,7 +38,7 @@ Hook files are standalone files under `.kiro/hooks/`. The trigger names `Stop` a
 | Verify on stop | `Stop` | Not observed | Kiro CLI | The row records no hook output from the stop. The 26.5 s figure in that row is a manual run of `pnpm verify`, not hook output [log, `kiro-integration, task 2`]. |
 | Typecheck on save | `PostFileSave` | Not observed | Headless Kiro CLI 3.3.0, 16 November 2026 | One attempt, no hook output reached the session [log, row `Setup: hook observation typecheck-on-save`]. |
 
-A second entry of the live hook, on `PostFileSave`, was deleted because it was never observed. The hook command is `pnpm demo:live`. Its skip rule: when `samples/manor` is identical to `public/demo/manor/before`, or when the built command line tool is missing, it prints a line that starts with `demo:live: skipped` and exits 0, so the committed `public/demo/live.json` stays as it is. The skip line was seen when the command was run by hand [`.kiro/hooks/README.md`]. The final headless turn that would show it in a Kiro session is left to the person and is not yet in the log [log, `kiro-integration, task 14`].
+A second entry of the live hook, on `PostFileSave`, was deleted because it was never observed. The hook command is `pnpm demo:live`. Its skip rule: when `haunts/manor` is identical to `public/demo/manor/before`, or when the built command line tool is missing, it prints a line that starts with `demo:live: skipped` and exits 0, so the committed `public/demo/live.json` stays as it is. The skip line was seen when the command was run by hand [`.kiro/hooks/README.md`]. The final headless turn that would show it in a Kiro session is left to the person and is not yet in the log [log, `kiro-integration, task 14`].
 
 No hook has been observed in the Kiro IDE.
 
@@ -53,7 +53,7 @@ All code, tests and documents in the repository were written by Kiro CLI, versio
 | Folders | Spec | Written by | Log rows |
 | --- | --- | --- | --- |
 | `src/analysis`, `src/contracts`, `src/workers`, `tests/fixtures`, `public/demo/manor`, `public/demo/annex`, `tests/analysis` | `analysis-core` | Kiro CLI | `analysis-core, task 1` to `task 15` |
-| `packages/hauntmap-mcp`, `samples`, `scripts/demo-reset.ts`, `scripts/demo-live.ts`, `public/demo/live.json`, `src/features/liveSnapshot`, `tests/kiro`, `.kiro/hooks`, `.kiro/steering/refactoring.md`, `docs/demo`, `docs/acceptance/h9-session` | `kiro-integration` | Kiro CLI. The H9 headless session was started by the person, and `public/demo/live.json` is the file that session's hook wrote | `kiro-integration, task 1a` to `task 15` |
+| `packages/hauntmap-mcp`, `haunts`, `scripts/demo-reset.ts`, `scripts/demo-live.ts`, `public/demo/live.json`, `src/features/liveSnapshot`, `tests/kiro`, `.kiro/hooks`, `.kiro/steering/refactoring.md`, `docs/demo`, `docs/acceptance/h9-session` | `kiro-integration` | Kiro CLI. The H9 headless session was started by the person, and `public/demo/live.json` is the file that session's hook wrote | `kiro-integration, task 1a` to `task 15` |
 | `src/scene`, `src/features/investigation`, `src/components`, `src/styles`, `tests/ui`, `tests/e2e` | `investigation-ui` | Kiro CLI | `investigation-ui, task 1a` to `task 14`, the theme pass, and its follow up of 17 November |
 | `src/analysis/graph/compare.ts`, `src/features/compare`, `src/scene/compare`, `tests/compare` | `snapshot-comparison` | Kiro CLI | `snapshot-comparison/1a` to `/15` |
 

@@ -9,7 +9,7 @@ private and is not published.
 ```powershell
 pnpm install
 pnpm build:mcp                 # writes packages/hauntmap-mcp/dist/index.js and dist/cli.js
-pnpm hauntmap analyze samples/manor --out .hauntmap/live.json   # needs the CLI of task 4c
+pnpm hauntmap analyze haunts/manor --out .hauntmap/live.json   # needs the CLI of task 4c
 ```
 
 `pnpm hauntmap` without a built `dist/cli.js` prints `hauntmap: the CLI is not built. Run pnpm build:mcp first.` and exits with code 3.
@@ -60,7 +60,7 @@ Read on `main` on 2026-11-16, all exported from `src/analysis/index.ts`:
 Transcript excerpt: `docs/acceptance/mcp-first-use.md`.
 
 - The workspace file `.kiro/settings/mcp.json` is read. No user-level `mcp.json` exists on the machine, and a headless session called `@hauntmap/cycles`.
-- The server starts with the workspace as its current directory: the relative `args` path worked and the tool resolved `samples/manor`. No `cwd` field was needed.
+- The server starts with the workspace as its current directory: the relative `args` path worked and the tool resolved `haunts/manor`. No `cwd` field was needed.
 - The flag that trusts the tools in a headless session is `--trust-all-tools` (with `--trust-workspace`).
 - Not observed: the command that lists MCP servers and tools, and whether `cycles` runs without a prompt while `compare` prompts. The second needs a person in an interactive session.
 - Run `pnpm build:mcp` before the first session; `dist/` is not committed.

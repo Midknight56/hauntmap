@@ -149,8 +149,8 @@ describe("generated workspaces", () => {
     const withCli = makeDemoLiveWorkspace(makeTemp(), true);
     expect(existsSync(join(without, "packages", "hauntmap-mcp", "dist", "cli.js"))).toBe(false);
     expect(existsSync(join(withCli, "packages", "hauntmap-mcp", "dist", "cli.js"))).toBe(true);
-    expect(walk(join(withCli, "samples", "manor"))).toEqual(["src/a.ts", "src/b.ts", "src/c.ts"]);
-    expect(readFileSync(join(withCli, "samples", "manor", "src", "a.ts"), "utf8")).toBe(readFileSync(join(withCli, "public", "demo", "manor", "before", "src", "a.ts"), "utf8"));
+    expect(walk(join(withCli, "haunts", "manor"))).toEqual(["src/a.ts", "src/b.ts", "src/c.ts"]);
+    expect(readFileSync(join(withCli, "haunts", "manor", "src", "a.ts"), "utf8")).toBe(readFileSync(join(withCli, "public", "demo", "manor", "before", "src", "a.ts"), "utf8"));
   });
 });
 
@@ -161,14 +161,14 @@ describe("live fixtures", () => {
     const value = JSON.parse(read("valid-live.json")) as { schemaVersion: number; resolverMode: string; sourceLabel: string };
     expect(value.schemaVersion).toBe(1);
     expect(value.resolverMode).toBe("documented-source-subset");
-    expect(value.sourceLabel).toBe("live:samples/manor");
+    expect(value.sourceLabel).toBe("live:haunts/manor");
   });
 
   it("malformed-live.json has schemaVersion 2", () => {
     expect(JSON.parse(read("malformed-live.json"))).toEqual({
       schemaVersion: 2,
       resolverMode: "documented-source-subset",
-      sourceLabel: "live:samples/manor",
+      sourceLabel: "live:haunts/manor",
       modules: [],
       imports: [],
       diagnostics: [],

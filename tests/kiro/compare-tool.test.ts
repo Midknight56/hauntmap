@@ -72,22 +72,22 @@ describe("compare", () => {
     const stub = createContext(REPO, {
       analysis: { ...ctx.analysis, compareInvestigations: () => ({ ok: false, error: { code: "incompatible-schema", message: "schemaVersion differs" } }) },
     });
-    expect(await compareTool(stub, { rootBefore: "public/demo/manor/before", rootAfter: "samples/manor" })).toEqual({
+    expect(await compareTool(stub, { rootBefore: "public/demo/manor/before", rootAfter: "haunts/manor" })).toEqual({
       ok: false,
       error: { code: "analysis-failed", message: "The snapshots cannot be compared: schemaVersion differs." },
     });
   });
 
   it("4.5 a root failure names the side and returns no comparison", async () => {
-    const before = await compareTool(ctx, { rootBefore: "nope", rootAfter: "samples/manor" });
+    const before = await compareTool(ctx, { rootBefore: "nope", rootAfter: "haunts/manor" });
     expect(before).toEqual({ ok: false, error: { code: "root-not-found", message: 'rootBefore: Root "nope" does not exist or is not a directory.' } });
-    const after = await compareTool(ctx, { rootBefore: "samples/manor", rootAfter: ".." });
+    const after = await compareTool(ctx, { rootBefore: "haunts/manor", rootAfter: ".." });
     expect(after.ok === false && after.error.code).toBe("root-outside-workspace");
     expect(after.ok === false && after.error.message.startsWith("rootAfter: ")).toBe(true);
   });
 
   it("4.1 both sides are analyzed under static-value", async () => {
-    const result = await compareTool(ctx, { rootBefore: "samples/manor", rootAfter: "samples/manor" });
+    const result = await compareTool(ctx, { rootBefore: "haunts/manor", rootAfter: "haunts/manor" });
     if (!result.ok) throw new Error(result.error.message);
     expect(result.value.preset).toBe("static-value");
     expect(result.value.removedRelations).toEqual([]);
@@ -99,7 +99,7 @@ describe("compare without compare.ts", () => {
   it("returns the precondition message while compareInvestigations is not wired", async () => {
     const base = createContext(REPO);
     const without = createContext(REPO, { analysis: { ...base.analysis, compareInvestigations: undefined } });
-    expect(await compareTool(without, { rootBefore: "samples/manor", rootAfter: "samples/manor" })).toEqual({
+    expect(await compareTool(without, { rootBefore: "haunts/manor", rootAfter: "haunts/manor" })).toEqual({
       ok: false,
       error: { code: "analysis-failed", message: "compare is not available until snapshot-comparison lands" },
     });

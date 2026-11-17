@@ -9,7 +9,7 @@ import { RpcProcess } from "./rpc";
 const SERVER = join(REPO, "packages", "hauntmap-mcp", "dist", "index.js");
 
 const PRESET_SCHEMA = { type: "string", enum: ["static-value", "type-inclusive", "dynamic-inclusive"], default: "static-value" };
-const ROOT_SCHEMA = { type: "string", description: "Directory relative to the workspace root, e.g. samples/manor" };
+const ROOT_SCHEMA = { type: "string", description: "Directory relative to the workspace root, e.g. haunts/manor" };
 const TOOLS = [
   {
     name: "analyze",
@@ -75,7 +75,7 @@ describe("server (3.1)", () => {
   it("writes nothing but protocol frames to stdout", async () => {
     const rpc = await start();
     await rpc.request("tools/list");
-    await call(rpc, "cycles", { root: "samples/manor" });
+    await call(rpc, "cycles", { root: "haunts/manor" });
     expect(rpc.stdoutLines.length).toBeGreaterThanOrEqual(3);
     for (const line of rpc.stdoutLines) {
       const frame = JSON.parse(line) as { jsonrpc?: string };
@@ -87,7 +87,7 @@ describe("server (3.1)", () => {
 describe("tool calls over the transport (3.3, 3.6)", () => {
   it("cycles round-trips as one JSON text item", async () => {
     const rpc = await start();
-    const result = await call(rpc, "cycles", { root: "samples/manor", preset: "static-value" });
+    const result = await call(rpc, "cycles", { root: "haunts/manor", preset: "static-value" });
     expect(result.isError).not.toBe(true);
     expect(result.content).toHaveLength(1);
     expect(result.content[0]?.type).toBe("text");
@@ -100,12 +100,12 @@ describe("tool calls over the transport (3.3, 3.6)", () => {
 
   it("an error result carries the error flag and the JSON error", async () => {
     const rpc = await start();
-    const result = await call(rpc, "who_imports", { root: "samples/manor", module: "src/nope.ts" });
+    const result = await call(rpc, "who_imports", { root: "haunts/manor", module: "src/nope.ts" });
     expect(result.isError).toBe(true);
     expect(JSON.parse(result.content[0]?.text ?? "")).toEqual({
       error: {
         code: "module-not-found",
-        message: 'Module "src/nope.ts" is not in the analysis of "samples/manor"; module IDs are paths relative to the root, such as src/orders/checkout.ts.',
+        message: 'Module "src/nope.ts" is not in the analysis of "haunts/manor"; module IDs are paths relative to the root, such as src/orders/checkout.ts.',
       },
     });
   });
@@ -120,18 +120,18 @@ describe("tool calls over the transport (3.3, 3.6)", () => {
 
   it("compare is registered and answers (placeholder or real)", async () => {
     const rpc = await start();
-    const result = await call(rpc, "compare", { rootBefore: "public/demo/manor/before", rootAfter: "samples/manor" });
+    const result = await call(rpc, "compare", { rootBefore: "public/demo/manor/before", rootAfter: "haunts/manor" });
     expect(result.content[0]?.type).toBe("text");
   });
 });
 
 describe("response time (3.8)", () => {
-  it("prints the analyze response time for samples/manor", async () => {
+  it("prints the analyze response time for haunts/manor", async () => {
     const rpc = await start();
     const started = performance.now();
-    const result = await call(rpc, "analyze", { root: "samples/manor" });
+    const result = await call(rpc, "analyze", { root: "haunts/manor" });
     const elapsed = performance.now() - started;
     expect(result.isError).not.toBe(true);
-    console.info(`analyze samples/manor through the server: ${elapsed.toFixed(0)} ms (target 2000 ms, not a claim until recorded in docs/performance.md)`);
+    console.info(`analyze haunts/manor through the server: ${elapsed.toFixed(0)} ms (target 2000 ms, not a claim until recorded in docs/performance.md)`);
   });
 });

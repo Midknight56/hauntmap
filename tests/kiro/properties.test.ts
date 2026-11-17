@@ -139,10 +139,10 @@ describe("P4 root containment", () => {
     workspace = makeWorkspace();
     outside = makeWorkspace();
     mkdirSync(join(workspace, "src"));
-    mkdirSync(join(workspace, "samples", "manor"), { recursive: true });
+    mkdirSync(join(workspace, "haunts", "manor"), { recursive: true });
     writeFileSync(join(workspace, "x.ts"), "export {};\n");
     writeFileSync(join(outside, "x.ts"), "export {};\n");
-    mkdirSync(join(outside, "samples"));
+    mkdirSync(join(outside, "haunts"));
     symlinkDirectory(outside, join(workspace, "link"));
     symlinkDirectory(outside, join(workspace, "src", "outside"));
   });
@@ -181,7 +181,7 @@ describe("P5 tool error totality", () => {
     const { analyzeTool, compareTool, createContext, cyclesTool, whoImportsTool } = await import("../../packages/hauntmap-mcp/src/tools");
     const { validateComparison, validateInvestigation } = await import("../../src/contracts/validate");
     const workspace = makeWorkspace();
-    for (const base of ["samples/manor", "public/demo/manor/before"]) {
+    for (const base of ["haunts/manor", "public/demo/manor/before"]) {
       mkdirSync(join(workspace, ...base.split("/"), "src", "orders"), { recursive: true });
       mkdirSync(join(workspace, ...base.split("/"), "src", "notifications"), { recursive: true });
       writeFileSync(join(workspace, ...base.split("/"), "src", "orders", "checkout.ts"), "export const describeOrder = 1;\n");

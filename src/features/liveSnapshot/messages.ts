@@ -1,6 +1,6 @@
 export const LIVE_PATH = "demo/live.json";
 
-export const MSG_MISSING = "No live snapshot yet. Run `pnpm hauntmap analyze samples/manor --out public/demo/live.json`, or let the Kiro hook write it.";
+export const MSG_MISSING = "No live snapshot yet. Run `pnpm hauntmap analyze haunts/manor --out public/demo/live.json`, or let the Kiro hook write it.";
 
 export const msgMalformed = (firstError: string): string => `The live snapshot at demo/live.json is not valid: ${firstError}. The current view is unchanged.`;
 

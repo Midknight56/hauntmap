@@ -93,7 +93,7 @@ export function liveInvestigation(moduleCount = 2): Investigation {
   return {
     schemaVersion: 1,
     resolverMode: "documented-source-subset",
-    sourceLabel: "live:samples/manor",
+    sourceLabel: "live:haunts/manor",
     modules: Array.from({ length: moduleCount }, (_, i) => ({ id: `src/m${i}.ts`, sourceHash: "a".repeat(64), language: "ts" as const, parseStatus: "ok" as const })),
     imports: [],
     diagnostics: [],

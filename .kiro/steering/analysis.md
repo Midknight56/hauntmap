@@ -3,7 +3,7 @@ inclusion: always
 ---
 # Analysis rules
 
-Rules for `src/analysis/**`, `src/contracts/**`, `src/workers/**`, `tests/fixtures/**`, `public/demo/**`, `samples/**` and `packages/hauntmap-mcp/**`. They implement "Parser and resolver scope", "Main contracts" and "Analysis rules" of `plans/hauntmap-implementation-plan.md` (revision 3, 2026-11-03). One analysis module serves the app, the worker, the MCP server and the CLI: `tests/analysis-boundary.test.ts` fails if any file under `src/analysis` or `src/contracts` imports from `src/scene`, `src/features`, `src/components` or a DOM API.
+Rules for `src/analysis/**`, `src/contracts/**`, `src/workers/**`, `tests/fixtures/**`, `public/demo/**`, `haunts/**` and `packages/hauntmap-mcp/**`. They implement "Parser and resolver scope", "Main contracts" and "Analysis rules" of `plans/hauntmap-implementation-plan.md` (revision 3, 2026-11-03). One analysis module serves the app, the worker, the MCP server and the CLI: `tests/analysis-boundary.test.ts` fails if any file under `src/analysis` or `src/contracts` imports from `src/scene`, `src/features`, `src/components` or a DOM API.
 
 ## Supported subset (the resolver is not TypeScript, Node or a bundler; never claim identical resolution)
 - Parse `.js`, `.jsx`, `.ts`, `.tsx`, `.mjs`, `.mts` with Babel's parser in the explicit mode for each extension (version pinned at scaffold time; read the import/export kind fields of that version, *verify* their names).

@@ -60,10 +60,10 @@ describe("registration (1.4, 10.6)", () => {
     const h = createHarness();
     const before = await openManorBefore(h);
     const cs = registered(h);
-    const live: Investigation = { ...before, sourceLabel: "live:samples/manor" };
+    const live: Investigation = { ...before, sourceLabel: "live:haunts/manor" };
     const handoff = h.registry.getHandoff("compare") as (args: { before: Investigation; after: Investigation; layoutKey: string | null }) => Promise<void>;
     await handoff({ before, after: live, layoutKey: h.store.getState().layout?.layoutKey ?? null });
-    expect(cs.getState().after?.label).toBe("live:samples/manor");
+    expect(cs.getState().after?.label).toBe("live:haunts/manor");
     expect(cs.getState().after?.sourceText).toBeNull();
     expect(cs.getState().detail?.identical).toBe(true);
   });

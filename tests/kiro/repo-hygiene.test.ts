@@ -11,7 +11,7 @@ function ignored(path: string): boolean {
 }
 
 describe(".gitignore", () => {
-  it.each([".kiro/hooks/verify-on-stop.json", ".kiro/settings/mcp.json", ".kiro/steering/refactoring.md", ".kiro", "public/demo/live.json", "samples/manor/src/index.ts", "docs/kiro-log.md"])("does not ignore %s", (path) => {
+  it.each([".kiro/hooks/verify-on-stop.json", ".kiro/settings/mcp.json", ".kiro/steering/refactoring.md", ".kiro", "public/demo/live.json", "haunts/manor/src/index.ts", "docs/kiro-log.md"])("does not ignore %s", (path) => {
     expect(ignored(path)).toBe(false);
   });
 

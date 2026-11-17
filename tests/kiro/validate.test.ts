@@ -147,7 +147,7 @@ describe("validateComparison", () => {
     schemaVersion: 1,
     preset: "static-value",
     before: { label: "live:public/demo/manor/before", moduleCount: 40, relationCount: 72 },
-    after: { label: "live:samples/manor", moduleCount: 40, relationCount: 71 },
+    after: { label: "live:haunts/manor", moduleCount: 40, relationCount: 71 },
     addedModules: [],
     removedModules: [],
     changedModules: ["src/notifications/receipt.ts"],

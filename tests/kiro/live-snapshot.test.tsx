@@ -14,7 +14,7 @@ import type { FakeStore, HandoffArgs } from "./fakes";
 // file is created but the Vitest include does not collect it. The exact strings are copied from
 // design.md, not imported from messages.ts.
 
-const MISSING = "No live snapshot yet. Run `pnpm hauntmap analyze samples/manor --out public/demo/live.json`, or let the Kiro hook write it.";
+const MISSING = "No live snapshot yet. Run `pnpm hauntmap analyze haunts/manor --out public/demo/live.json`, or let the Kiro hook write it.";
 const NO_COMPARE = "Comparison is not available in this build.";
 
 interface Setup {
@@ -179,7 +179,7 @@ describe("8.6 and 8.9 the handoff", () => {
     expect(handoffArgs[0]?.before).toEqual(before);
     expect(handoffArgs[0]?.after).toEqual(liveInvestigation(4));
     expect(handoffArgs[0]?.layoutKey).toBeNull();
-    expect(store.calls.setStatus).toEqual(["Live snapshot loaded: live:samples/manor (4 modules) is the newer snapshot; manor/before is the older one."]);
+    expect(store.calls.setStatus).toEqual(["Live snapshot loaded: live:haunts/manor (4 modules) is the newer snapshot; manor/before is the older one."]);
     expect(store.calls.openInvestigation).toEqual([]);
     const after = store.getState();
     expect(after.camera).toEqual(state.camera);

@@ -52,7 +52,7 @@ The `layoutKey` lets the comparison compute a union layout that keeps rooms comm
 There is one `role="status"` element (`src/components/StatusRegion.tsx`). Features write to it only through `store.actions.setStatus(message)`. A new message replaces the previous one and stays until the next. A message may contain a segment in backticks; it is rendered verbatim with that segment in a `<code>` element, and everything else is text. The live-snapshot messages of `kiro-integration` rely on this:
 
 ```
-No live snapshot yet. Run `pnpm hauntmap analyze samples/manor --out public/demo/live.json`, or let the Kiro hook write it.
+No live snapshot yet. Run `pnpm hauntmap analyze haunts/manor --out public/demo/live.json`, or let the Kiro hook write it.
 ```
 
 No other element in `src/**` may carry `aria-live` or `role="status"`. A control that reports a failure writes its message and leaves the investigation, selection, camera, route filter and evidence trail as they were (10.5).

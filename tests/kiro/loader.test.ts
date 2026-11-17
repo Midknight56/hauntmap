@@ -33,9 +33,9 @@ async function load(workspace: string, root: string, fs?: RecordingFs) {
 
 describe("2.8 sourceLabelFor", () => {
   it.each([
-    ["samples/manor", "live:samples/manor"],
-    ["./samples/manor/", "live:samples/manor"],
-    ["samples\\manor", "live:samples/manor"],
+    ["haunts/manor", "live:haunts/manor"],
+    ["./haunts/manor/", "live:haunts/manor"],
+    ["haunts\\manor", "live:haunts/manor"],
     ["./public/demo/manor/before/", "live:public/demo/manor/before"],
     [".", "live:."],
   ])("%s -> %s", (given, label) => {

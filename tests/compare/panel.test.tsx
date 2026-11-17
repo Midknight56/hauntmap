@@ -59,7 +59,7 @@ async function openFixturePair(name: FixtureName, sources?: { before?: Map<strin
 }
 
 describe("the idle panel (1.1)", () => {
-  it("on manor/before: the sentence and only Revised manor sample; aria-expanded follows the panel", async () => {
+  it("on manor/before: the sentence and only Revised manor; aria-expanded follows the panel", async () => {
     const h = createHarness();
     await openManorBefore(h);
     compareStore(h);
@@ -70,7 +70,7 @@ describe("the idle panel (1.1)", () => {
     expect(control.getAttribute("aria-expanded")).toBe("true");
     expect(within(panel()).getByRole("heading", { name: "Compare revisions" })).toBeTruthy();
     expect(within(panel()).getByText("Compare manor/before with a newer snapshot.")).toBeTruthy();
-    expect(within(panel()).getAllByRole("button").map((b) => b.textContent)).toEqual(["Revised manor sample"]);
+    expect(within(panel()).getAllByRole("button").map((b) => b.textContent)).toEqual(["Revised manor"]);
     expect(within(panel()).queryByText(/folder|GitHub/i)).toBeNull();
   });
 
@@ -92,7 +92,7 @@ describe("the idle panel (1.1)", () => {
     await mountControl(h);
     fireEvent.click(button("Compare revisions"));
     h.fetcher.failWith("manor/after", 500);
-    const sample = button("Revised manor sample");
+    const sample = button("Revised manor");
     sample.focus();
     fireEvent.click(sample);
     expect(sample.getAttribute("aria-disabled")).toBe("true");
