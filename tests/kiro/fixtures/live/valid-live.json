@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "resolverMode": "documented-source-subset",
+  "sourceLabel": "live:samples/manor",
+  "modules": [],
+  "imports": [],
+  "diagnostics": [],
+  "options": {
+    "preset": "static-value",
+    "includeExtensions": [".js", ".jsx", ".ts", ".tsx", ".mjs", ".mts"],
+    "excludeDirectories": [".git", "node_modules", "dist", "build", "out", ".next", "coverage"],
+    "excludeFilePatterns": [".env", ".env.*", "*.pem", "*.key", "id_rsa*"],
+    "maxFiles": 1000,
+    "maxFileBytes": 1048576,
+    "maxTotalBytes": 26214400,
+    "jsToTsFallback": true
+  }
+}

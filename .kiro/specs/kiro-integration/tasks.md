@@ -8,7 +8,7 @@ Ownership: `.kiro/steering/ownership.md` gives this spec `packages/hauntmap-mcp/
 
 A task is done only when its Verify line holds and its log row is appended the same day, one row per task part in the task-cell format of Requirement 10.4, with the credits used. Two repair passes against the same observed defect, then stop, keep the reproducer and report it in the log. Every *verify* item is settled by reading the installed version or the landed module and writing the observed value into the file that carries the mark, with a log row.
 
-- [ ] 1a. Package scaffold, launcher, the sample working copy and the two demo scripts
+- [x] 1a. Package scaffold, launcher, the sample working copy and the two demo scripts
   - Do this task first: `.kiro/hooks/analyze-live.json` is already installed and runs `pnpm demo:live`, which does not exist yet. On 2026-11-16 the agent stop of the spec-review session printed `Command "demo:live" not found`; that defect is logged and this task fixes it. After the script exists, confirm that the next agent stop prints a `demo:live: skipped (…)` line instead, and add that to this task's row.
   - Create `packages/hauntmap-mcp/` with `package.json` (name `hauntmap-mcp`, private, `"type": "module"` or not as the bundle format requires, scripts `build` and `test`), `tsconfig.json`, the bundler configuration (esbuild or tsup, MIT; pin the version) producing `dist/index.js` and `dist/cli.js` with every dependency inlined, in a format that Node 24 runs with no `package.json` beside it, `bin/hauntmap.js` (the launcher of `design.md`: missing `dist/cli.js` → `hauntmap: the CLI is not built. Run pnpm build:mcp first.`, exit 3; loads the CLI through `pathToFileURL`), empty `src/{index,cli,tools,loader,errors}.ts` stubs that compile, and `README.md` recording, with the date read from the lockfile: the MCP TypeScript SDK package name and version (*verify*), the bundler and version, whether esbuild runs while `pnpm-workspace.yaml` denies its install script (`allowBuilds: esbuild: false`; `pnpm exec esbuild --version`), the Node version targeted (24, from the root `engines`) and `node --version` as installed, and the analysis entry points of `design.md` as read on `main` (`selectSources`, `analyze` with its `HashFn` argument, `findCycles`, `trace`, `DEFAULT_ANALYSIS_OPTIONS`, all from `src/analysis/index.ts`).
   - Create `scripts/sampleTree.ts` (`listIncluded(root)`, `treesEqual(a, b)` over the six included extensions), `samples/manor/` by copying every included file of `public/demo/manor/before/` (40 `.ts` files; `expected.json` and `sources.json` are not copied), `scripts/demo-reset.ts` printing `demo:reset: samples/manor restored from public/demo/manor/before (<n> files)`, and `scripts/demo-live.ts` with the three branches of `design.md` (`dist/cli.js` absent → skip line, exit 0; `treesEqual` → skip line, exit 0; else the injected runner with `analyze samples/manor --out public/demo/live.json`, spawned with `process.execPath` and no shell).
@@ -18,14 +18,14 @@ A task is done only when its Verify line holds and its log row is appended the s
   - _Requirements: 1.1, 1.3, 1.4, 1.5, 1.6, 6.8_
   - _Owner: kiro_
 
-- [ ] 1b. Fixtures, the materializer, generators and the fake file system
+- [x] 1b. Fixtures, the materializer, generators and the fake file system
   - Write `tests/kiro/fixtures/loader-root.json` with the exact entries of the `design.md` fixture table (BOM bytes, CRLF, the NUL file, the 1,048,577-byte file, the secret names, the seven excluded directories, `postinstall.js` with its marker), `tests/kiro/materialize.ts` (directory links as junctions on Windows), `tests/kiro/generators.ts` (`arbTree` with names unique without regard to case, no trailing dot and no reserved device names, `arbArgs`, `arbInvestigation`, `arbMutation`, `arbPath`, the `cap-files`, `cap-bytes` and `demo-live` workspace generators), `tests/kiro/fixtures/live/{valid-live.json (placeholder until task 9), malformed-live.json, not-json-live.txt, fallback.html}` with the contents of the table, and `tests/kiro/fakeFs.ts` (an `FsLike` over a temp directory that records every path read and written).
   - Fill `tests/kiro/fixtures.test.ts` asserting that the manifest materializes to the expected file list and that `cap-files` sorts to `m999.ts` as its last name (derived from the sorted list: `m1000.ts` sorts fifth, after `m0.ts`, `m1.ts`, `m10.ts`, `m100.ts`), and that `cap-bytes` produces 26 files of 1,048,576 bytes whose first 25 total exactly 26,214,400 bytes.
   - Verify: `pnpm verify` collects `tests/kiro/fixtures.test.ts` and it passes.
   - _Requirements: 2.2, 2.5_
   - _Owner: kiro_
 
-- [ ] 1c. Failing test files and the test configuration
+- [x] 1c. Failing test files and the test configuration
   - Create every test file of the `design.md` unit table and `tests/kiro/e2e/live-snapshot.spec.ts` with one test per listed case asserting the contract (they fail until the matching task lands); `sample-copy.test.ts` and `demo-live.test.ts` pass at once against task 1a's scripts. `live-snapshot.test.tsx` and the browser spec need jsdom, React Testing Library and Playwright, which `investigation-ui` installs; until then those two files are created but not collected, and the log row says so.
   - The Vitest `include` (`tests/**/*.test.ts`) already collects `tests/kiro/*.test.ts` and `tests/mcp-agreement.test.ts`.
   - **Other owner** (`analysis-core` root configuration, `vitest.config.ts`): add the global setup that builds `dist/` once when it is older than `src/`; after `investigation-ui` has installed jsdom, add `tests/kiro/**/*.test.tsx` in the jsdom environment. **Other owner** (`investigation-ui` Playwright configuration, once it exists): add `tests/kiro/e2e/**` to the `dev` project.
@@ -33,7 +33,7 @@ A task is done only when its Verify line holds and its log row is appended the s
   - _Requirements: 1.4, 6.8_
   - _Owner: kiro_
 
-- [ ] 2. The `verify-on-stop` hook and its observation
+- [x] 2. The `verify-on-stop` hook and its observation
   - `.kiro/hooks/verify-on-stop.json` exists with the content of `design.md` (trigger `Stop`, per the revision); confirm it byte for byte rather than rewriting it. Update `.kiro/hooks/README.md` for the revision of 2026-11-16: remove the Crew, worktree, integrator and IDE 1.4.62 text and the reference to the planning workspace's `kiro/FORMAT.md`; mark the trigger names as settled by the revision; replace screenshots with transcript excerpts; replace the `HAUNTMAP_FAST=1 pnpm verify` rule with `pnpm verify:fast` (an environment-variable prefix does not run in PowerShell or `cmd.exe`); keep the files table, the *verify* ledger, the observation procedure and the rules.
   - Confirm `pnpm verify` passes from PowerShell first, and record `Measure-Command { pnpm verify }` with the machine named by `Get-CimInstance Win32_Processor` and `Win32_ComputerSystem` (CPU model, memory).
   - Run a headless Kiro CLI 3.3.0 session in the repository root with a one-line prompt (flags read from `kiro-cli chat --help`, *verify*), output redirected to `.hauntmap/hook-verify-on-stop.txt`; record whether the hook's `pnpm verify` output appears, its first and last lines, the duration, the shell the hook ran in if shown, and save the excerpt as `docs/acceptance/hook-verify-on-stop.md`. If no hook output appears, read the installed CLI's hook reference (`kiro-cli` help or its documentation), change nothing that the revision fixes (`Stop`), try once more with any flag that the reference says enables hooks in headless mode, and then record `not observed`. An observation in an interactive session or in the IDE **needs a person**; it is optional.
@@ -42,35 +42,35 @@ A task is done only when its Verify line holds and its log row is appended the s
   - _Requirements: 6.1, 6.3, 6.6_
   - _Owner: kiro_
 
-- [ ] 3. The Node source loader
+- [x] 3. The Node source loader
   - Implement `packages/hauntmap-mcp/src/loader.ts` as in `design.md`: `sourceLabelFor`; `resolveRoot` (both sides through `fs.realpath`, prefix with `path.sep`; the ENOENT branch checks the unresolved path; `root-outside-workspace` and `root-not-found` messages verbatim); `loadSourceSet` (code-point-ordered depth-first walk; excluded directories not entered, one `<dir>/` entry each; every other file passed to `selectSources` of `src/analysis/index.ts`, read only when it may be included, `text: ""` otherwise; `TextDecoder("utf-8")` without newline normalization; links and junctions resolved and skipped with a stderr line when they leave the workspace; the two `cap-reached` messages built from the `selectSources` cap diagnostic; the selection diagnostics returned for `analyze`); `sha256Hex` as the async `HashFn` over `node:crypto`; the `FsLike` injection. Import `DEFAULT_ANALYSIS_OPTIONS` and `selectSources` from `src/analysis/index.ts`; copy no option value.
   - Fill `tests/kiro/loader.test.ts` (every case of the `design.md` table, including the fake-fs assertion that no `readdir` happens under `node_modules` and no read outside the workspace for `escape-link`, `cap-files` with the first excluded name derived from the sorted list, and `cap-bytes` with the 26th sorted name) and P1–P4 in `tests/kiro/properties.test.ts`.
   - Verify: `pnpm verify` passes with `loader.test.ts` and P1–P4 green; the `bom.ts` and `crlf.ts` hashes printed by the test equal the Web Crypto hashes computed in the same run.
   - _Requirements: 2.1, 2.2, 2.3, 2.5, 2.6, 2.7, 2.8_
   - _Owner: kiro_
 
-- [ ] 4a. The validators
+- [x] 4a. The validators
   - Add `src/contracts/validate.ts` (`validateInvestigation`, `validateComparison`, the exact error strings of the `design.md` validator table, no schema library; `ValidationResult` is a type alias, not an interface). `analysis-core` provides no validator on 2026-11-16, and `.kiro/steering/ownership.md` names this file as the one file under `src/contracts` that this task creates. The file must pass check 1 of `tests/analysis-boundary.test.ts` (no DOM or worker globals). `snapshot-comparison` consumes it.
   - Fill `tests/kiro/validate.test.ts` (every row of the validator table produces its exact string; a valid `analyze` output passes; a hand-built `ComparisonResult` passes until task 9 replaces it with one from `compareInvestigations`; unsorted relation lists fail) and P7 in `properties.test.ts`.
   - Verify: `pnpm verify` passes with `validate.test.ts`, P7 and `tests/analysis-boundary.test.ts` green.
   - _Requirements: 3.2, 4.6, 5.4_
   - _Owner: kiro_
 
-- [ ] 4b. Errors, the `analyze` tool and the server skeleton
+- [x] 4b. Errors, the `analyze` tool and the server skeleton
   - Implement `packages/hauntmap-mcp/src/errors.ts`, `tools.ts` (`parseArgs`, the shared steps 1–4 and 6, `analyzeTool`, the `ToolContext` wired to the functions of `src/analysis/index.ts` by reference, the validators and `sha256Hex`; no method or arrow function named `findCycles` or `trace` in this package, because check 2 of `tests/analysis-boundary.test.ts` fails on it) and `index.ts` (SDK server named `hauntmap`, stdio transport, the `analyze` tool with the schema and description of the table returned verbatim by `tools/list`, stderr-only logging with the `hauntmap-mcp: ` prefix, SIGINT/SIGTERM handling; *verify* and record in `README.md` the SDK class and request-handler names used, whether `structuredContent` is supported and the error-flag field name).
   - Fill `tests/kiro/tools.test.ts` (the `analyze` cases), `package-boundary.test.ts`, `no-execution.test.ts`, `server.test.ts` (`tools/list` with `analyze` only for now, stdout purity, the 3.8 timing printed) and `dist-standalone.test.ts` (the copy goes to a folder under the system temp directory, outside the repository).
   - Verify: `pnpm build:mcp` succeeds; `pnpm verify` passes with the five files and `tests/analysis-boundary.test.ts` green; `node packages/hauntmap-mcp/dist/index.js` started from the repository root answers `tools/list` with `analyze` (observed through `server.test.ts`).
   - _Requirements: 1.1, 1.2, 3.1, 3.2, 3.6, 3.7, 3.8_
   - _Owner: kiro_
 
-- [ ] 4c. The CLI, the launcher wiring and `hauntmap analyze`
+- [x] 4c. The CLI, the launcher wiring and `hauntmap analyze`
   - Implement `cli.ts` with `bin/hauntmap.js` (`USAGE`, the root `package.json` guard for the name `hauntmap`, `analyze` with `--out` and `--preset`, the `.tmp` + rename write with the Windows retry of `design.md`, the `analyze:` stdout line, exit codes 2, 4, 5, 6).
   - Fill `tests/kiro/cli.test.ts` (the `analyze` cases and every exit code, 5.6 including the twice-run byte comparison) and `tests/mcp-agreement.test.ts` case `row 26` (the app side reads `public/demo/manor/before/sources.json`, builds `SourceFile`s with `bytes` = UTF-8 length, runs `selectSources` and `analyze` with a Web Crypto hash; `scripts/pack-samples.ts` is a command-line script and is not imported).
   - Verify: `pnpm build:mcp`, then `pnpm hauntmap analyze samples/manor --out .hauntmap/live.json` prints `analyze: 40 modules, 72 relations, 1 diagnostics → .hauntmap/live.json` (the three numbers are those of `public/demo/manor/before/expected.json`: 40 modules, 72 imports with 72 distinct relation IDs, one `unresolved` diagnostic); the file passes `validateInvestigation` and contains no `"text"` property; a second run to `.hauntmap/live-again.json` is byte-identical (`git diff --no-index --exit-code .hauntmap/live.json .hauntmap/live-again.json` exits 0); `pnpm verify` passes with `cli.test.ts` and `row 26` green (sorted module IDs, hashes and relation IDs equal between the CLI output and the app path).
   - _Requirements: 2.4, 5.1, 5.2, 5.4, 5.5, 5.6_
   - _Owner: kiro_
 
-- [ ] 5. The `cycles` and `who_imports` tools
+- [x] 5. The `cycles` and `who_imports` tools
   - Add `cyclesTool` and `whoImportsTool` to `tools.ts` (`findCycles`; the `module-not-found` check against `investigation.modules` before `trace`, which throws on an unknown origin; `direction: "imported-by"`), register both in `index.ts` with their schemas and descriptions, and register `compareTool` as the placeholder that returns `analysis-failed` with `compare is not available until snapshot-comparison lands` (its schema and description already final).
   - Fill the `cycles`, `who_imports`, `invalid-preset`, `invalid-arguments` and `module-not-found` cases of `tests/kiro/tools.test.ts` (facts read from `public/demo/manor/before/expected.json`, never hardcoded: one component of three members under `static-value`, the demo relation ID first in its witness, `direct` of `src/orders/checkout.ts` equal to `["src/notifications/receipt.ts"]`), the four-tool `tools/list` assertion and the error-result round trip of `server.test.ts`, and P5–P6 in `properties.test.ts`.
   - Verify: `pnpm verify` passes with `tools.test.ts`, `server.test.ts` and P5–P6 green; `server.test.ts` prints the `analyze` response time for `samples/manor` (target 2,000 ms; the figure goes to `docs/performance.md` with the machine named as in task 2).

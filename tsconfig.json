@@ -15,5 +15,5 @@
     "allowImportingTsExtensions": true
   },
   "include": ["src", "tests", "scripts", "vitest.config.ts", "eslint.config.js"],
-  "exclude": ["tests/fixtures/*/**"]
+  "exclude": ["tests/fixtures/*/**", "tests/pending/**"]
 }

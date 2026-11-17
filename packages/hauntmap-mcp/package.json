@@ -1,0 +1,22 @@
+{
+  "name": "hauntmap-mcp",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "hauntmap": "bin/hauntmap.js"
+  },
+  "scripts": {
+    "build": "tsc --noEmit -p tsconfig.json && node build.mjs",
+    "test": "pnpm --dir ../.. exec vitest run tests/kiro"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "esbuild": "0.28.2",
+    "typescript": "6.0.3"
+  }
+}

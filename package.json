@@ -14,6 +14,10 @@
     "test": "vitest run",
     "pack:samples": "tsx scripts/pack-samples.ts",
     "check:expected": "node scripts/check-expected.mjs",
+    "build:mcp": "pnpm --filter hauntmap-mcp build",
+    "hauntmap": "node packages/hauntmap-mcp/bin/hauntmap.js",
+    "demo:reset": "tsx scripts/demo-reset.ts",
+    "demo:live": "tsx scripts/demo-live.ts",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm pack:samples --check && pnpm check:expected"
   },
   "devDependencies": {

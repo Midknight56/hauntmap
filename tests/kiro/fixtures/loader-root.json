@@ -1,0 +1,50 @@
+{
+  "files": {
+    "src/a.ts": "import { b } from \"./b\";\nexport const a = b;\n",
+    "src/b.ts": "export const b = 1;\n",
+    "src/util/index.ts": "export const util = 1;\n",
+    "src/Util.ts": "export const Util = 1;\n",
+    "legacy.mjs": "export const legacy = 1;\n",
+    "types.mts": "export type Id = string;\n",
+    "bom.ts": { "base64": "77u/ZXhwb3J0IGNvbnN0IHggPSAxOwo=" },
+    "crlf.ts": "export const y = 2;\r\n",
+    "bin.ts": { "base64": "AAECZXhwb3J0IGNvbnN0IHogPSAzOwo=" },
+    "big.ts": { "bytes": 1048577, "fill": "/" },
+    "Readme.md": "# Readme\n",
+    ".env": "TOKEN=1\n",
+    ".env.local": "TOKEN=2\n",
+    "secret.pem": "-----BEGIN PRIVATE KEY-----\n",
+    "server.key": "key\n",
+    "id_rsa": "private\n",
+    "id_rsa.pub": "public\n",
+    "node_modules/pkg/index.js": "export const pkg = 1;\n",
+    "dist/out.js": "export const out = 1;\n",
+    "build/x.js": "export const x = 1;\n",
+    "out/y.js": "export const y = 1;\n",
+    ".next/z.js": "export const z = 1;\n",
+    "coverage/c.js": "export const c = 1;\n",
+    ".git/HEAD": "ref: refs/heads/main\n",
+    "postinstall.js": "import { writeFileSync } from \"node:fs\";\nwriteFileSync(new URL(\"./MARKER\", import.meta.url), \"postinstall.js ran\");\n"
+  },
+  "expected": {
+    "files": ["bom.ts", "crlf.ts", "legacy.mjs", "postinstall.js", "src/Util.ts", "src/a.ts", "src/b.ts", "src/util/index.ts", "types.mts"],
+    "skipped": {
+      ".git/": "excluded-dir",
+      "node_modules/": "excluded-dir",
+      "dist/": "excluded-dir",
+      "build/": "excluded-dir",
+      "out/": "excluded-dir",
+      ".next/": "excluded-dir",
+      "coverage/": "excluded-dir",
+      ".env": "secret-pattern",
+      ".env.local": "secret-pattern",
+      "secret.pem": "secret-pattern",
+      "server.key": "secret-pattern",
+      "id_rsa": "secret-pattern",
+      "id_rsa.pub": "secret-pattern",
+      "Readme.md": "extension",
+      "big.ts": "oversized",
+      "bin.ts": "binary"
+    }
+  }
+}
