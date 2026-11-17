@@ -1,0 +1,40 @@
+{
+  "expectedVersion": 1,
+  "addedModules": [],
+  "removedModules": [],
+  "changedModules": ["src/notifications/receipt.ts", "src/orders/checkout.ts"],
+  "addedRelations": [
+    {
+      "from": "src/notifications/receipt.ts",
+      "to": "src/orders/summary.ts",
+      "specifier": "../orders/summary",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local"
+    }
+  ],
+  "removedRelations": [
+    {
+      "from": "src/notifications/receipt.ts",
+      "to": "src/orders/checkout.ts",
+      "specifier": "../orders/checkout",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local"
+    }
+  ],
+  "before": { "moduleCount": 40, "relationCount": 72 },
+  "after": { "moduleCount": 40, "relationCount": 72 },
+  "cyclicComponentsBefore": 1,
+  "cyclicComponentsAfter": 0,
+  "occurrenceCounts": {
+    "src/notifications/receipt.ts": { "before": 4, "after": 4 },
+    "src/orders/checkout.ts": { "before": 6, "after": 6 }
+  },
+  "relationChangesByModule": {
+    "src/notifications/receipt.ts": { "removed": 1, "added": 1 }
+  },
+  "optionsDiffer": [],
+  "parseFailed": [],
+  "identical": false
+}

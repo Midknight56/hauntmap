@@ -1,5 +1,8 @@
 import { Application, Container, Graphics, type Texture } from "pixi.js";
 import { createAnimator } from "./animation";
+import { applyComparison, closingKey, shouldClose, type ComparisonDebug, type ComparisonStyle } from "./compare";
+import { drawComparisonMarks } from "./compare/states";
+import { closeCorridor } from "./compare/transition";
 import { drawCorridors, drawRoute, type RouteHandle } from "./corridors";
 import { drawDoors } from "./doors";
 import { createElementTextures } from "./elements";
@@ -94,6 +97,12 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
   let displayed: Camera = { x: 0, y: 0, zoom: 1 };
   let target: Camera = displayed;
   let cameraToken = 0;
+  // Comparison (snapshot-comparison, gate G3): the last style received, the last closing set applied, and the
+  // layout actually drawn (hidden rooms and doors removed).
+  let comparison: ComparisonStyle | null = null;
+  let lastClosing = "";
+  let comparisonStates: ComparisonDebug["states"] = {};
+  let drawnLayout: LayoutResult | null = null;
 
   const gate = createTickerGate({ start: () => app.ticker.start(), stop: () => app.ticker.stop() });
 
@@ -106,7 +115,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
       visibleRooms = 0;
       return;
     }
-    const visible = new Set(visibleRoomIds(layout.rooms, displayed, viewport()));
+    const visible = new Set(visibleRoomIds((drawnLayout ?? layout).rooms, displayed, viewport()));
     visibleRooms = visible.size;
     for (const [id, node] of roomNodes) node.visible = visible.has(id);
   }
@@ -117,17 +126,25 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     roomNodes = new Map();
     route = null;
     particles = 0;
+    drawnLayout = null;
     if (layout === null) return;
-    const states = deriveStates(layout, styleState ?? { selection: { kind: "none" }, routeFilter: null });
+    const view = applyComparison(layout, deriveStates(layout, styleState ?? { selection: { kind: "none" }, routeFilter: null }), comparison);
+    const drawn = view.drawn;
+    const states = view.states;
+    drawnLayout = drawn;
+    comparisonStates = view.debug;
+    // Hidden comparison elements are neither drawn nor hit-tested.
+    targets = buildHitTargets(drawn);
     const ctx: DrawContext = { layers, textures, states, reduced };
-    drawWings(ctx, layout);
-    drawCorridors(ctx, layout);
-    roomNodes = drawRooms(ctx, layout);
-    drawDoors(ctx, layout);
-    route = drawRoute(ctx, layout);
+    drawWings(ctx, drawn);
+    drawCorridors(ctx, drawn);
+    roomNodes = drawRooms(ctx, drawn);
+    drawDoors(ctx, drawn);
+    drawComparisonMarks(layers.selected, view);
+    route = drawRoute(ctx, drawn);
     particles = route?.particleCount ?? 0;
     if (states.haloRoom !== null) {
-      const rect = haloRect(layout, states.haloRoom);
+      const rect = haloRect(drawn, states.haloRoom);
       if (rect !== null) {
         const halo = new Graphics();
         halo.roundRect(rect.x - 6, rect.y - 6, rect.w + 12, rect.h + 12, 12).stroke({ width: 4, color: TOKENS.focus });
@@ -247,6 +264,16 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     },
     setStyleState(state) {
       guard();
+      // An absent `comparison` keeps the last style; `null` clears it.
+      if (state.comparison !== undefined) {
+        const next = (state.comparison ?? null) as ComparisonStyle | null;
+        const previous = styleState?.routeFilter ?? null;
+        if (shouldClose(next, lastClosing) && previous !== null && previous.kind === "witness" && layout !== null) {
+          closeCorridor({ parent: world, layout, route: previous, animator, reduced });
+        }
+        lastClosing = next === null ? "" : closingKey(next.closingRelationIds);
+        comparison = next;
+      }
       styleState = state;
       redraw(false);
     },
@@ -301,15 +328,17 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
       if (!opts.debug) {
         return { textureCount: 0, visibleRooms: 0, tickerRunning: false, activeTweens: 0, drawnDoors: 0, particleCount: 0, frames: 0 };
       }
-      return {
+      const counters: SceneDebug & ComparisonDebug = {
         textureCount: textures.size,
         visibleRooms,
         tickerRunning: app.ticker.started,
         activeTweens: animator.activeTweens,
-        drawnDoors: layout?.doors.length ?? 0,
+        drawnDoors: (drawnLayout ?? layout)?.doors.length ?? 0,
         particleCount: particles,
         frames,
+        states: { ...comparisonStates },
       };
+      return counters;
     },
     destroy() {
       if (destroyed) return;

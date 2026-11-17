@@ -15,6 +15,10 @@
   --ink: #f1ecf7;
   --ink-muted: #b9b0c7;
   --focus: #f5b700;
+  /* Comparison states (snapshot-comparison, gate G3). */
+  --changed: #f0b429;
+  --removed: #9a93a8;
+  --added: #5ad48a;
 }
 
 :focus-visible {

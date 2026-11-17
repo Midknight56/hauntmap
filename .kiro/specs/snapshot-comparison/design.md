@@ -66,7 +66,7 @@ sequenceDiagram
 | `src/features/compare/store.ts` | `createCompareStore`: state machine, acquisition, comparison, layout path, toggle, end, reset | kiro |
 | `src/features/compare/sources.ts` | `acquireSnapshot` for sample, investigation and intake sources | kiro |
 | `src/features/compare/unionLayout.ts` | `buildUnionGraph`, `buildUnionRequest`, `extendLayout`, `unionLayoutKey`, `unionRequestBuilder` | kiro |
-| `src/features/compare/placement.ts` | `DoorPlacement` adapter over `src/scene/layout/doorsPlacement.ts` (*verify* export name) | kiro |
+| `src/features/compare/placement.ts` | `DoorPlacement` adapter over `src/scene/layout/doorsPlacement.ts` (export name `placeDoors`, read in task 1a) | kiro |
 | `src/features/compare/legend.ts` | `LEGEND_ENTRIES` (the three legend concepts of 5.3) | Kiro |
 | `src/features/compare/register.ts` | registers the `compare` control, the `compare` handoff and the legend provider | Kiro |
 | `src/features/compare/CompareControl.tsx`, `ComparePanel.tsx`, `SelectedChange.tsx`, `Notes.tsx` | the toolbar control and the panel | kiro |
@@ -173,7 +173,7 @@ export function buildUnionGraph(before: Investigation, after: Investigation, pre
 export function buildUnionRequest(union: UnionGraph, expandedWings: string[], keep: ReadonlyMap<string, string[]>, preset: Preset, engine: "dagre" | "elk"): LayoutRequest;
   // modules/relations/boundaries from the union; expandedWings with shownIds and hiddenCount: a wing present in `keep` (the shownIds of the current layout) keeps them (dropped modules removed, added modules appended while fewer than 80), any other expanded wing shows its 80 lexically smallest union modules or all of them; no `bring` swap, because the fleet's builder receives only ViewState
 
-export interface DoorPlacement {   // adapter in placement.ts over src/scene/layout/doorsPlacement.ts (*verify* its export name and signature)
+export interface DoorPlacement {   // adapter in placement.ts over src/scene/layout/doorsPlacement.ts (export `placeDoors({ rooms: ReadonlyMap<string, Rect>, relations, boundaries })`, read in task 1a)
   (rooms: RoomBox[], relations: { relationId: string; from: string; to: string }[], boundaries: { relationId: string; from: string }[]): { doors: DoorBox[]; sealed: SealedBox[] };
 }
 export interface ExtendOutcome { layout: LayoutResult; addedRoomIds: string[]; droppedRoomIds: string[]; movedRoomIds: string[] }

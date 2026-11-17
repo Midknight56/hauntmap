@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "resolverMode": "documented-source-subset",
+  "sourceLabel": "cycle-closes/before",
+  "modules": [
+    {
+      "id": "src/x.ts",
+      "sourceHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/y.ts",
+      "sourceHash": "2222222222222222222222222222222222222222222222222222222222222222",
+      "language": "ts",
+      "parseStatus": "ok"
+    }
+  ],
+  "imports": [
+    {
+      "occurrenceId": "[\"src/x.ts\",1,1,\"./y\"]",
+      "relationId": "[\"src/x.ts\",[\"local\",\"src/y.ts\"],\"import\",\"value\"]",
+      "from": "src/x.ts",
+      "to": "src/y.ts",
+      "specifier": "./y",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local",
+      "line": 1,
+      "column": 1
+    },
+    {
+      "occurrenceId": "[\"src/y.ts\",1,1,\"./x\"]",
+      "relationId": "[\"src/y.ts\",[\"local\",\"src/x.ts\"],\"import\",\"value\"]",
+      "from": "src/y.ts",
+      "to": "src/x.ts",
+      "specifier": "./x",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local",
+      "line": 1,
+      "column": 1
+    }
+  ],
+  "diagnostics": [],
+  "options": {
+    "preset": "static-value",
+    "includeExtensions": [
+      ".js",
+      ".jsx",
+      ".ts",
+      ".tsx",
+      ".mjs",
+      ".mts"
+    ],
+    "excludeDirectories": [
+      ".git",
+      "node_modules",
+      "dist",
+      "build",
+      "out",
+      ".next",
+      "coverage"
+    ],
+    "excludeFilePatterns": [
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key",
+      "id_rsa*"
+    ],
+    "maxFiles": 1000,
+    "maxFileBytes": 1048576,
+    "maxTotalBytes": 26214400,
+    "jsToTsFallback": true
+  }
+}

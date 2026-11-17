@@ -1,0 +1,30 @@
+{
+  "expectedVersion": 1,
+  "addedModules": [],
+  "removedModules": [],
+  "changedModules": [
+    "src/a.ts"
+  ],
+  "addedRelations": [],
+  "removedRelations": [],
+  "before": {
+    "moduleCount": 2,
+    "relationCount": 1
+  },
+  "after": {
+    "moduleCount": 2,
+    "relationCount": 1
+  },
+  "cyclicComponentsBefore": 0,
+  "cyclicComponentsAfter": 0,
+  "occurrenceCounts": {
+    "src/a.ts": {
+      "before": 1,
+      "after": 1
+    }
+  },
+  "relationChangesByModule": {},
+  "optionsDiffer": [],
+  "parseFailed": [],
+  "identical": false
+}

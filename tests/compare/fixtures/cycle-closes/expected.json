@@ -1,0 +1,44 @@
+{
+  "expectedVersion": 1,
+  "addedModules": [],
+  "removedModules": [],
+  "changedModules": [
+    "src/y.ts"
+  ],
+  "addedRelations": [],
+  "removedRelations": [
+    {
+      "from": "src/y.ts",
+      "to": "src/x.ts",
+      "specifier": "./x",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local"
+    }
+  ],
+  "before": {
+    "moduleCount": 2,
+    "relationCount": 2
+  },
+  "after": {
+    "moduleCount": 2,
+    "relationCount": 1
+  },
+  "cyclicComponentsBefore": 1,
+  "cyclicComponentsAfter": 0,
+  "occurrenceCounts": {
+    "src/y.ts": {
+      "before": 1,
+      "after": 0
+    }
+  },
+  "relationChangesByModule": {
+    "src/y.ts": {
+      "removed": 1,
+      "added": 0
+    }
+  },
+  "optionsDiffer": [],
+  "parseFailed": [],
+  "identical": false
+}

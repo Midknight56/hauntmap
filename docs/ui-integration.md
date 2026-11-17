@@ -75,3 +75,11 @@ hook.registry.registerControl("export", () => hook.h("button", { type: "button" 
 ```
 
 The release build has no hook. `tests/e2e/hosted-controls.spec.ts` shows the stubs for 10.3 (backtick message), 10.4 (the `layoutKey` and unchanged camera, selection, route filter and wings), 10.5 (a failure leaves the state deep-equal) and 10.7 (a stub export control and a stub dialog).
+
+## Comparison
+
+Added by `snapshot-comparison` task 10 under gate G2 (2026-11-17).
+
+- The handoff. `src/components/App.tsx` calls `createCompareServices` at start: it builds the compare store of `src/features/compare/store.ts` over the app's store, analysis client and `loadSample`, and `registerCompare(registry, compareStore)` registers the `compare` control (the `Compare revisions` button and its panel), the `compare` handoff and the legend provider. The handoff takes `{ before, after, layoutKey }`; `after` is `{ sample: "manor/after" }` or an `Investigation`. It resolves when the comparison is active and rejects with an `Error` carrying the message it already wrote to the status region, so a caller writes no second message.
+- The `comparison` prop of `MapView`. `MapView` takes an optional `comparison: { get(): unknown; subscribe(listener): () => void }`. When it is given, every `setStyleState` call carries `comparison: get()` (`null` when no comparison is active), and `get()` is read again on every notification. `App.tsx` passes `{ get: () => styleOf(compareStore.getState()), subscribe: compareStore.subscribe }`. Without the prop `MapView` sends no `comparison` key, and the scene keeps the last style it received.
+- The live snapshot. `kiro-integration` calls the same handoff with the `Investigation` of `public/demo/live.json` (its `sourceLabel` starts with `live:`); the snapshot has no source map, so the comparison panel says `Source not included in this snapshot; evidence is path, line and specifier.` for its occurrences. In development builds `window.__hauntmap.compareStore` is the compare store (its `getState().result` is the `ComparisonResult`), and `window.__hauntmap.compareWith(after, layoutKey?)` calls the handoff with the open investigation as `before` and the current layout key unless one is given. The release build has neither.

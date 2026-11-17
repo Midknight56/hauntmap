@@ -1,0 +1,57 @@
+{
+  "expectedVersion": 1,
+  "addedModules": [
+    "src/util/formatMoney.ts"
+  ],
+  "removedModules": [
+    "src/util/format.ts"
+  ],
+  "changedModules": [
+    "src/app.ts"
+  ],
+  "addedRelations": [
+    {
+      "from": "src/app.ts",
+      "to": "src/util/formatMoney.ts",
+      "specifier": "./util/formatMoney",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local"
+    }
+  ],
+  "removedRelations": [
+    {
+      "from": "src/app.ts",
+      "to": "src/util/format.ts",
+      "specifier": "./util/format",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local"
+    }
+  ],
+  "before": {
+    "moduleCount": 2,
+    "relationCount": 1
+  },
+  "after": {
+    "moduleCount": 2,
+    "relationCount": 1
+  },
+  "cyclicComponentsBefore": 0,
+  "cyclicComponentsAfter": 0,
+  "occurrenceCounts": {
+    "src/app.ts": {
+      "before": 1,
+      "after": 1
+    }
+  },
+  "relationChangesByModule": {
+    "src/app.ts": {
+      "removed": 1,
+      "added": 1
+    }
+  },
+  "optionsDiffer": [],
+  "parseFailed": [],
+  "identical": false
+}

@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "resolverMode": "documented-source-subset",
+  "sourceLabel": "boundary-change/after",
+  "modules": [
+    {
+      "id": "src/app.ts",
+      "sourceHash": "6666666666666666666666666666666666666666666666666666666666666666",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/ghosts/present.ts",
+      "sourceHash": "7777777777777777777777777777777777777777777777777777777777777777",
+      "language": "ts",
+      "parseStatus": "ok"
+    }
+  ],
+  "imports": [
+    {
+      "occurrenceId": "[\"src/app.ts\",1,1,\"zod\"]",
+      "relationId": "[\"src/app.ts\",[\"external\",\"zod\"],\"import\",\"value\"]",
+      "from": "src/app.ts",
+      "to": null,
+      "specifier": "zod",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "external",
+      "line": 1,
+      "column": 1
+    },
+    {
+      "occurrenceId": "[\"src/app.ts\",2,1,\"./ghosts/present\"]",
+      "relationId": "[\"src/app.ts\",[\"local\",\"src/ghosts/present.ts\"],\"import\",\"value\"]",
+      "from": "src/app.ts",
+      "to": "src/ghosts/present.ts",
+      "specifier": "./ghosts/present",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local",
+      "line": 2,
+      "column": 1
+    }
+  ],
+  "diagnostics": [],
+  "options": {
+    "preset": "static-value",
+    "includeExtensions": [
+      ".js",
+      ".jsx",
+      ".ts",
+      ".tsx",
+      ".mjs",
+      ".mts"
+    ],
+    "excludeDirectories": [
+      ".git",
+      "node_modules",
+      "dist",
+      "build",
+      "out",
+      ".next",
+      "coverage"
+    ],
+    "excludeFilePatterns": [
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key",
+      "id_rsa*"
+    ],
+    "maxFiles": 1000,
+    "maxFileBytes": 1048576,
+    "maxTotalBytes": 26214400,
+    "jsToTsFallback": true
+  }
+}

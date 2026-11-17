@@ -1,0 +1,4 @@
+// moved down
+// by two comment lines
+import { b } from "./b";
+export const a = b;

@@ -1,0 +1,2 @@
+import { format } from "./util/formatMoney";
+export const app = format(1);

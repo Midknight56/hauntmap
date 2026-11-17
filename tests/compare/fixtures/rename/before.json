@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "resolverMode": "documented-source-subset",
+  "sourceLabel": "rename/before",
+  "modules": [
+    {
+      "id": "src/app.ts",
+      "sourceHash": "1984e12f78e75c4f6d76dd8a0cbe102d238fa4890492c36f7e55bc01aa9a97cb",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/util/format.ts",
+      "sourceHash": "40483aaf98549a7d523cf046595dfa937b38a931996d5e3ad3f37c110f698df7",
+      "language": "ts",
+      "parseStatus": "ok"
+    }
+  ],
+  "imports": [
+    {
+      "occurrenceId": "[\"src/app.ts\",1,1,\"./util/format\"]",
+      "relationId": "[\"src/app.ts\",[\"local\",\"src/util/format.ts\"],\"import\",\"value\"]",
+      "from": "src/app.ts",
+      "to": "src/util/format.ts",
+      "specifier": "./util/format",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local",
+      "line": 1,
+      "column": 1
+    }
+  ],
+  "diagnostics": [],
+  "options": {
+    "preset": "static-value",
+    "includeExtensions": [
+      ".js",
+      ".jsx",
+      ".ts",
+      ".tsx",
+      ".mjs",
+      ".mts"
+    ],
+    "excludeDirectories": [
+      ".git",
+      "node_modules",
+      "dist",
+      "build",
+      "out",
+      ".next",
+      "coverage"
+    ],
+    "excludeFilePatterns": [
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key",
+      "id_rsa*"
+    ],
+    "maxFiles": 1000,
+    "maxFileBytes": 1048576,
+    "maxTotalBytes": 26214400,
+    "jsToTsFallback": true
+  }
+}

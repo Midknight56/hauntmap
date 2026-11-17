@@ -1,0 +1,44 @@
+{
+  "expectedVersion": 1,
+  "addedModules": [],
+  "removedModules": [],
+  "changedModules": [
+    "src/a&b.ts"
+  ],
+  "addedRelations": [
+    {
+      "from": "src/a&b.ts",
+      "to": null,
+      "specifier": "./<img src=x onerror=alert(1)>",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "unresolved"
+    }
+  ],
+  "removedRelations": [],
+  "before": {
+    "moduleCount": 1,
+    "relationCount": 0
+  },
+  "after": {
+    "moduleCount": 1,
+    "relationCount": 1
+  },
+  "cyclicComponentsBefore": 0,
+  "cyclicComponentsAfter": 0,
+  "occurrenceCounts": {
+    "src/a&b.ts": {
+      "before": 0,
+      "after": 1
+    }
+  },
+  "relationChangesByModule": {
+    "src/a&b.ts": {
+      "removed": 0,
+      "added": 1
+    }
+  },
+  "optionsDiffer": [],
+  "parseFailed": [],
+  "identical": false
+}

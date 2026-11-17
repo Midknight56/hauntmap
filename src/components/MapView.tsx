@@ -23,6 +23,11 @@ interface Props {
   createScene: typeof CreateScene;
   /** Overrides the development hook and the `?renderer=off` query (tests). */
   forceFailure?: boolean;
+  /**
+   * The comparison style (snapshot-comparison, gate G2). When given, every `setStyleState` call carries
+   * `comparison: get()`, and `get()` is read again on every notification.
+   */
+  comparison?: { get(): unknown; subscribe(listener: () => void): () => void };
 }
 
 /** A pointer drag shorter than this is a click. */
@@ -60,8 +65,14 @@ function firstFit(state: ViewState, viewport: { width: number; height: number })
   return fitBounds(layout.bounds, viewport, FIT_PADDING);
 }
 
-export function MapView({ store, createScene, forceFailure }: Props) {
+export function MapView({ store, createScene, forceFailure, comparison }: Props) {
   const state = useViewState(store);
+  const [comparisonValue, setComparisonValue] = useState<unknown>(() => comparison?.get());
+  useEffect(() => {
+    if (comparison === undefined) return;
+    setComparisonValue(comparison.get());
+    return comparison.subscribe(() => setComparisonValue(comparison.get()));
+  }, [comparison]);
   const reduced = useReducedMotion(state.motion);
   const helpId = useId();
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -152,8 +163,12 @@ export function MapView({ store, createScene, forceFailure }: Props) {
   }, [scene, state.layout]);
 
   useEffect(() => {
-    scene?.setStyleState({ selection: state.selection, routeFilter: state.routeFilter });
-  }, [scene, state.selection, state.routeFilter, state.layout]);
+    scene?.setStyleState(
+      comparison === undefined
+        ? { selection: state.selection, routeFilter: state.routeFilter }
+        : { selection: state.selection, routeFilter: state.routeFilter, comparison: comparisonValue ?? null },
+    );
+  }, [scene, state.selection, state.routeFilter, state.layout, comparison, comparisonValue]);
 
   useEffect(() => {
     scene?.setReducedMotion(reduced);
@@ -182,9 +197,15 @@ export function MapView({ store, createScene, forceFailure }: Props) {
     const target = focusTargetOf(selection, state.layout, state.investigation);
     if (target !== null) store.actions.setCamera(scene.focusOn(target, 1));
   }, [store, scene, state.layout, state.layoutStatus, state.selection, state.selectionOrigin, state.investigation]);
-  // The first layout of an investigation fits the camera; later layouts keep the camera center (3.6).
+  // The first layout of an investigation fits the camera; later layouts keep the camera center (3.6). An
+  // investigation opened with `openInvestigation` starts with no layout; one swapped in with `replaceInvestigation`
+  // (the comparison toggle, gate G2) keeps its layout and therefore keeps the camera (snapshot-comparison 6.1, 6.2).
   useEffect(() => {
-    if (state.layout === null || state.investigation === null || fittedFor.current === state.investigation) return;
+    if (state.layout === null) {
+      fittedFor.current = null;
+      return;
+    }
+    if (state.investigation === null || fittedFor.current !== null) return;
     fittedFor.current = state.investigation;
     const wrapper = wrapperRef.current;
     if (wrapper !== null) setViewportSize({ width: wrapper.clientWidth, height: wrapper.clientHeight });

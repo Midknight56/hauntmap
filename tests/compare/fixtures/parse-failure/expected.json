@@ -1,0 +1,42 @@
+{
+  "expectedVersion": 1,
+  "addedModules": [],
+  "removedModules": [],
+  "changedModules": [],
+  "addedRelations": [],
+  "removedRelations": [
+    {
+      "from": "src/a.ts",
+      "to": "src/b.ts",
+      "specifier": "./b",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local"
+    }
+  ],
+  "before": {
+    "moduleCount": 2,
+    "relationCount": 1
+  },
+  "after": {
+    "moduleCount": 2,
+    "relationCount": 0
+  },
+  "cyclicComponentsBefore": 0,
+  "cyclicComponentsAfter": 0,
+  "occurrenceCounts": {},
+  "relationChangesByModule": {
+    "src/a.ts": {
+      "removed": 1,
+      "added": 0
+    }
+  },
+  "optionsDiffer": [],
+  "parseFailed": [
+    {
+      "id": "src/a.ts",
+      "side": "after"
+    }
+  ],
+  "identical": false
+}

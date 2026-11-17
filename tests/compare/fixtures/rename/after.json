@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "resolverMode": "documented-source-subset",
+  "sourceLabel": "rename/after",
+  "modules": [
+    {
+      "id": "src/app.ts",
+      "sourceHash": "7b6050c79fd136330e8bb663edd569fd451127cb1ae00d698a1f8cedb243a29e",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/util/formatMoney.ts",
+      "sourceHash": "40483aaf98549a7d523cf046595dfa937b38a931996d5e3ad3f37c110f698df7",
+      "language": "ts",
+      "parseStatus": "ok"
+    }
+  ],
+  "imports": [
+    {
+      "occurrenceId": "[\"src/app.ts\",1,1,\"./util/formatMoney\"]",
+      "relationId": "[\"src/app.ts\",[\"local\",\"src/util/formatMoney.ts\"],\"import\",\"value\"]",
+      "from": "src/app.ts",
+      "to": "src/util/formatMoney.ts",
+      "specifier": "./util/formatMoney",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local",
+      "line": 1,
+      "column": 1
+    }
+  ],
+  "diagnostics": [],
+  "options": {
+    "preset": "static-value",
+    "includeExtensions": [
+      ".js",
+      ".jsx",
+      ".ts",
+      ".tsx",
+      ".mjs",
+      ".mts"
+    ],
+    "excludeDirectories": [
+      ".git",
+      "node_modules",
+      "dist",
+      "build",
+      "out",
+      ".next",
+      "coverage"
+    ],
+    "excludeFilePatterns": [
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key",
+      "id_rsa*"
+    ],
+    "maxFiles": 1000,
+    "maxFileBytes": 1048576,
+    "maxTotalBytes": 26214400,
+    "jsToTsFallback": true
+  }
+}

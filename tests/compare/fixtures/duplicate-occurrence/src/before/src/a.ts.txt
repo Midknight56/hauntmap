@@ -1,0 +1,3 @@
+import { x } from "./b";
+import { y } from "./b";
+export const a = x + y;

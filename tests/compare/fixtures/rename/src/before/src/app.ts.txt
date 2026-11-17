@@ -1,0 +1,2 @@
+import { format } from "./util/format";
+export const app = format(1);

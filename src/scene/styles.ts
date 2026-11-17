@@ -19,6 +19,10 @@ export const TOKENS = {
   ink: "#f1ecf7",
   inkMuted: "#b9b0c7",
   focus: "#f5b700",
+  // Comparison states (snapshot-comparison, gate G3): amber lamp, ghost outline, green doorway.
+  changed: "#f0b429",
+  removed: "#9a93a8",
+  added: "#5ad48a",
 } as const;
 
 export type ElementKind = "room" | "wing" | "door" | "sealed" | "corridor" | "grouped";
@@ -40,6 +44,8 @@ export interface StateStyle {
   outlineWidth: number;
   glyph: string | null;
   label: string | null;
+  /** `dashed` for the ghost outline of `comparison-removed`; absent means `solid`. */
+  outlineStyle?: "solid" | "dashed";
 }
 
 export const STATE_STYLES: Record<State, StateStyle> = {
@@ -49,9 +55,10 @@ export const STATE_STYLES: Record<State, StateStyle> = {
   witness: { fill: TOKENS.room, outlineWidth: 2, glyph: null, label: "Step number" },
   trace: { fill: TOKENS.room, outlineWidth: 2, glyph: null, label: "Step number" },
   focusHalo: { fill: TOKENS.room, outlineWidth: 4, glyph: null, label: "Focus" },
-  "comparison-changed": { fill: TOKENS.room, outlineWidth: 1, glyph: "\u25C8", label: "Changed source" },
-  "comparison-removed": { fill: TOKENS.roomSubdued, outlineWidth: 2, glyph: null, label: "Removed in the newer snapshot" },
-  "comparison-added": { fill: TOKENS.room, outlineWidth: 1, glyph: "+", label: "Added in the newer snapshot" },
+  // The lamp of `comparison-changed` is drawn on the north edge by src/scene/compare/states.ts in `changed`.
+  "comparison-changed": { fill: TOKENS.room, outlineWidth: 0, glyph: null, label: "changed" },
+  "comparison-removed": { fill: TOKENS.roomSubdued, outlineWidth: 2, outlineStyle: "dashed", glyph: null, label: "removed" },
+  "comparison-added": { fill: TOKENS.room, outlineWidth: 2, glyph: "+", label: "added" },
 };
 
 /** Concept words for the glyph drawn on a sealed doorway. */

@@ -1,0 +1,55 @@
+{
+  "expectedVersion": 1,
+  "addedModules": [
+    "src/ghosts/present.ts"
+  ],
+  "removedModules": [],
+  "changedModules": [
+    "src/app.ts"
+  ],
+  "addedRelations": [
+    {
+      "from": "src/app.ts",
+      "to": "src/ghosts/present.ts",
+      "specifier": "./ghosts/present",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "local"
+    }
+  ],
+  "removedRelations": [
+    {
+      "from": "src/app.ts",
+      "to": null,
+      "specifier": "./ghosts/missing",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "resolution": "unresolved"
+    }
+  ],
+  "before": {
+    "moduleCount": 1,
+    "relationCount": 2
+  },
+  "after": {
+    "moduleCount": 2,
+    "relationCount": 2
+  },
+  "cyclicComponentsBefore": 0,
+  "cyclicComponentsAfter": 0,
+  "occurrenceCounts": {
+    "src/app.ts": {
+      "before": 2,
+      "after": 2
+    }
+  },
+  "relationChangesByModule": {
+    "src/app.ts": {
+      "removed": 1,
+      "added": 1
+    }
+  },
+  "optionsDiffer": [],
+  "parseFailed": [],
+  "identical": false
+}
