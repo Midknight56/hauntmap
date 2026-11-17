@@ -1,6 +1,6 @@
 # HauntMap
 
-HauntMap turns the imports of a TypeScript or JavaScript project into a haunted manor you can walk through. Folders are wings, files are rooms, imports are doors, and a dependency loop is a glowing corridor that a ghost walks round and round. It reads source text only and never runs it.
+HauntMap is our Costume Contest entry: a haunting user interface that is polished and unforgettable, where the spooky design elements enhance the app's function. It turns the imports of a TypeScript or JavaScript project into a haunted manor you can walk through. Folders are wings, files are rooms, imports are doors, and a dependency loop is a glowing corridor that a ghost walks round and round. Kiro built it with spec driven development: four specs, each with requirements, design and tasks, carried out in the Kiro CLI. It reads source text only and never runs it.
 
 Category: Costume Contest.
 
@@ -61,14 +61,37 @@ pnpm hauntmap analyze haunts/manor --out public/demo/live.json
 
 `docs/write-up.md` has the full account with a source for every figure. In short:
 
-| Kiro feature | What we did |
-| --- | --- |
-| Specs | Five specs in `.kiro/specs`. Four were built: `analysis-core`, `kiro-integration`, `investigation-ui`, `snapshot-comparison`. Kiro reviewed each spec first and fixed what it found before writing code. `intake` was planned and not built. |
-| Steering | Six files in `.kiro/steering`: analysis rules, accessibility and motion, claims policy, ownership of folders, a refactoring rule that makes Kiro call `cycles` before an import change and `compare` after, and the revision note of 16 Nov 2026. |
-| Hooks | Three hook files in `.kiro/hooks`. The `Stop` hook `analyze-live` runs `pnpm demo:live`, which writes `public/demo/live.json`; it was seen working in headless CLI sessions. |
-| MCP | Our own server `packages/hauntmap-mcp` with four tools over stdio. Kiro used it in recorded sessions (`docs/acceptance/mcp-first-use.md`, `docs/acceptance/h9-session/`). |
-| Property tests | 49 fast check properties in 8 files. The Kiro CLI has no spec correctness button, so the analysis properties were written from the acceptance criteria. |
-| CLI | All work ran in the Kiro CLI with no person at the keyboard, one written prompt per batch of tasks, test first. Every run is a row in `docs/kiro-log.md`. |
+### Kiro IDE, CLI, Web, Crew
+
+We used the Kiro CLI only: version 3.3.0 on 16 November 2026 and 3.4.0 on 17 November, model `auto`, one written prompt per batch of tasks, 30 runs in all. Every task is a row in `docs/kiro-log.md`. The Kiro IDE, Web and Crew were not used in this build.
+
+### Custom agents
+
+Not used in this build.
+
+### Agent hooks
+
+Three hook files sit in `.kiro/hooks`. The `Stop` hook `analyze-live` runs `pnpm demo:live`, which writes the live snapshot `public/demo/live.json` that the app opens with `Open live snapshot`. It was seen working in a headless CLI session: the file did not exist before the session and existed after it (`docs/acceptance/hook-analyze-live.md`). The `verify-on-stop` and `typecheck-on-save` hooks are set up, but their output was not seen in a session, and the log says so.
+
+### Spec driven development
+
+Five specs in `.kiro/specs`, four built: `analysis-core`, `kiro-integration`, `investigation-ui` and `snapshot-comparison`, with 43 requirements and 66 done tasks. Each spec has `requirements.md` (numbered acceptance criteria), `design.md` (contracts, data shapes, the tests that prove each criterion) and `tasks.md` (small steps, each naming the requirements it covers and the check that must pass). Kiro reviewed each spec before any code, and every task wrote its test first, saw it fail, then wrote the code. Compared with vibe coding, the review is where it paid off: Kiro's review of `kiro-integration` found functions and files the spec named that did not exist in the code, and fixed the spec before a line was written.
+
+### Steering docs
+
+Six files in `.kiro/steering`: the analysis rules, accessibility and motion (contrast, text size, reduced motion), the claims policy, folder ownership, the revision note of 16 November 2026, and a refactoring rule that makes Kiro call the `cycles` tool before an import change and `compare` after. In one headless session Kiro made the calls in that order (`docs/acceptance/steering-observation.md`).
+
+### MCP
+
+Our own MCP server, `packages/hauntmap-mcp`, gives Kiro four tools over stdio: `analyze`, `cycles`, `who_imports` and `compare`. In a recorded session Kiro called `cycles`, removed one import, called `compare`, and reported 1 removed relation and loops 1 to 0 (`docs/acceptance/h9-session/`). The same analysis code runs in the browser, so the agent and the person see the same facts.
+
+### Property based testing (PBT)
+
+49 fast check properties in 8 files. The Kiro CLI has no button that derives properties from a spec, so the analysis properties were written from the acceptance criteria. One property found a real bug: it generated the Windows path `link/C:`, which the MCP loader read wrongly, and the fix went into the loader with that path kept as a fixed example.
+
+### Kiro powers
+
+Not used in this build.
 
 ## What it does not do
 
