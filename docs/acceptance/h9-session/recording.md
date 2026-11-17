@@ -20,12 +20,16 @@ These two files are NOT cut from `transcript.md`. The headless output shows the 
 | `transcript.md` | Headless Kiro CLI output of the edit turn, as the person saved it. |
 | `live.json` | The snapshot of the session; byte-equal to `public/demo/live.json`. |
 | `mcp-cycles.json`, `mcp-compare.json` | See above. |
-| `app-before.png`, `app-after.png`, `app-comparison.json`, `app-recording.webm` | Output of `tests/kiro/h9/h9-app.spec.ts` (headless Chromium 1.65.1, 1,280 x 720, keyboard only, video on), run against the Vite dev server on its own port in the theme pass of 2026-11-17. The map text-size change of the same day (every drawn text at least 11 CSS px) came after that run: these four files show the map as it drew before that change, and they were not re-recorded. |
+| `app-before.png`, `app-after.png`, `app-comparison.json`, `app-recording.webm` | Output of `tests/kiro/h9/h9-app.spec.ts` (headless Chromium 1.65.1, 1,280 x 720, keyboard only, video on), run against the Vite dev server on its own port. First made in the theme pass of 2026-11-17; re-recorded at 12:40 PM the same day after the map text-size change (every drawn text at least 11 CSS px) and the folder rename to `haunts/`. The spec passed (1 passed). |
 | `credits.md` | What the headless output shows about credits. |
 
 Video length: not measured. No side-by-side recording of terminal and app was made; that needs a person and is optional.
 
 The app was served by the Vite dev server, not by a rebuilt preview.
+
+## Final headless turn
+
+After the rename, one more headless Kiro CLI turn ran from 12:33 to 12:34 PM on 2026-11-17 to confirm the record. Kiro answered `ready`. `git status --porcelain haunts public/demo/live.json` printed nothing, and `pnpm demo:live` printed `demo:live: skipped (haunts/manor is identical to public/demo/manor/before)`. The turn changed no file.
 
 ## Limits
 
