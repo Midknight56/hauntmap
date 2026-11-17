@@ -39,3 +39,21 @@ export const analysisApi: AnalysisApi = {
     return "static-value";
   },
 };
+
+/**
+ * The same seam with a gate in front of its two computing functions. The development hook uses it to
+ * make the next `cycles` or `trace` call throw (requirement 7.8); nothing here computes anything itself.
+ */
+export function gateAnalysisApi(api: AnalysisApi, gate: (name: "cycles" | "trace") => void): AnalysisApi {
+  return {
+    ...api,
+    cycles: (investigation, preset) => {
+      gate("cycles");
+      return api.cycles(investigation, preset);
+    },
+    trace: (investigation, origin, direction, preset) => {
+      gate("trace");
+      return api.trace(investigation, origin, direction, preset);
+    },
+  };
+}

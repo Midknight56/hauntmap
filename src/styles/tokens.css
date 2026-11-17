@@ -1,0 +1,23 @@
+/* Design tokens. tests/ui/styles.test.ts compares these hex values with TOKENS in src/scene/styles.ts. */
+:root {
+  --floor: #141019;
+  --wing: #241d30;
+  --wing-ink: #d8cfe6;
+  --room: #3a3150;
+  --room-ink: #f3ecff;
+  --room-subdued: #211c2c;
+  --room-subdued-ink: #d8cfe6;
+  --door: #e9d8a6;
+  --corridor: #8f6bff;
+  --sealed: #b8b0c4;
+  --light: #7df9ff;
+  --panel: #1b1622;
+  --ink: #f1ecf7;
+  --ink-muted: #b9b0c7;
+  --focus: #f5b700;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}

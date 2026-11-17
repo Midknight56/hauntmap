@@ -1,0 +1,262 @@
+/* Application styles. Colors come from tokens.css. The focus ring is defined there and is never removed. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--floor);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 15px;
+  overflow-x: hidden;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+button,
+select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--ink-muted);
+  border-radius: 6px;
+  padding: 4px 10px;
+  min-height: 28px;
+  cursor: pointer;
+}
+
+button.primary {
+  background: var(--room);
+  border-color: var(--focus);
+}
+
+button[aria-pressed="true"],
+button[aria-expanded="true"],
+button[role="tab"][aria-selected="true"] {
+  background: var(--room);
+}
+
+code {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Landing */
+.landing {
+  max-width: 44rem;
+  margin: auto;
+  padding: 2rem 1.25rem;
+}
+
+.landing h1 {
+  font-size: 2.5rem;
+  margin: 0 0 1rem;
+}
+
+.landing p {
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+.landing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.landing-actions button {
+  font-size: 1.05rem;
+  padding: 8px 16px;
+}
+
+/* Status region */
+.status-region {
+  margin: 0;
+  padding: 6px 12px;
+  min-height: 2rem;
+  background: var(--panel);
+  color: var(--ink);
+  border-top: 1px solid var(--ink-muted);
+}
+
+/* Investigation screen */
+.investigation {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--ink-muted);
+}
+
+.toolbar-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toolbar-tabs {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  flex: 1;
+  min-height: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 24rem;
+}
+
+.map-view {
+  position: relative;
+  flex: 1;
+  min-height: 20rem;
+}
+
+.map-wrapper {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.map-host {
+  width: 100%;
+  height: 100%;
+}
+
+.evidence-area {
+  flex: 1;
+  padding: 12px;
+}
+
+.renderer-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--focus);
+}
+
+.renderer-banner p {
+  margin: 0;
+}
+
+.breadcrumb {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  padding: 2px 8px;
+  background: var(--panel);
+  color: var(--ink);
+  border-radius: 6px;
+}
+
+.minimap {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 1;
+  background: var(--panel);
+  border: 1px solid var(--ink-muted);
+  border-radius: 6px;
+  cursor: crosshair;
+}
+
+.minimap-wing {
+  fill: var(--wing);
+  stroke: var(--wing-ink);
+  stroke-width: 1;
+}
+
+.minimap-viewport {
+  fill: none;
+  stroke: var(--focus);
+  stroke-width: 2;
+}
+
+.inspector {
+  padding: 12px;
+  background: var(--panel);
+  border-left: 1px solid var(--ink-muted);
+  overflow-y: auto;
+}
+
+.error-boundary {
+  padding: 2rem 1.25rem;
+}
+
+@media (max-width: 720px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .inspector {
+    border-left: 0;
+    border-top: 1px solid var(--ink-muted);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none;
+    animation: none;
+  }
+}
+
+[data-motion="reduce"] *,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  transition: none;
+  animation: none;
+}

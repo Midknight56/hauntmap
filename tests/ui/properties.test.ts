@@ -11,8 +11,10 @@ import { makeInvestigation, mulberry32 } from "./generators";
 import { inside, intersects, layoutOf, rankMap, requestFor } from "./layoutRequests";
 import { layoutKey } from "../../src/scene/layout/key";
 import type { LayoutRequest } from "../../src/scene/layout/types";
+import { createAnimator } from "../../src/scene/animation";
+import { buildHitTargets, hitTest } from "../../src/scene/hitTest";
 
-// Property tests: P5, P10, P11, P13, P14 (task 2a), P6 (task 2b) and P1, P2, P3 (task 3). `HAUNTMAP_FAST` (see .kiro/hooks/README.md) lowers the runs.
+// Property tests: P5, P10, P11, P13, P14 (task 2a), P6 (task 2b), P1, P2, P3 (task 3), P9 (task 4) and P4 (task 5). `HAUNTMAP_FAST` (see .kiro/hooks/README.md) lowers the runs.
 const RUNS = process.env["HAUNTMAP_FAST"] === undefined ? 200 : 50;
 const PRESETS: Preset[] = ["static-value", "type-inclusive", "dynamic-inclusive"];
 
@@ -366,6 +368,73 @@ describe("P3 order independence (3.3)", () => {
         const b = await layoutOf(permuted);
         expect(b).toEqual(a);
         expect(b.layoutKey).toBe(a.layoutKey);
+      }),
+      { numRuns: RUNS },
+    );
+  }, 300_000);
+});
+describe("P9 reduced motion (11.5, 9.5)", () => {
+  const ops = fc.array(
+    fc.record({ duration: fc.constantFrom(0, 100, 300, 600), steps: fc.array(fc.integer({ min: 1, max: 400 }), { maxLength: 6 }) }),
+    { minLength: 1, maxLength: 12 },
+  );
+
+  it("with reduced motion on, no sequence of tweens is ever active", () => {
+    fc.assert(
+      fc.property(ops, (list) => {
+        const animator = createAnimator({ reduced: true });
+        let finished = 0;
+        for (const op of list) {
+          animator.tween({ duration: op.duration, update: () => undefined, onDone: () => finished++ });
+          expect(animator.activeTweens).toBe(0);
+          for (const dt of op.steps) {
+            animator.tick(dt);
+            expect(animator.activeTweens).toBe(0);
+          }
+        }
+        expect(finished).toBe(list.length);
+      }),
+      { numRuns: RUNS },
+    );
+  });
+
+  it("with it off, every tween completes and the active count returns to 0", () => {
+    fc.assert(
+      fc.property(ops, (list) => {
+        const animator = createAnimator({ reduced: false });
+        let finished = 0;
+        for (const op of list) {
+          animator.tween({ duration: op.duration, update: () => undefined, onDone: () => finished++ });
+          for (const dt of op.steps) animator.tick(dt);
+        }
+        animator.tick(10_000);
+        expect(animator.activeTweens).toBe(0);
+        expect(finished).toBe(list.length);
+      }),
+      { numRuns: RUNS },
+    );
+  });
+});
+describe("P4 hit targets (9.1, 9.2)", () => {
+  it("every door and sealed hit is at least 24 x 24, disjoint per room, found at its center, and nothing outside the bounds hits", async () => {
+    await fc.assert(
+      fc.asyncProperty(investigationArb, async (inv) => {
+        const layout = await layoutOf(requestFor(inv, "all"));
+        const targets = buildHitTargets(layout);
+        const perRoom = new Map<string, { x: number; y: number; w: number; h: number }[]>();
+        for (const t of targets) {
+          if (t.kind !== "door" && t.kind !== "sealed") continue;
+          expect(t.rect.w).toBeGreaterThanOrEqual(24);
+          expect(t.rect.h).toBeGreaterThanOrEqual(24);
+          expect(hitTest(targets, { x: t.rect.x + t.rect.w / 2, y: t.rect.y + t.rect.h / 2 })).toMatchObject({ kind: t.kind, id: t.id });
+          const from = t.kind === "door" ? layout.doors.find((d) => d.relationId === t.id)!.from : layout.sealed.find((s) => s.relationId === t.id)!.from;
+          const list = perRoom.get(from) ?? [];
+          for (const other of list) expect(intersects(other, t.rect)).toBe(false);
+          list.push(t.rect);
+          perRoom.set(from, list);
+        }
+        expect(hitTest(targets, { x: layout.bounds.x - 1, y: layout.bounds.y - 1 })).toBeNull();
+        expect(hitTest(targets, { x: layout.bounds.x + layout.bounds.w + 1, y: layout.bounds.y + layout.bounds.h + 1 })).toBeNull();
       }),
       { numRuns: RUNS },
     );
