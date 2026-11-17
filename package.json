@@ -12,8 +12,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "pack:samples": "node -e \"console.log('not built yet')\"",
-    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm pack:samples"
+    "pack:samples": "tsx scripts/pack-samples.ts",
+    "check:expected": "node scripts/check-expected.mjs",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm pack:samples --check && pnpm check:expected"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

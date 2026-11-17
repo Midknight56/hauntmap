@@ -1,0 +1,181 @@
+{
+  "modules": [
+    { "id": "src/catalog/catalogService.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/catalog/category.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/catalog/index.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/catalog/inventory.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/catalog/price.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/catalog/product.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/catalog/search.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/catalog/stock.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/config/env.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/config/flags.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/config/index.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/config/limits.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/notifications/mailer.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/notifications/preferences.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/notifications/queue.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/notifications/receipt.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/notifications/templates.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/orders/cart.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/orders/checkout.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/orders/discounts.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/orders/order.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/orders/orderRepo.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/orders/shipping.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/orders/status.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/orders/summary.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/orders/totals.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/payments/charge.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/payments/fees.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/payments/gateway.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/payments/invoice.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/payments/ledger.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/payments/methods.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/payments/refund.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/shared/dates.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/shared/ids.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/shared/logger.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/shared/money.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/shared/result.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/shared/types.ts", "language": "ts", "parseStatus": "ok" },
+    { "id": "src/shared/validation.ts", "language": "ts", "parseStatus": "ok" }
+  ],
+  "wings": {
+    "catalog": 8,
+    "config": 4,
+    "notifications": 5,
+    "orders": 9,
+    "payments": 7,
+    "shared": 7
+  },
+  "receiptToCheckout": { "specifier": "../orders/checkout", "importLine": 3, "useLine": 13 },
+  "imports": [
+    { "from": "src/catalog/catalogService.ts", "specifier": "./product", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/catalog/product.ts", "line": 1, "column": 1 },
+    { "from": "src/catalog/catalogService.ts", "specifier": "./price", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/catalog/price.ts", "line": 2, "column": 1 },
+    { "from": "src/catalog/catalogService.ts", "specifier": "./inventory", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/catalog/inventory.ts", "line": 3, "column": 1 },
+    { "from": "src/catalog/catalogService.ts", "specifier": "./search", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/catalog/search.ts", "line": 4, "column": 1 },
+    { "from": "src/catalog/category.ts", "specifier": "./product", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/catalog/product.ts", "line": 1, "column": 1 },
+    { "from": "src/catalog/index.ts", "specifier": "./catalogService", "syntaxKind": "re-export", "dependencyKind": "value", "resolution": "local", "to": "src/catalog/catalogService.ts", "line": 1, "column": 1 },
+    { "from": "src/catalog/index.ts", "specifier": "./search", "syntaxKind": "re-export", "dependencyKind": "value", "resolution": "local", "to": "src/catalog/search.ts", "line": 2, "column": 1 },
+    { "from": "src/catalog/inventory.ts", "specifier": "./product", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/catalog/product.ts", "line": 1, "column": 1 },
+    { "from": "src/catalog/inventory.ts", "specifier": "./stock", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/catalog/stock.ts", "line": 2, "column": 1 },
+    { "from": "src/catalog/price.ts", "specifier": "./product", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/catalog/product.ts", "line": 1, "column": 1 },
+    { "from": "src/catalog/price.ts", "specifier": "../shared/money", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/money.ts", "line": 2, "column": 1 },
+    { "from": "src/catalog/product.ts", "specifier": "../shared/ids", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/ids.ts", "line": 1, "column": 1 },
+    { "from": "src/catalog/product.ts", "specifier": "./price", "syntaxKind": "re-export", "dependencyKind": "type", "resolution": "local", "to": "src/catalog/price.ts", "line": 2, "column": 1 },
+    { "from": "src/catalog/search.ts", "specifier": "./category", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/catalog/category.ts", "line": 1, "column": 1 },
+    { "from": "src/catalog/search.ts", "specifier": "./synonyms", "syntaxKind": "import", "dependencyKind": "value", "resolution": "unresolved", "to": null, "reason": "absent-file", "line": 2, "column": 1 },
+    { "from": "src/catalog/stock.ts", "specifier": "../shared/result", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/result.ts", "line": 1, "column": 1 },
+    { "from": "src/config/flags.ts", "specifier": "./env", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/config/env.ts", "line": 1, "column": 1 },
+    { "from": "src/config/index.ts", "specifier": "./env", "syntaxKind": "re-export", "dependencyKind": "value", "resolution": "local", "to": "src/config/env.ts", "line": 1, "column": 1 },
+    { "from": "src/config/index.ts", "specifier": "./flags", "syntaxKind": "re-export", "dependencyKind": "value", "resolution": "local", "to": "src/config/flags.ts", "line": 2, "column": 1 },
+    { "from": "src/config/index.ts", "specifier": "./limits", "syntaxKind": "re-export", "dependencyKind": "value", "resolution": "local", "to": "src/config/limits.ts", "line": 3, "column": 1 },
+    { "from": "src/config/limits.ts", "specifier": "./flags", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/config/flags.ts", "line": 1, "column": 1 },
+    { "from": "src/notifications/mailer.ts", "specifier": "./queue", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/notifications/queue.ts", "line": 1, "column": 1 },
+    { "from": "src/notifications/mailer.ts", "specifier": "./preferences", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/notifications/preferences.ts", "line": 2, "column": 1 },
+    { "from": "src/notifications/mailer.ts", "specifier": "../config/env", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/config/env.ts", "line": 3, "column": 1 },
+    { "from": "src/notifications/mailer.ts", "specifier": "../payments/invoice", "syntaxKind": "dynamic-literal", "dependencyKind": "value", "resolution": "local", "to": "src/payments/invoice.ts", "line": 11, "column": 25 },
+    { "from": "src/notifications/preferences.ts", "specifier": "../shared/validation", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/validation.ts", "line": 1, "column": 1 },
+    { "from": "src/notifications/queue.ts", "specifier": "../shared/logger", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/logger.ts", "line": 1, "column": 1 },
+    { "from": "src/notifications/receipt.ts", "specifier": "./templates", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/notifications/templates.ts", "line": 1, "column": 1 },
+    { "from": "src/notifications/receipt.ts", "specifier": "./mailer", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/notifications/mailer.ts", "line": 2, "column": 1 },
+    { "from": "src/notifications/receipt.ts", "specifier": "../orders/checkout", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/orders/checkout.ts", "line": 3, "column": 1 },
+    { "from": "src/notifications/receipt.ts", "specifier": "../shared/money", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/money.ts", "line": 4, "column": 1 },
+    { "from": "src/orders/cart.ts", "specifier": "../catalog", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/catalog/index.ts", "line": 1, "column": 1 },
+    { "from": "src/orders/cart.ts", "specifier": "../shared/ids", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/ids.ts", "line": 2, "column": 1 },
+    { "from": "src/orders/cart.ts", "specifier": "../config/limits", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/config/limits.ts", "line": 3, "column": 1 },
+    { "from": "src/orders/checkout.ts", "specifier": "../payments/charge", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/payments/charge.ts", "line": 1, "column": 1 },
+    { "from": "src/orders/checkout.ts", "specifier": "./cart", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/orders/cart.ts", "line": 2, "column": 1 },
+    { "from": "src/orders/checkout.ts", "specifier": "./totals", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/orders/totals.ts", "line": 3, "column": 1 },
+    { "from": "src/orders/checkout.ts", "specifier": "./order", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/orders/order.ts", "line": 4, "column": 1 },
+    { "from": "src/orders/checkout.ts", "specifier": "./orderRepo", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/orders/orderRepo.ts", "line": 5, "column": 1 },
+    { "from": "src/orders/checkout.ts", "specifier": "../shared/logger", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/logger.ts", "line": 6, "column": 1 },
+    { "from": "src/orders/discounts.ts", "specifier": "../config/flags", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/config/flags.ts", "line": 1, "column": 1 },
+    { "from": "src/orders/order.ts", "specifier": "../shared/ids", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/ids.ts", "line": 1, "column": 1 },
+    { "from": "src/orders/order.ts", "specifier": "./status", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/orders/status.ts", "line": 2, "column": 1 },
+    { "from": "src/orders/order.ts", "specifier": "./totals", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/orders/totals.ts", "line": 3, "column": 1 },
+    { "from": "src/orders/orderRepo.ts", "specifier": "./order", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/orders/order.ts", "line": 1, "column": 1 },
+    { "from": "src/orders/orderRepo.ts", "specifier": "../shared/logger", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/logger.ts", "line": 2, "column": 1 },
+    { "from": "src/orders/shipping.ts", "specifier": "../config/limits", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/config/limits.ts", "line": 1, "column": 1 },
+    { "from": "src/orders/summary.ts", "specifier": "./totals", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/orders/totals.ts", "line": 1, "column": 1 },
+    { "from": "src/orders/summary.ts", "specifier": "../shared/money", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/money.ts", "line": 2, "column": 1 },
+    { "from": "src/orders/summary.ts", "specifier": "./status", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/orders/status.ts", "line": 3, "column": 1 },
+    { "from": "src/orders/totals.ts", "specifier": "../shared/money", "syntaxKind": "import", "dependencyKind": "mixed", "resolution": "local", "to": "src/shared/money.ts", "line": 1, "column": 1 },
+    { "from": "src/orders/totals.ts", "specifier": "./discounts", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/orders/discounts.ts", "line": 2, "column": 1 },
+    { "from": "src/orders/totals.ts", "specifier": "./shipping", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/orders/shipping.ts", "line": 3, "column": 1 },
+    { "from": "src/payments/charge.ts", "specifier": "../notifications/receipt", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/notifications/receipt.ts", "line": 1, "column": 1 },
+    { "from": "src/payments/charge.ts", "specifier": "./gateway", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/payments/gateway.ts", "line": 2, "column": 1 },
+    { "from": "src/payments/charge.ts", "specifier": "./fees", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/payments/fees.ts", "line": 3, "column": 1 },
+    { "from": "src/payments/charge.ts", "specifier": "./ledger", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/payments/ledger.ts", "line": 4, "column": 1 },
+    { "from": "src/payments/charge.ts", "specifier": "./methods", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/payments/methods.ts", "line": 5, "column": 1 },
+    { "from": "src/payments/fees.ts", "specifier": "../config/limits", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/config/limits.ts", "line": 1, "column": 1 },
+    { "from": "src/payments/gateway.ts", "specifier": "../config/env", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/config/env.ts", "line": 1, "column": 1 },
+    { "from": "src/payments/gateway.ts", "specifier": "../shared/result", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/result.ts", "line": 2, "column": 1 },
+    { "from": "src/payments/invoice.ts", "specifier": "./ledger", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/payments/ledger.ts", "line": 1, "column": 1 },
+    { "from": "src/payments/invoice.ts", "specifier": "../shared/money", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/money.ts", "line": 2, "column": 1 },
+    { "from": "src/payments/ledger.ts", "specifier": "../shared/ids", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/ids.ts", "line": 1, "column": 1 },
+    { "from": "src/payments/ledger.ts", "specifier": "../shared/dates", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/dates.ts", "line": 2, "column": 1 },
+    { "from": "src/payments/methods.ts", "specifier": "../shared/validation", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/validation.ts", "line": 1, "column": 1 },
+    { "from": "src/payments/refund.ts", "specifier": "./gateway", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/payments/gateway.ts", "line": 1, "column": 1 },
+    { "from": "src/payments/refund.ts", "specifier": "./ledger", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/payments/ledger.ts", "line": 2, "column": 1 },
+    { "from": "src/shared/ids.ts", "specifier": "nanoid", "syntaxKind": "import", "dependencyKind": "value", "resolution": "external", "to": null, "line": 1, "column": 1 },
+    { "from": "src/shared/logger.ts", "specifier": "../config", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/config/index.ts", "line": 1, "column": 1 },
+    { "from": "src/shared/validation.ts", "specifier": "./result", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/result.ts", "line": 1, "column": 1 },
+    { "from": "src/shared/validation.ts", "specifier": "./dates", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "src/shared/dates.ts", "line": 2, "column": 1 }
+  ],
+  "diagnostics": [
+    { "code": "unresolved", "module": "src/catalog/search.ts", "line": 2, "column": 1, "specifier": "./synonyms" }
+  ],
+  "cycles": {
+    "static-value": [
+      {
+        "members": ["src/notifications/receipt.ts", "src/orders/checkout.ts", "src/payments/charge.ts"],
+        "witness": {
+          "modules": ["src/notifications/receipt.ts", "src/orders/checkout.ts", "src/payments/charge.ts"],
+          "relationIds": [
+            "[\"src/notifications/receipt.ts\",[\"local\",\"src/orders/checkout.ts\"],\"import\",\"value\"]",
+            "[\"src/orders/checkout.ts\",[\"local\",\"src/payments/charge.ts\"],\"import\",\"value\"]",
+            "[\"src/payments/charge.ts\",[\"local\",\"src/notifications/receipt.ts\"],\"import\",\"value\"]"
+          ]
+        }
+      }
+    ],
+    "type-inclusive": [
+      {
+        "members": ["src/catalog/price.ts", "src/catalog/product.ts"],
+        "witness": {
+          "modules": ["src/catalog/price.ts", "src/catalog/product.ts"],
+          "relationIds": [
+            "[\"src/catalog/price.ts\",[\"local\",\"src/catalog/product.ts\"],\"import\",\"value\"]",
+            "[\"src/catalog/product.ts\",[\"local\",\"src/catalog/price.ts\"],\"re-export\",\"type\"]"
+          ]
+        }
+      },
+      {
+        "members": ["src/notifications/receipt.ts", "src/orders/checkout.ts", "src/payments/charge.ts"],
+        "witness": {
+          "modules": ["src/notifications/receipt.ts", "src/orders/checkout.ts", "src/payments/charge.ts"],
+          "relationIds": [
+            "[\"src/notifications/receipt.ts\",[\"local\",\"src/orders/checkout.ts\"],\"import\",\"value\"]",
+            "[\"src/orders/checkout.ts\",[\"local\",\"src/payments/charge.ts\"],\"import\",\"value\"]",
+            "[\"src/payments/charge.ts\",[\"local\",\"src/notifications/receipt.ts\"],\"import\",\"value\"]"
+          ]
+        }
+      }
+    ],
+    "dynamic-inclusive": [
+      {
+        "members": ["src/notifications/receipt.ts", "src/orders/checkout.ts", "src/payments/charge.ts"],
+        "witness": {
+          "modules": ["src/notifications/receipt.ts", "src/orders/checkout.ts", "src/payments/charge.ts"],
+          "relationIds": [
+            "[\"src/notifications/receipt.ts\",[\"local\",\"src/orders/checkout.ts\"],\"import\",\"value\"]",
+            "[\"src/orders/checkout.ts\",[\"local\",\"src/payments/charge.ts\"],\"import\",\"value\"]",
+            "[\"src/payments/charge.ts\",[\"local\",\"src/notifications/receipt.ts\"],\"import\",\"value\"]"
+          ]
+        }
+      }
+    ]
+  }
+}

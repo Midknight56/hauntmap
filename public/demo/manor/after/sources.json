@@ -1,0 +1,164 @@
+{
+  "files": [
+    {
+      "path": "src/catalog/catalogService.ts",
+      "text": "import { createProduct } from \"./product\";\nimport { withTax } from \"./price\";\nimport { stockNewProduct, takeStock } from \"./inventory\";\nimport { searchCatalog } from \"./search\";\n\nexport function findProduct(name: string, category: string) {\n  const [first] = searchCatalog(name, category);\n  return first ?? null;\n}\n\nexport function listPrice(net: number, rate: number): number {\n  return withTax({ net, taxClass: \"standard\" }, rate);\n}\n\nexport function makeProduct(name: string, quantity: number) {\n  return quantity > 0 ? stockNewProduct(name, quantity) : createProduct(name);\n}\n\nexport function reserveProduct(productId: string, wanted: number) {\n  return takeStock(productId, wanted);\n}\n"
+    },
+    {
+      "path": "src/catalog/category.ts",
+      "text": "import { createProduct } from \"./product\";\n\nconst byCategory = new Map<string, string[]>();\n\nexport function addToCategory(category: string, name: string) {\n  const product = createProduct(name);\n  byCategory.set(category, [...(byCategory.get(category) ?? []), product.id]);\n  return product;\n}\n\nexport function listCategory(category: string): string[] {\n  return byCategory.get(category) ?? [];\n}\n"
+    },
+    {
+      "path": "src/catalog/index.ts",
+      "text": "export * from \"./catalogService\";\nexport { searchCatalog } from \"./search\";\n"
+    },
+    {
+      "path": "src/catalog/inventory.ts",
+      "text": "import { createProduct } from \"./product\";\nimport { reserve } from \"./stock\";\n\nconst onHand = new Map<string, number>();\n\nexport function stockNewProduct(name: string, quantity: number) {\n  const product = createProduct(name);\n  onHand.set(product.id, quantity);\n  return product;\n}\n\nexport function takeStock(productId: string, wanted: number) {\n  const result = reserve(onHand.get(productId) ?? 0, wanted);\n  if (result.ok) onHand.set(productId, result.value);\n  return result;\n}\n"
+    },
+    {
+      "path": "src/catalog/price.ts",
+      "text": "import { TAX_CLASSES } from \"./product\";\nimport { addMoney } from \"../shared/money\";\n\nexport interface Price {\n  net: number;\n  taxClass: (typeof TAX_CLASSES)[number];\n}\n\nexport function withTax(price: Price, rate: number): number {\n  const net = { cents: price.net, currency: \"EUR\" };\n  const tax = { cents: Math.round(price.net * rate), currency: \"EUR\" };\n  return addMoney(net, tax).cents;\n}\n"
+    },
+    {
+      "path": "src/catalog/product.ts",
+      "text": "import { newId } from \"../shared/ids\";\nexport type { Price } from \"./price\";\n\nexport const TAX_CLASSES = [\"standard\", \"reduced\", \"zero\"] as const;\n\nexport interface Product {\n  id: string;\n  name: string;\n  taxClass: (typeof TAX_CLASSES)[number];\n}\n\nexport function createProduct(name: string): Product {\n  return { id: newId(\"prd\"), name, taxClass: \"standard\" };\n}\n"
+    },
+    {
+      "path": "src/catalog/search.ts",
+      "text": "import { listCategory } from \"./category\";\nimport { expandTerms } from \"./synonyms\";\n\nexport function searchCatalog(term: string, category: string): string[] {\n  const words = expandTerms(term);\n  return listCategory(category).filter((id) => words.some((word) => id.includes(word)));\n}\n"
+    },
+    {
+      "path": "src/catalog/stock.ts",
+      "text": "import { ok, fail } from \"../shared/result\";\n\nexport function reserve(onHand: number, wanted: number) {\n  return wanted <= onHand ? ok(onHand - wanted) : fail<number>(\"not enough stock\");\n}\n"
+    },
+    {
+      "path": "src/config/env.ts",
+      "text": "export const env = {\n  nodeEnv: process.env.NODE_ENV ?? \"development\",\n  currency: process.env.SHOP_CURRENCY ?? \"EUR\",\n  mailFrom: process.env.SHOP_MAIL_FROM ?? \"shop@manor.test\",\n};\n"
+    },
+    {
+      "path": "src/config/flags.ts",
+      "text": "import { env } from \"./env\";\n\nexport const flags = {\n  giftWrap: env.nodeEnv !== \"production\",\n  couponStacking: false,\n};\n"
+    },
+    {
+      "path": "src/config/index.ts",
+      "text": "export * from \"./env\";\nexport * from \"./flags\";\nexport * from \"./limits\";\n"
+    },
+    {
+      "path": "src/config/limits.ts",
+      "text": "import { flags } from \"./flags\";\n\nexport const limits = {\n  maxCartLines: flags.couponStacking ? 50 : 25,\n  freeShippingCents: 5000,\n  maxChargeCents: 500000,\n};\n"
+    },
+    {
+      "path": "src/notifications/mailer.ts",
+      "text": "import { enqueue } from \"./queue\";\nimport { mayContact } from \"./preferences\";\nimport { env } from \"../config/env\";\n\nexport async function sendMail(to: string, subject: string, body: string): Promise<void> {\n  if (!mayContact(to)) return;\n  enqueue(`${env.mailFrom} > ${to}: ${subject}\\n${body}`);\n}\n\nexport async function sendInvoiceMail(to: string, orderId: string): Promise<void> {\n  const invoice = await import(\"../payments/invoice\");\n  await sendMail(to, \"Your invoice\", invoice.renderInvoice(orderId));\n}\n"
+    },
+    {
+      "path": "src/notifications/preferences.ts",
+      "text": "import { requireEmail } from \"../shared/validation\";\n\nconst optedOut = new Set<string>();\n\nexport function optOut(email: string): void {\n  if (requireEmail(email).ok) optedOut.add(email);\n}\n\nexport function mayContact(email: string): boolean {\n  return !optedOut.has(email);\n}\n"
+    },
+    {
+      "path": "src/notifications/queue.ts",
+      "text": "import { logger } from \"../shared/logger\";\n\nconst pending: string[] = [];\n\nexport function enqueue(message: string): number {\n  pending.push(message);\n  logger.info(`queued ${pending.length}`);\n  return pending.length;\n}\n"
+    },
+    {
+      "path": "src/notifications/receipt.ts",
+      "text": "import { renderTemplate } from \"./templates\";\nimport { sendMail } from \"./mailer\";\nimport { summarizeOrder } from \"../orders/summary\";\nimport { formatMoney } from \"../shared/money\";\n\nexport interface ReceiptInput {\n  orderId: string;\n  customerEmail: string;\n  totalCents: number;\n}\n\nexport async function sendReceipt(input: ReceiptInput): Promise<void> {\n  const body = renderTemplate(\"receipt\", { total: formatMoney(input.totalCents) });\n  await sendMail(input.customerEmail, \"Your receipt\", body);\n}\n"
+    },
+    {
+      "path": "src/notifications/templates.ts",
+      "text": "const templates: Record<string, string> = {\n  receipt: \"Thank you. Total: {total}\",\n  shipped: \"Your parcel is on its way.\",\n};\n\nexport function renderTemplate(name: string, values: Record<string, string>): string {\n  const text = templates[name] ?? \"\";\n  return text.replace(/\\{(\\w+)\\}/g, (_, key: string) => values[key] ?? \"\");\n}\n"
+    },
+    {
+      "path": "src/orders/cart.ts",
+      "text": "import { findProduct, listPrice } from \"../catalog\";\nimport { newId } from \"../shared/ids\";\nimport { limits } from \"../config/limits\";\n\nexport interface CartLine {\n  productId: string;\n  net: number;\n}\n\nconst carts = new Map<string, CartLine[]>();\n\nexport function loadCart(cartId: string): CartLine[] {\n  return carts.get(cartId) ?? [];\n}\n\nexport function addLine(cartId: string, name: string, category: string, net: number): CartLine[] {\n  const productId = findProduct(name, category) ?? newId(\"prd\");\n  const lines = loadCart(cartId);\n  if (lines.length >= limits.maxCartLines) return lines;\n  const next = [...lines, { productId, net: listPrice(net, 0.2) }];\n  carts.set(cartId, next);\n  return next;\n}\n\nexport function clearCart(cartId: string): void {\n  carts.delete(cartId);\n}\n"
+    },
+    {
+      "path": "src/orders/checkout.ts",
+      "text": "// Checkout prices the cart, takes the payment and stores the order.\nimport { chargeCustomer } from \"../payments/charge\";\nimport { loadCart, clearCart } from \"./cart\";\nimport { computeTotals } from \"./totals\";\nimport { openOrder } from \"./order\";\nimport { saveOrder } from \"./orderRepo\";\nimport { logger } from \"../shared/logger\";\n\nexport function describeOrder(orderId: string): string {\n  return `order ${orderId}`;\n}\n\nexport async function checkout(cartId: string, email: string) {\n  const lines = loadCart(cartId);\n  const subtotal = lines.reduce((sum, line) => sum + line.net, 0);\n  const totals = computeTotals(subtotal, lines.length, 0);\n  const order = openOrder(cartId, subtotal, lines.length);\n  await chargeCustomer(order.id, email, totals.totalCents);\n  saveOrder(order);\n  clearCart(cartId);\n  logger.info(describeOrder(order.id));\n  return order;\n}\n"
+    },
+    {
+      "path": "src/orders/discounts.ts",
+      "text": "import { flags } from \"../config/flags\";\n\nexport function discountFor(lines: number, coupon: number): number {\n  const stacked = flags.couponStacking ? coupon * 2 : coupon;\n  return lines >= 10 ? stacked + 5 : stacked;\n}\n"
+    },
+    {
+      "path": "src/orders/order.ts",
+      "text": "import { newId } from \"../shared/ids\";\nimport { canCancel } from \"./status\";\nimport { computeTotals } from \"./totals\";\n\nexport interface Order {\n  id: string;\n  cartId: string;\n  status: \"open\" | \"paid\" | \"shipped\" | \"cancelled\";\n  totalCents: number;\n}\n\nexport function openOrder(cartId: string, subtotalCents: number, lines: number): Order {\n  const totals = computeTotals(subtotalCents, lines, 0);\n  return { id: newId(\"ord\"), cartId, status: \"open\", totalCents: totals.totalCents };\n}\n\nexport function cancelOrder(order: Order): Order {\n  return canCancel(order.status) ? { ...order, status: \"cancelled\" } : order;\n}\n"
+    },
+    {
+      "path": "src/orders/orderRepo.ts",
+      "text": "import { openOrder } from \"./order\";\nimport { logger } from \"../shared/logger\";\n\ntype StoredOrder = ReturnType<typeof openOrder>;\n\nconst stored = new Map<string, StoredOrder>();\n\nexport function saveOrder(order: StoredOrder): void {\n  stored.set(order.id, order);\n  logger.info(`stored ${order.id}`);\n}\n\nexport function loadOrder(id: string): StoredOrder | null {\n  return stored.get(id) ?? null;\n}\n"
+    },
+    {
+      "path": "src/orders/shipping.ts",
+      "text": "import { limits } from \"../config/limits\";\n\nexport function shippingCents(subtotalCents: number): number {\n  return subtotalCents >= limits.freeShippingCents ? 0 : 490;\n}\n"
+    },
+    {
+      "path": "src/orders/status.ts",
+      "text": "export type OrderStatus = \"open\" | \"paid\" | \"shipped\" | \"cancelled\";\n\nexport function canCancel(status: OrderStatus): boolean {\n  return status === \"open\" || status === \"paid\";\n}\n"
+    },
+    {
+      "path": "src/orders/summary.ts",
+      "text": "import { computeTotals } from \"./totals\";\nimport { formatMoney } from \"../shared/money\";\nimport { canCancel } from \"./status\";\n\nexport function summarizeOrder(subtotalCents: number, lines: number): string {\n  const totals = computeTotals(subtotalCents, lines, 0);\n  const note = canCancel(\"open\") ? \"can be cancelled\" : \"final\";\n  return `${lines} lines, ${formatMoney(totals.totalCents)}, ${note}`;\n}\n"
+    },
+    {
+      "path": "src/orders/totals.ts",
+      "text": "import { formatMoney, type Money } from \"../shared/money\";\nimport { discountFor } from \"./discounts\";\nimport { shippingCents } from \"./shipping\";\n\nexport interface Totals {\n  subtotalCents: number;\n  shippingCents: number;\n  discountCents: number;\n  totalCents: number;\n  label: string;\n}\n\nexport function computeTotals(subtotalCents: number, lines: number, coupon: number): Totals {\n  const shipping = shippingCents(subtotalCents);\n  const discount = discountFor(lines, coupon);\n  const total = subtotalCents + shipping - discount;\n  return {\n    subtotalCents,\n    shippingCents: shipping,\n    discountCents: discount,\n    totalCents: total,\n    label: formatMoney(total),\n  };\n}\n\nexport function toMoney(totals: Totals, currency: string): Money {\n  return { cents: totals.totalCents, currency };\n}\n"
+    },
+    {
+      "path": "src/payments/charge.ts",
+      "text": "import { sendReceipt } from \"../notifications/receipt\";\nimport { authorize } from \"./gateway\";\nimport { processingFee } from \"./fees\";\nimport { record } from \"./ledger\";\nimport { checkPayer } from \"./methods\";\n\nexport async function chargeCustomer(orderId: string, email: string, cents: number): Promise<boolean> {\n  if (!checkPayer(email)) return false;\n  const auth = authorize(orderId, cents + processingFee(cents));\n  if (!auth.ok) return false;\n  record(cents, `charge ${orderId}`);\n  await sendReceipt({ orderId, customerEmail: email, totalCents: cents });\n  return true;\n}\n"
+    },
+    {
+      "path": "src/payments/fees.ts",
+      "text": "import { limits } from \"../config/limits\";\n\nexport function processingFee(cents: number): number {\n  const cap = Math.round(limits.maxChargeCents * 0.01);\n  return Math.min(Math.round(cents * 0.015) + 25, cap);\n}\n"
+    },
+    {
+      "path": "src/payments/gateway.ts",
+      "text": "import { env } from \"../config/env\";\nimport { ok, fail } from \"../shared/result\";\n\nexport function authorize(token: string, cents: number) {\n  if (env.nodeEnv === \"test\") return ok(`test-${token}`);\n  return cents > 0 ? ok(`auth-${token}-${cents}`) : fail<string>(\"nothing to charge\");\n}\n"
+    },
+    {
+      "path": "src/payments/invoice.ts",
+      "text": "import { balance } from \"./ledger\";\nimport { formatMoney } from \"../shared/money\";\n\nexport function renderInvoice(orderId: string): string {\n  return `invoice ${orderId}: balance ${formatMoney(balance())}`;\n}\n"
+    },
+    {
+      "path": "src/payments/ledger.ts",
+      "text": "import { newId } from \"../shared/ids\";\nimport { isoDate } from \"../shared/dates\";\n\nexport interface LedgerEntry {\n  id: string;\n  day: string;\n  cents: number;\n  memo: string;\n}\n\nconst entries: LedgerEntry[] = [];\n\nexport function record(cents: number, memo: string): LedgerEntry {\n  const entry = { id: newId(\"led\"), day: isoDate(new Date()), cents, memo };\n  entries.push(entry);\n  return entry;\n}\n\nexport function balance(): number {\n  return entries.reduce((sum, entry) => sum + entry.cents, 0);\n}\n"
+    },
+    {
+      "path": "src/payments/methods.ts",
+      "text": "import { requireEmail } from \"../shared/validation\";\n\nexport function checkPayer(email: string): boolean {\n  return requireEmail(email).ok;\n}\n"
+    },
+    {
+      "path": "src/payments/refund.ts",
+      "text": "import { authorize } from \"./gateway\";\nimport { record } from \"./ledger\";\n\nexport function refund(orderId: string, cents: number) {\n  const auth = authorize(orderId, cents);\n  if (auth.ok) record(-cents, `refund ${orderId}`);\n  return auth;\n}\n"
+    },
+    {
+      "path": "src/shared/dates.ts",
+      "text": "export function isoDate(value: Date): string {\n  return value.toISOString().slice(0, 10);\n}\n\nexport function daysBetween(a: Date, b: Date): number {\n  return Math.round((b.getTime() - a.getTime()) / 86400000);\n}\n"
+    },
+    {
+      "path": "src/shared/ids.ts",
+      "text": "import { nanoid } from \"nanoid\";\n\nexport function newId(prefix: string): string {\n  return `${prefix}_${nanoid(10)}`;\n}\n"
+    },
+    {
+      "path": "src/shared/logger.ts",
+      "text": "import { env } from \"../config\";\n\nexport const logger = {\n  info(message: string): void {\n    if (env.nodeEnv !== \"test\") console.log(message);\n  },\n};\n"
+    },
+    {
+      "path": "src/shared/money.ts",
+      "text": "export interface Money {\n  cents: number;\n  currency: string;\n}\n\nexport function formatMoney(cents: number): string {\n  return (cents / 100).toFixed(2);\n}\n\nexport function addMoney(a: Money, b: Money): Money {\n  return { cents: a.cents + b.cents, currency: a.currency };\n}\n"
+    },
+    {
+      "path": "src/shared/result.ts",
+      "text": "export type Result<T> = { ok: true; value: T } | { ok: false; error: string };\n\nexport function ok<T>(value: T): Result<T> {\n  return { ok: true, value };\n}\n\nexport function fail<T>(error: string): Result<T> {\n  return { ok: false, error };\n}\n"
+    },
+    {
+      "path": "src/shared/types.ts",
+      "text": "export type Id = string;\nexport type Timestamp = string;\n"
+    },
+    {
+      "path": "src/shared/validation.ts",
+      "text": "import { fail, ok } from \"./result\";\nimport { isoDate } from \"./dates\";\n\nexport function requireEmail(value: string) {\n  return value.includes(\"@\") ? ok(value) : fail<string>(\"not an email address\");\n}\n\nexport function requireFutureDate(value: Date, today: Date) {\n  return value > today ? ok(isoDate(value)) : fail<string>(\"date is not in the future\");\n}\n"
+    }
+  ]
+}

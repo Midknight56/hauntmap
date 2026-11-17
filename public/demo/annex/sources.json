@@ -1,0 +1,76 @@
+{
+  "files": [
+    {
+      "path": "app.js",
+      "text": "import { User } from \"./models/index\";\nimport { render } from \"./views/render\";\nimport { fetchUsers } from \"./services/api\";\nimport { log } from \"./util/events\";\nimport \"./legacy/polyfills\";\n\nvar users = [];\n\nexport function start(root) {\n  log(\"start\");\n  fetchUsers().then(function (list) {\n    users = list.map(function (item) {\n      return new User(item.name);\n    });\n    render(root, users);\n  });\n}\n"
+    },
+    {
+      "path": "config/settings.js",
+      "text": "import { ENV } from \"~/config/env\";\n\nexport var settings = {\n  baseUrl: ENV === \"production\" ? \"https://shop.example.test/api\" : \"http://localhost:3000/api\",\n};\n"
+    },
+    {
+      "path": "legacy/polyfills.js",
+      "text": "import \"../util/strings\";\n\nif (!String.prototype.startsWith) {\n  String.prototype.startsWith = function (prefix) {\n    return this.indexOf(prefix) === 0;\n  };\n}\n"
+    },
+    {
+      "path": "models/account.js",
+      "text": "import { User } from \"./user\";\n\nexport function Account(owner) {\n  this.owner = owner;\n  this.kind = \"basic\";\n}\n\nAccount.prototype.isOwnedBy = function (user) {\n  return user instanceof User && user === this.owner;\n};\n"
+    },
+    {
+      "path": "models/index.js",
+      "text": "export * from \"./user\";\nexport * from \"./account\";\nexport * from \"./session\";\n"
+    },
+    {
+      "path": "models/session.js",
+      "text": "import { User } from \"./user\";\n\nvar current = null;\n\nexport function signIn(name) {\n  current = new User(name);\n  return current;\n}\n\nexport function signOut() {\n  current = null;\n}\n"
+    },
+    {
+      "path": "models/user.js",
+      "text": "import { Account } from \"./account\";\n\nexport function User(name) {\n  this.name = name;\n  this.account = new Account(this);\n}\n\nUser.prototype.label = function () {\n  return this.name + \" (\" + this.account.kind + \")\";\n};\n"
+    },
+    {
+      "path": "services/api.js",
+      "text": "import { settings } from \"../config/settings\";\nimport { pad } from \"../util/strings\";\n\nexport function fetchUsers() {\n  var stamp = pad(new Date().getMonth() + 1, 2);\n  return fetch(settings.baseUrl + \"/users?month=\" + stamp).then(function (response) {\n    return response.json();\n  });\n}\n"
+    },
+    {
+      "path": "services/storage.js",
+      "text": "import { settings } from \"../config/settings\";\n\nexport function save(key, value) {\n  localStorage.setItem(settings.baseUrl + key, JSON.stringify(value));\n}\n"
+    },
+    {
+      "path": "util/dom.js",
+      "text": "export function byId(id) {\n  return document.getElementById(id);\n}\n"
+    },
+    {
+      "path": "util/events.js",
+      "text": "import * as self from \"./events\";\n\nvar handlers = {};\n\nexport function on(name, handler) {\n  handlers[name] = handler;\n}\n\nexport function log(message) {\n  self.on(\"log\", function () {});\n  if (handlers.log) handlers.log(message);\n}\n"
+    },
+    {
+      "path": "util/strings.js",
+      "text": "export function pad(value, width) {\n  var text = String(value);\n  while (text.length < width) text = \"0\" + text;\n  return text;\n}\n"
+    },
+    {
+      "path": "views/render.js",
+      "text": "import { buildTable } from \"./widgets/table\";\nimport { buildForm } from \"./widgets/form\";\nimport { byId } from \"../util/dom\";\n\nexport function render(rootId, users) {\n  var root = byId(rootId);\n  root.appendChild(buildTable(users));\n  root.appendChild(buildForm());\n}\n"
+    },
+    {
+      "path": "views/widgets/cell.js",
+      "text": "import { countRows } from \"./table\";\n\nexport function buildCell(text) {\n  var cell = document.createElement(\"td\");\n  cell.textContent = text;\n  cell.title = \"rows: \" + countRows(cell.parentNode || document.createElement(\"table\"));\n  return cell;\n}\n"
+    },
+    {
+      "path": "views/widgets/field.js",
+      "text": "import { formatLabel } from \"@/lib/format\";\n\nexport function buildField(name) {\n  var input = document.createElement(\"input\");\n  input.name = name;\n  input.placeholder = formatLabel(name);\n  return input;\n}\n"
+    },
+    {
+      "path": "views/widgets/form.js",
+      "text": "import { buildField } from \"./field\";\nimport { byId } from \"../../util/dom\";\n\nexport function buildForm() {\n  var form = document.createElement(\"form\");\n  form.appendChild(buildField(\"name\"));\n  form.id = byId(\"main\") ? \"form-main\" : \"form\";\n  return form;\n}\n"
+    },
+    {
+      "path": "views/widgets/row.js",
+      "text": "import { buildCell } from \"./cell\";\n\nexport function buildRow(user) {\n  var row = document.createElement(\"tr\");\n  row.appendChild(buildCell(user.name));\n  return row;\n}\n"
+    },
+    {
+      "path": "views/widgets/table.js",
+      "text": "import { buildRow } from \"./row\";\n\nexport function buildTable(users) {\n  var table = document.createElement(\"table\");\n  users.forEach(function (user) {\n    table.appendChild(buildRow(user));\n  });\n  return table;\n}\n\nexport function countRows(table) {\n  return table.rows.length;\n}\n"
+    }
+  ]
+}

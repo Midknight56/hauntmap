@@ -74,7 +74,7 @@ Each task ends with `pnpm verify` green. A task writes its tests first, sees the
   - Verify: `pnpm verify` passes.
   - _Requirements: 4.4, 5.3, 6.2_
 
-- [ ] 12. The manor sample pair
+- [x] 12. The manor sample pair
   - Write 40 modules of original TypeScript under `public/demo/manor/before` for a small shop back end with the folders `orders`, `payments`, `notifications`, `catalog`, `shared` and `config` under `src`. Build in every fact of requirement 8.1: the three member cycle through `receipt.ts`, `checkout.ts` and `charge.ts`, the one external import, the one absent file, the type only re-export cycle, the one mixed import, the one literal dynamic import, `receipt.ts` importing one binding from `checkout.ts` in one statement used in one deletable statement, and `src/orders/summary.ts` with no import path to `receipt.ts`. Write no other external, unresolved or unsupported import.
   - Copy it to `public/demo/manor/after` and make the three changes of requirement 8.2 and nothing else: remove the import of `checkout.ts` and its use in `receipt.ts`, add an import of `src/orders/summary.ts` to `receipt.ts`, and insert one comment line above the first import of `checkout.ts`.
   - Write `expected.json` for both by reading the files. List every module and every import with its line, column, kinds and resolution, the wings with their module counts, the cyclic components for each preset, the diagnostics, and for `before` the specifier and the two lines of the `receipt.ts` to `checkout.ts` relation. For `after`, list the one removed relation, the one added relation and the changed modules.
@@ -83,20 +83,20 @@ Each task ends with `pnpm verify` green. A task writes its tests first, sees the
   - Verify: `pnpm verify` passes with the pair's tests green.
   - _Requirements: 8.1, 8.2, 8.4_
 
-- [ ] 13. The annex sample and the packer
+- [x] 13. The annex sample and the packer
   - Write the `annex` sample under `public/demo/annex`: about 18 modules of original older style code with exactly three disjoint cyclic components, of sizes 2 and 3 and one self-loop, and exactly two alias imports, `@/lib/format` and `~/config/env`. Write its `expected.json` by hand and add it to `samples.test.ts`.
   - Implement `scripts/pack-samples.ts` that writes `sources.json` beside each sample (`manor/before`, `manor/after`, `annex`), and its `--check` mode. Run it once and keep the three files. Replace the root `pack:samples` script and add `pack:samples --check` to `verify`.
   - Implement `scripts/check-expected.mjs` with the line rule of requirement 8.5 and add it to `verify`.
   - Verify: `pnpm verify` passes, and removing one import line from a copy makes `check-expected` fail.
   - _Requirements: 8.3, 8.4, 8.5_
 
-- [ ] 14. Worker and client
+- [x] 14. Worker and client
   - Write `tests/workers/client.test.ts` first with a fake worker: the revision guard, cancel by terminate and recreate within 500 ms, cancel of a worker that never answers, the `AnalysisCancelled` rejection, and an error that keeps the last investigation. See it fail.
   - Implement `src/workers/analysis.worker.ts` and `src/workers/client.ts` with the message types and the client interface from the design.
   - Verify: `pnpm verify` passes.
   - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
-- [ ] 15. Boundary test, export file and log
+- [x] 15. Boundary test, export file and log
   - Create `src/analysis/index.ts` as the only export file, re-exporting `DEFAULT_ANALYSIS_OPTIONS`, and `tests/analysis-boundary.test.ts` with both checks of the design.
   - Add the log rows for this spec with the credits used.
   - Verify: `pnpm verify` passes.

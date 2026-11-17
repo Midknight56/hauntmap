@@ -1,0 +1,146 @@
+{
+  "modules": [
+    { "id": "app.js", "language": "js", "parseStatus": "ok" },
+    { "id": "config/settings.js", "language": "js", "parseStatus": "ok" },
+    { "id": "legacy/polyfills.js", "language": "js", "parseStatus": "ok" },
+    { "id": "models/account.js", "language": "js", "parseStatus": "ok" },
+    { "id": "models/index.js", "language": "js", "parseStatus": "ok" },
+    { "id": "models/session.js", "language": "js", "parseStatus": "ok" },
+    { "id": "models/user.js", "language": "js", "parseStatus": "ok" },
+    { "id": "services/api.js", "language": "js", "parseStatus": "ok" },
+    { "id": "services/storage.js", "language": "js", "parseStatus": "ok" },
+    { "id": "util/dom.js", "language": "js", "parseStatus": "ok" },
+    { "id": "util/events.js", "language": "js", "parseStatus": "ok" },
+    { "id": "util/strings.js", "language": "js", "parseStatus": "ok" },
+    { "id": "views/render.js", "language": "js", "parseStatus": "ok" },
+    { "id": "views/widgets/cell.js", "language": "js", "parseStatus": "ok" },
+    { "id": "views/widgets/field.js", "language": "js", "parseStatus": "ok" },
+    { "id": "views/widgets/form.js", "language": "js", "parseStatus": "ok" },
+    { "id": "views/widgets/row.js", "language": "js", "parseStatus": "ok" },
+    { "id": "views/widgets/table.js", "language": "js", "parseStatus": "ok" }
+  ],
+  "imports": [
+    { "from": "app.js", "specifier": "./models/index", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "models/index.js", "line": 1, "column": 1 },
+    { "from": "app.js", "specifier": "./views/render", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "views/render.js", "line": 2, "column": 1 },
+    { "from": "app.js", "specifier": "./services/api", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "services/api.js", "line": 3, "column": 1 },
+    { "from": "app.js", "specifier": "./util/events", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "util/events.js", "line": 4, "column": 1 },
+    { "from": "app.js", "specifier": "./legacy/polyfills", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "legacy/polyfills.js", "line": 5, "column": 1 },
+    { "from": "config/settings.js", "specifier": "~/config/env", "syntaxKind": "import", "dependencyKind": "value", "resolution": "unresolved", "to": null, "reason": "alias-not-configured", "line": 1, "column": 1 },
+    { "from": "legacy/polyfills.js", "specifier": "../util/strings", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "util/strings.js", "line": 1, "column": 1 },
+    { "from": "models/account.js", "specifier": "./user", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "models/user.js", "line": 1, "column": 1 },
+    { "from": "models/index.js", "specifier": "./user", "syntaxKind": "re-export", "dependencyKind": "value", "resolution": "local", "to": "models/user.js", "line": 1, "column": 1 },
+    { "from": "models/index.js", "specifier": "./account", "syntaxKind": "re-export", "dependencyKind": "value", "resolution": "local", "to": "models/account.js", "line": 2, "column": 1 },
+    { "from": "models/index.js", "specifier": "./session", "syntaxKind": "re-export", "dependencyKind": "value", "resolution": "local", "to": "models/session.js", "line": 3, "column": 1 },
+    { "from": "models/session.js", "specifier": "./user", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "models/user.js", "line": 1, "column": 1 },
+    { "from": "models/user.js", "specifier": "./account", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "models/account.js", "line": 1, "column": 1 },
+    { "from": "services/api.js", "specifier": "../config/settings", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "config/settings.js", "line": 1, "column": 1 },
+    { "from": "services/api.js", "specifier": "../util/strings", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "util/strings.js", "line": 2, "column": 1 },
+    { "from": "services/storage.js", "specifier": "../config/settings", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "config/settings.js", "line": 1, "column": 1 },
+    { "from": "util/events.js", "specifier": "./events", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "util/events.js", "line": 1, "column": 1 },
+    { "from": "views/render.js", "specifier": "./widgets/table", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "views/widgets/table.js", "line": 1, "column": 1 },
+    { "from": "views/render.js", "specifier": "./widgets/form", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "views/widgets/form.js", "line": 2, "column": 1 },
+    { "from": "views/render.js", "specifier": "../util/dom", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "util/dom.js", "line": 3, "column": 1 },
+    { "from": "views/widgets/cell.js", "specifier": "./table", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "views/widgets/table.js", "line": 1, "column": 1 },
+    { "from": "views/widgets/field.js", "specifier": "@/lib/format", "syntaxKind": "import", "dependencyKind": "value", "resolution": "unresolved", "to": null, "reason": "alias-not-configured", "line": 1, "column": 1 },
+    { "from": "views/widgets/form.js", "specifier": "./field", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "views/widgets/field.js", "line": 1, "column": 1 },
+    { "from": "views/widgets/form.js", "specifier": "../../util/dom", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "util/dom.js", "line": 2, "column": 1 },
+    { "from": "views/widgets/row.js", "specifier": "./cell", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "views/widgets/cell.js", "line": 1, "column": 1 },
+    { "from": "views/widgets/table.js", "specifier": "./row", "syntaxKind": "import", "dependencyKind": "value", "resolution": "local", "to": "views/widgets/row.js", "line": 1, "column": 1 }
+  ],
+  "diagnostics": [
+    { "code": "unresolved", "module": "config/settings.js", "line": 1, "column": 1, "specifier": "~/config/env" },
+    { "code": "unresolved", "module": "views/widgets/field.js", "line": 1, "column": 1, "specifier": "@/lib/format" }
+  ],
+  "cycles": {
+    "static-value": [
+      {
+        "members": ["models/account.js", "models/user.js"],
+        "witness": {
+          "modules": ["models/account.js", "models/user.js"],
+          "relationIds": [
+            "[\"models/account.js\",[\"local\",\"models/user.js\"],\"import\",\"value\"]",
+            "[\"models/user.js\",[\"local\",\"models/account.js\"],\"import\",\"value\"]"
+          ]
+        }
+      },
+      {
+        "members": ["util/events.js"],
+        "witness": {
+          "modules": ["util/events.js"],
+          "relationIds": ["[\"util/events.js\",[\"local\",\"util/events.js\"],\"import\",\"value\"]"]
+        }
+      },
+      {
+        "members": ["views/widgets/cell.js", "views/widgets/row.js", "views/widgets/table.js"],
+        "witness": {
+          "modules": ["views/widgets/cell.js", "views/widgets/table.js", "views/widgets/row.js"],
+          "relationIds": [
+            "[\"views/widgets/cell.js\",[\"local\",\"views/widgets/table.js\"],\"import\",\"value\"]",
+            "[\"views/widgets/table.js\",[\"local\",\"views/widgets/row.js\"],\"import\",\"value\"]",
+            "[\"views/widgets/row.js\",[\"local\",\"views/widgets/cell.js\"],\"import\",\"value\"]"
+          ]
+        }
+      }
+    ],
+    "type-inclusive": [
+      {
+        "members": ["models/account.js", "models/user.js"],
+        "witness": {
+          "modules": ["models/account.js", "models/user.js"],
+          "relationIds": [
+            "[\"models/account.js\",[\"local\",\"models/user.js\"],\"import\",\"value\"]",
+            "[\"models/user.js\",[\"local\",\"models/account.js\"],\"import\",\"value\"]"
+          ]
+        }
+      },
+      {
+        "members": ["util/events.js"],
+        "witness": {
+          "modules": ["util/events.js"],
+          "relationIds": ["[\"util/events.js\",[\"local\",\"util/events.js\"],\"import\",\"value\"]"]
+        }
+      },
+      {
+        "members": ["views/widgets/cell.js", "views/widgets/row.js", "views/widgets/table.js"],
+        "witness": {
+          "modules": ["views/widgets/cell.js", "views/widgets/table.js", "views/widgets/row.js"],
+          "relationIds": [
+            "[\"views/widgets/cell.js\",[\"local\",\"views/widgets/table.js\"],\"import\",\"value\"]",
+            "[\"views/widgets/table.js\",[\"local\",\"views/widgets/row.js\"],\"import\",\"value\"]",
+            "[\"views/widgets/row.js\",[\"local\",\"views/widgets/cell.js\"],\"import\",\"value\"]"
+          ]
+        }
+      }
+    ],
+    "dynamic-inclusive": [
+      {
+        "members": ["models/account.js", "models/user.js"],
+        "witness": {
+          "modules": ["models/account.js", "models/user.js"],
+          "relationIds": [
+            "[\"models/account.js\",[\"local\",\"models/user.js\"],\"import\",\"value\"]",
+            "[\"models/user.js\",[\"local\",\"models/account.js\"],\"import\",\"value\"]"
+          ]
+        }
+      },
+      {
+        "members": ["util/events.js"],
+        "witness": {
+          "modules": ["util/events.js"],
+          "relationIds": ["[\"util/events.js\",[\"local\",\"util/events.js\"],\"import\",\"value\"]"]
+        }
+      },
+      {
+        "members": ["views/widgets/cell.js", "views/widgets/row.js", "views/widgets/table.js"],
+        "witness": {
+          "modules": ["views/widgets/cell.js", "views/widgets/table.js", "views/widgets/row.js"],
+          "relationIds": [
+            "[\"views/widgets/cell.js\",[\"local\",\"views/widgets/table.js\"],\"import\",\"value\"]",
+            "[\"views/widgets/table.js\",[\"local\",\"views/widgets/row.js\"],\"import\",\"value\"]",
+            "[\"views/widgets/row.js\",[\"local\",\"views/widgets/cell.js\"],\"import\",\"value\"]"
+          ]
+        }
+      }
+    ]
+  }
+}
