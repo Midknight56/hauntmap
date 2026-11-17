@@ -1,4 +1,5 @@
 import type { CycleReport, ImportRecord, Investigation, Preset, TraceResult } from "../../contracts/types";
+import { FIRST_VIEW_MIN_ZOOM } from "../../scene/camera";
 import type { Camera, LayoutRequest, LayoutResult } from "../../scene/layout/types";
 import type { DemoStepId, DemoStepState } from "../demo/types";
 import type { AnalysisApi } from "./analysisApi";
@@ -69,6 +70,8 @@ export interface InvestigationStore {
     chooseImporter(id: string): void;
     focusModule(id: string): void;
     setCamera(camera: Camera): void;
+  /** The camera of the first view of an investigation: like `setCamera`, but its zoom may go down to `FIRST_VIEW_MIN_ZOOM` (a phone frames the loop whole). */
+  setFirstViewCamera(camera: Camera): void;
     setStatus(message: string): void;
     /** An externally produced layout (the comparison's union layout). */
     applyLayout(result: LayoutResult): void;
@@ -499,6 +502,9 @@ export function createInvestigationStore(deps: StoreDeps): InvestigationStore {
       }
     },
 
+    setFirstViewCamera(camera) {
+      set({ camera: { x: camera.x, y: camera.y, zoom: Number.isFinite(camera.zoom) ? Math.min(4, Math.max(FIRST_VIEW_MIN_ZOOM, camera.zoom)) : 1 } });
+    },
     setCamera(camera) {
       set({ camera: { x: camera.x, y: camera.y, zoom: clampZoom(camera.zoom) } });
     },

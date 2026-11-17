@@ -1,6 +1,6 @@
 import { CanvasTextMetrics, Container, Graphics, Sprite, Text, TextStyle, type Texture } from "pixi.js";
 import { DISPLAY_FONT, FONT } from "./elements";
-import { fitLines, labelScale, stemOfId, TARGET_LABEL_PX, wingTitleFor } from "./labels";
+import { fitLines, labelScale, roomNameFor, stemOfId, TARGET_LABEL_PX, wingTitleFor } from "./labels";
 import type { LayerName } from "./layers";
 import type { LayoutResult, Rect } from "./layout/types";
 import type { SceneStates } from "./stateMap";
@@ -76,7 +76,7 @@ export interface DrawContext {
   related: ReadonlySet<string> | null;
 }
 
-/** `src/orders · 7 modules`; the same words as the wing tooltip. */
+/** `src/orders Ãƒâ€šÃ‚Â· 7 modules`; the same words as the wing tooltip. */
 export function wingLabel(wing: string, moduleCount: number): string {
   return `${wing} \u00B7 ${moduleCount} ${moduleCount === 1 ? "module" : "modules"}`;
 }
@@ -116,6 +116,8 @@ const NOTE_FONT = 12;
 const WING_FONT_CAP = 40;
 /** The plaque sits on the top wall: its bottom edge is this far under the top of the wing, so that it stays in the strip above the rooms (40 units) however large it grows. */
 const PLATE_BOTTOM = 38;
+/** How far, in scene units, the name plate of a loop room may reach past each side of the room before it moves under the room. */
+export const PLATE_OVERHANG = 12;
 /** Rooms that are not in the current traversal are shown at this opacity (the design asks for 45 to 55 percent; text stays above 4.5:1). */
 export const SUBDUED_ALPHA = 0.55;
 
@@ -237,7 +239,7 @@ function glowOf(state: State): { color: string; strength: number } | null {
   }
 }
 
-/** Draw every room (body, name and, when subdued, the words `Not in this traversal`). Returns the nodes by module ID for culling. */
+/** Draw every room (body and name; a subdued room is shown by its opacity and its dotted rail, not by words). Returns the nodes by module ID for culling. */
 export function drawRooms(ctx: DrawContext, layout: LayoutResult): Map<string, Container> {
   const nodes = new Map<string, Container>();
   for (const room of layout.rooms) {
@@ -261,52 +263,61 @@ export function drawRooms(ctx: DrawContext, layout: LayoutResult): Map<string, C
       node.addChild(pinText(ctx, "glyph", room.id, mark, 14));
     }
     const stem = stemOfId(room.id);
-    // Where the name ends, so that the note under it never overlaps it.
-    let nameBottom = 8 + ROOM_FONT * LINE;
+    // A room on the loop, on a route or selected always shows its full file name (design pass 2, items 1 and 7). When the name is
+    // wider than the room, it is drawn on a small plate over the top of the room (a little wider than the room), or, when it is far
+    // wider (a phone view of the whole loop), on a plate under the room. Any other room shows the full name, the name without its
+    // extension, a cut of 4 letters or more, or nothing (item 2).
+    const plated = state === "witness" || state === "trace" || state === "selected" || state === "focusHalo";
+    const plate = new Graphics();
+    plate.visible = false;
+    // The name of such a room is drawn above the corridors, the doors and the ghost, so that its plate is never crossed by a line.
+    const holder = plated ? new Container() : null;
+    if (holder !== null) {
+      holder.position.set(room.x, room.y);
+      node.removeChild(name);
+      holder.addChild(plate, name);
+      ctx.layers.overlay.addChild(holder);
+    } else node.addChildAt(plate, node.getChildIndex(name));
     ctx.labels.push({
       kind: "room",
       id: room.id,
       node: name,
       fontUnits: ROOM_FONT,
-      visible: () => node.visible,
+      visible: () => node.visible && name.visible,
+      active: () => node.visible,
       layout(zoom) {
+        if (holder !== null) holder.visible = node.visible;
         const s = labelScale(zoom, ROOM_FONT);
-        const lineH = ROOM_FONT * LINE * s;
-        const maxLines = subdued ? 1 : Math.max(1, Math.min(2, Math.floor((room.h - 14) / lineH)));
-        const words = fitLines([room.label, stem], (room.w - 10) / s, (t) => measureWidth(t, FONT, ROOM_FONT, "500"), maxLines).join("\n");
-        if (name.text !== words) name.text = words;
+        const measure = (t: string): number => measureWidth(t, FONT, ROOM_FONT, "500");
         name.scale.set(s);
-        nameBottom = 8 + words.split("\n").length * lineH;
+        plate.clear();
+        plate.visible = false;
+        const inside = (room.w - 10) / s;
+        const words = plated ? (measure(room.label) <= inside ? room.label : null) : roomNameFor([room.label, stem], inside, measure);
+        if (words !== null) {
+          name.visible = true;
+          name.anchor.set(0, 0);
+          name.position.set(5, 8);
+          if (name.text !== words) name.text = words;
+          return;
+        }
+        if (!plated) {
+          name.visible = false;
+          return;
+        }
+        if (name.text !== room.label) name.text = room.label;
+        name.visible = true;
+        name.anchor.set(0.5, 0);
+        const pad = 3 / zoom;
+        const w = measure(room.label) * s;
+        const h = ROOM_FONT * LINE * s;
+        // Over the room when the plate is at most a room gap (about 12 units on each side) wider than the room; under it otherwise.
+        const top = w + 2 * pad <= room.w + PLATE_OVERHANG * 2 ? 6 : room.h + 4 / zoom + pad;
+        name.position.set(room.w / 2, top);
+        plate.roundRect(room.w / 2 - w / 2 - pad, top - pad, w + 2 * pad, h + 2 * pad, 3 / zoom).fill(TOKENS.plate).stroke({ width: 1 / zoom, color: TOKENS.wallLine });
+        plate.visible = true;
       },
-    });
-    const words = STATE_STYLES[state].label;
-    if (subdued && words !== null) {
-      const note = makeText(words, FONT, NOTE_FONT, TOKENS.roomSubduedInk, "500");
-      note.anchor.set(0, 1);
-      note.position.set(5, room.h - 4);
-      node.addChild(note);
-      ctx.labels.push({
-        kind: "note",
-        id: room.id,
-        node: note,
-        fontUnits: NOTE_FONT,
-        // The note is a text like any other: 12 CSS pixels or more on screen, or not drawn at that zoom.
-        visible: () => node.visible && note.visible,
-        active: () => node.visible,
-        layout(zoom) {
-          const wanted = labelScale(zoom, NOTE_FONT);
-          const lines = fitLines([words], (room.w - 10) / wanted, (t) => measureWidth(t, FONT, NOTE_FONT, "500"), 2);
-          const text = lines.join("\n");
-          const needed = lines.length * NOTE_FONT * LINE * wanted;
-          const roomLeft = room.h - 4 - nameBottom - 2;
-          // The words fit only when they are whole (no ellipsis) and leave the name its space; otherwise they wait for a closer view.
-          note.visible = !text.includes("\u2026") && needed <= roomLeft;
-          if (note.text !== text) note.text = text;
-          note.scale.set(wanted);
-        },
-      });
-    }
-    ctx.layers.rooms.addChild(node);
+    });    ctx.layers.rooms.addChild(node);
     nodes.set(room.id, node);
   }
   for (const group of layout.grouped) {

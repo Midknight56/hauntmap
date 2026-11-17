@@ -1,4 +1,4 @@
-import { useMemo, type ReactElement } from "react";
+import { useLayoutEffect, useMemo, useRef, type ReactElement } from "react";
 import type { ImportRecord, Investigation } from "../contracts/types";
 import { analysisApi, type AnalysisApi } from "../features/investigation/analysisApi";
 import { compareText, languageLabel, occurrencesOf, presetLine, relationHeading, targetText } from "../features/investigation/facts";
@@ -8,6 +8,7 @@ import { EvidenceTrail } from "./EvidenceTrail";
 import { NamedList } from "./NamedList";
 import { relationTip, selectRelation } from "./selecting";
 import { SourceExcerpt } from "./SourceExcerpt";
+import { usePhone } from "./useMediaQuery";
 import { useViewState } from "./useStore";
 
 export const INSPECTOR_HEADING_ID = "inspector-heading";
@@ -174,8 +175,21 @@ export function Inspector({ store, api = analysisApi }: Props): ReactElement {
   const state = useViewState(store);
   const selection = state.selection;
   const hasCard = state.investigation !== null && selection.kind !== "none";
+  const phone = usePhone();
+  const sheetRef = useRef<HTMLElement>(null);
+  // On a phone the inspector is the evidence sheet: a new selection opens it at its heading, even when the tap that made it
+  // (a trail step at the bottom of the sheet) scrolled the sheet down to the button (design 4d, design pass 2 item 9).
+  useLayoutEffect(() => {
+    const sheet = sheetRef.current;
+    if (!phone || sheet === null) return;
+    sheet.scrollTop = 0;
+    const frame = requestAnimationFrame(() => {
+      sheet.scrollTop = 0;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [phone, selection]);
   return (
-    <aside aria-label="Inspector" className="inspector" data-kind={selection.kind}>
+    <aside ref={sheetRef} aria-label="Inspector" className="inspector" data-kind={selection.kind}>
       <h2 id={INSPECTOR_HEADING_ID} tabIndex={-1}>
         {inspectorTitle(state)}
       </h2>

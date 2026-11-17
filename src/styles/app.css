@@ -282,6 +282,11 @@ input::placeholder {
   min-width: 0;
 }
 
+/* A comparison fills the legend with ten entries: the dock is taller so that its text fits (design pass 2, item 5). */
+.investigation[data-comparing] {
+  --dock: min(288px, max(224px, 27vh));
+}
+
 .toolbar {
   display: contents;
 }
@@ -1359,6 +1364,52 @@ button.toolbar-main {
     font-size: 13px;
   }
 
+  /* A comparison on a phone (design 4f): the sentence card under the top bar, the breadcrumb, the map, then the legend card. The
+     search row, the steps and the loops list follow the legend, a scroll away. A selection made during a comparison opens the
+     evidence under the map in the page, so that the sentence card stays on the screen. */
+  .investigation[data-comparing] .toolbar-top {
+    display: contents;
+  }
+
+  .investigation[data-comparing] .breadcrumb {
+    order: 4;
+    flex: none;
+  }
+
+  .investigation[data-comparing] .toolbar-find {
+    order: 9;
+  }
+
+  .investigation[data-comparing] .steps-panel {
+    order: 10;
+  }
+
+  .investigation[data-comparing] .loops-panel,
+  .investigation[data-comparing] .who-panel {
+    order: 11;
+  }
+
+  .investigation[data-comparing][data-selection="on"] .comparison-dock,
+  .investigation[data-comparing][data-selection="on"] .breadcrumb {
+    display: block;
+  }
+
+  .investigation[data-comparing][data-selection="on"] .legend {
+    display: flex;
+  }
+
+  .investigation[data-comparing][data-selection="on"] .toolbar-find {
+    display: none;
+  }
+
+  .investigation[data-comparing] .inspector {
+    position: static;
+    order: 6;
+    padding: 12px;
+    border: 1px solid var(--wall-line);
+    border-radius: var(--radius);
+    overflow: visible;
+  }
   /* Nothing is selected: the evidence panel is not on the screen. A selected room, door or wing opens the evidence sheet. */
   .investigation[data-selection="off"] .inspector {
     display: none;
@@ -1439,6 +1490,10 @@ button.toolbar-main {
     border: 1px solid var(--wall-line);
     border-radius: var(--radius);
     pointer-events: none;
+  }
+
+  body:has(.investigation[data-comparing]) .status-region[data-screen="investigation"] {
+    bottom: calc(min(288px, max(224px, 27vh)) + 16px);
   }
 
   .status-region[data-screen="investigation"][data-empty],

@@ -3,14 +3,14 @@ import { dashedPolyline } from "../doors";
 import { FONT } from "../elements";
 import type { CollapsedMark } from "./collapsed";
 import type { Point, Rect } from "../layout/types";
-import { TOKENS } from "../styles";
+import { REMOVED_ALPHA, TOKENS, removedStrokeWidth } from "../styles";
 import { pinText, type SceneLabel } from "../rooms";
 import type { ComparisonView } from "./view";
 
 // The comparison marks that the element textures do not carry. PixiJS; called by the scene adapter.
-function dashedOutline(g: Graphics, r: Rect, color: string): void {
-  const dash = 6;
-  const gap = 4;
+function dashedOutline(g: Graphics, r: Rect, color: string, width = 2): void {
+  const dash = Math.max(6, width * 2.2);
+  const gap = Math.max(4, width * 1.4);
   const edge = (x1: number, y1: number, x2: number, y2: number): void => {
     const length = Math.hypot(x2 - x1, y2 - y1);
     for (let t = 0; t < length; t += dash + gap) {
@@ -22,7 +22,7 @@ function dashedOutline(g: Graphics, r: Rect, color: string): void {
   edge(r.x + r.w, r.y, r.x + r.w, r.y + r.h);
   edge(r.x + r.w, r.y + r.h, r.x, r.y + r.h);
   edge(r.x, r.y + r.h, r.x, r.y);
-  g.stroke({ width: 2, color });
+  g.stroke({ width, color, alpha: color === TOKENS.removed ? REMOVED_ALPHA : 1 });
 }
 
 function plus(x: number, y: number, size = 13): Text {
@@ -38,7 +38,7 @@ function plus(x: number, y: number, size = 13): Text {
  * ghost outline of a removed element.
  */
 /** A wide ring around a removed (dashed ghost) or added (solid) door, so that the two changes are the first things the eye finds. */
-function ring(g: Graphics, rect: Rect, color: string, dashed: boolean): void {
+function ring(g: Graphics, rect: Rect, color: string, dashed: boolean, zoom: number): void {
   const cx = rect.x + rect.w / 2;
   const cy = rect.y + rect.h / 2;
   g.circle(cx, cy, 28).fill({ color, alpha: 0.14 });
@@ -52,7 +52,7 @@ function ring(g: Graphics, rect: Rect, color: string, dashed: boolean): void {
     const a1 = a0 + (Math.PI * 2) / dashes / 1.7;
     g.moveTo(cx + Math.cos(a0) * 24, cy + Math.sin(a0) * 24).arc(cx, cy, 24, a0, a1);
   }
-  g.stroke({ width: 3, color });
+  g.stroke({ width: removedStrokeWidth(zoom), color, alpha: REMOVED_ALPHA });
 }
 
 export function drawComparisonMarks(layer: Container, view: ComparisonView, pin: { labels: SceneLabel[]; zoom: number }): void {
@@ -75,31 +75,31 @@ export function drawComparisonMarks(layer: Container, view: ComparisonView, pin:
     } else if (c === "comparison-added" && !own) {
       layer.addChild(mark(room.id, plus(room.x + room.w - 10, room.y + 10), 13));
     } else if (c === "comparison-removed" && !own) {
-      dashedOutline(g, { x: room.x - 3, y: room.y - 3, w: room.w + 6, h: room.h + 6 }, TOKENS.removed);
+      dashedOutline(g, { x: room.x - 3, y: room.y - 3, w: room.w + 6, h: room.h + 6 }, TOKENS.removed, removedStrokeWidth(pin.zoom));
       used = true;
     }
   }
   for (const door of view.drawn.doors) {
     const c = view.marks.doors.get(door.relationId);
     if (c === "comparison-added") {
-      ring(g, door, TOKENS.added, false);
+      ring(g, door, TOKENS.added, false, pin.zoom);
       layer.addChild(mark(door.relationId, plus(door.x + door.w + 10, door.y - 8, 20), 20));
       used = true;
     } else if (c === "comparison-removed") {
-      ring(g, door, TOKENS.removed, true);
-      if (view.states.doors.get(door.relationId)?.state !== c) dashedOutline(g, { x: door.x - 3, y: door.y - 3, w: door.w + 6, h: door.h + 6 }, TOKENS.removed);
+      ring(g, door, TOKENS.removed, true, pin.zoom);
+      if (view.states.doors.get(door.relationId)?.state !== c) dashedOutline(g, { x: door.x - 3, y: door.y - 3, w: door.w + 6, h: door.h + 6 }, TOKENS.removed, removedStrokeWidth(pin.zoom));
       used = true;
     }
   }
   for (const s of view.drawn.sealed) {
     const c = view.marks.sealed.get(s.relationId);
     if (c === "comparison-added") {
-      ring(g, s, TOKENS.added, false);
+      ring(g, s, TOKENS.added, false, pin.zoom);
       layer.addChild(mark(s.relationId, plus(s.x + s.w + 10, s.y - 8, 20), 20));
       used = true;
     } else if (c === "comparison-removed") {
-      ring(g, s, TOKENS.removed, true);
-      if (view.states.sealed.get(s.relationId) !== c) dashedOutline(g, { x: s.x - 3, y: s.y - 3, w: s.w + 6, h: s.h + 6 }, TOKENS.removed);
+      ring(g, s, TOKENS.removed, true, pin.zoom);
+      if (view.states.sealed.get(s.relationId) !== c) dashedOutline(g, { x: s.x - 3, y: s.y - 3, w: s.w + 6, h: s.h + 6 }, TOKENS.removed, removedStrokeWidth(pin.zoom));
       used = true;
     }
   }
@@ -133,8 +133,9 @@ export function drawCollapsedMarks(layer: Container, marks: readonly CollapsedMa
     if (m.kind === "removed") {
       g.circle(cx, cy, 26).fill({ color: TOKENS.removed, alpha: 0.1 });
       g.poly(pts).fill({ color: TOKENS.floor, alpha: 0.85 });
-      dashedPolyline(g, pts, 6, 4);
-      g.stroke({ width: 3, color: TOKENS.removed });
+      const w = removedStrokeWidth(pin.zoom);
+      dashedPolyline(g, pts, Math.max(6, w * 2.2), Math.max(4, w * 1.4));
+      g.stroke({ width: w, color: TOKENS.removed, alpha: REMOVED_ALPHA });
     } else {
       g.circle(cx, cy, 28).fill({ color: TOKENS.added, alpha: 0.14 });
       g.poly(pts).fill({ color: TOKENS.added, alpha: 0.3 });

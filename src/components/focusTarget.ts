@@ -1,7 +1,7 @@
 import type { Investigation } from "../contracts/types";
 import { wingOf } from "../features/investigation/wings";
 import type { Selection } from "../features/investigation/selection";
-import type { LayoutResult } from "../scene/layout/types";
+import type { LayoutResult, Point, Rect } from "../scene/layout/types";
 import type { HitKind } from "../scene/types";
 
 export interface FocusTarget {
@@ -36,4 +36,33 @@ export function focusTargetOf(selection: Selection, layout: LayoutResult, invest
       return record === undefined ? null : roomOrWing(record.from);
     }
   }
+}
+function segmentBoxes(points: readonly Point[]): Rect[] {
+  const out: Rect[] = [];
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1] as Point;
+    const b = points[i] as Point;
+    out.push({ x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(a.x - b.x), h: Math.abs(a.y - b.y) });
+  }
+  return out;
+}
+
+/**
+ * What a selected import shows: its two rooms, its door and the corridor it runs along (the corridors between the two wings),
+ * in scene units. Null when the selection is not a relation whose door and both rooms are drawn; the camera then centers on
+ * the focus target instead.
+ */
+export function stepRectsOf(selection: Selection, layout: LayoutResult): Rect[] | null {
+  if (selection.kind !== "relation") return null;
+  const door = layout.doors.find((d) => d.relationId === selection.relationId);
+  if (door === undefined) return null;
+  const from = layout.rooms.find((r) => r.id === door.from);
+  const to = layout.rooms.find((r) => r.id === door.to);
+  if (from === undefined || to === undefined) return null;
+  const rects: Rect[] = [from, to, door].map((r) => ({ x: r.x, y: r.y, w: r.w, h: r.h }));
+  rects.push(...segmentBoxes(door.arrow));
+  if (from.wing !== to.wing) {
+    for (const c of layout.corridors) if (c.fromWing === from.wing && c.toWing === to.wing) rects.push(...segmentBoxes(c.route ?? c.path));
+  }
+  return rects;
 }

@@ -89,7 +89,60 @@ async function audit(page: Page, edge: number): Promise<Audit> {
       const size = parseFloat(getComputedStyle(parent).fontSize);
       if (size < 12) problems.push(`${nameOf(parent)} has text at ${size} px (at least 12)`);
     }
-    if (document.documentElement.scrollWidth > vw) problems.push(`the page scrolls sideways (${document.documentElement.scrollWidth} > ${vw})`);
+    // Text cut in two by the edge of the screen or by the box that holds it (design pass 2, item 5). A line that lies wholly outside a
+    // scrolling box is only scrolled away; a line that is partly in and partly out is cut off, and nobody can read it without moving
+    // something. A box that scrolls sideways by design (the phone legend) may cut a line at its sides; no box may cut one at its top or bottom.
+    const vh = window.innerHeight;
+    const cutBy = (r: DOMRect, box: { left: number; top: number; right: number; bottom: number }, axis: "x" | "y"): boolean => {
+      if (axis === "y") return r.bottom > box.top + 1 && r.top < box.bottom - 1 && (r.top < box.top - 1.5 || r.bottom > box.bottom + 1.5);
+      return r.right > box.left + 1 && r.left < box.right - 1 && (r.left < box.left - 1.5 || r.right > box.right + 1.5);
+    };
+    const seenCut = new Set<string>();
+    const textWalker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let node = textWalker.nextNode(); node !== null; node = textWalker.nextNode()) {
+      const parent = node.parentElement;
+      if (parent === null || (node.textContent ?? "").trim() === "" || !shown(parent)) continue;
+      if (parent.closest("script, style, canvas, svg, .visually-hidden, .map-wrapper, .minimap, [data-empty], [data-mirrored]") !== null) continue;
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      const lines = [...range.getClientRects()].filter((r) => r.width > 1 && r.height > 1);
+      const boxes: { el: Element; box: DOMRect; x: boolean; y: boolean }[] = [];
+      // The page itself is not a box here: the screen edge below is checked for it.
+      for (let el: Element | null = parent; el !== null && el !== document.body; el = el.parentElement) {
+        const style = getComputedStyle(el);
+        const x = style.overflowX === "hidden" || style.overflowX === "clip";
+        const y = style.overflowY !== "visible";
+        if (x || y) boxes.push({ el, box: el.getBoundingClientRect(), x, y });
+      }
+      for (const r of lines) {
+        const words = (node.textContent ?? "").trim().slice(0, 50);
+        for (const b of boxes) {
+          if (b.y && cutBy(r, b.box, "y")) {
+            const key = `y|${nameOf(b.el)}|${words}`;
+            if (!seenCut.has(key)) {
+              problems.push(`the text "${words}" is cut off at the top or bottom of ${nameOf(b.el)}`);
+              seenCut.add(key);
+            }
+          }
+          if (b.x && cutBy(r, b.box, "x")) {
+            const key = `x|${nameOf(b.el)}|${words}`;
+            if (!seenCut.has(key)) {
+              problems.push(`the text "${words}" is cut off at a side of ${nameOf(b.el)}`);
+              seenCut.add(key);
+            }
+          }
+        }
+        const edge = { left: 0, top: 0, right: vw, bottom: vh };
+        // A phone page scrolls up and down, so only its sides are an edge there; a desktop page is one screen.
+        if (cutBy(r, edge, "x") || (vw > 720 && cutBy(r, edge, "y"))) {
+          const key = `v|${nameOf(parent)}|${words}`;
+          if (!seenCut.has(key)) {
+              problems.push(`the text "${words}" in ${nameOf(parent)} runs over the edge of the screen`);
+              seenCut.add(key);
+            }
+        }
+      }
+    }    if (document.documentElement.scrollWidth > vw) problems.push(`the page scrolls sideways (${document.documentElement.scrollWidth} > ${vw})`);
     return { problems, controls: boxes.length };
   }, edge);
 }

@@ -5,6 +5,11 @@ import type { Camera, Point, Rect } from "./layout/types";
 
 export const MIN_ZOOM = 0.25;
 export const MAX_ZOOM = 4;
+/**
+ * The lowest zoom of the first view on a phone, and of nothing else. A 328 px map shows the whole loop of the manor (about 1,200
+ * units with the name plates of its three rooms) only under the 0.25 floor. The zoom buttons, the wheel and the keys keep 0.25.
+ */
+export const FIRST_VIEW_MIN_ZOOM = 0.15;
 
 export interface Viewport {
   width: number;

@@ -47,3 +47,11 @@ export const STATE_STYLES: Record<State, StateStyle> = {
 
 /** Concept words for the glyph drawn on a sealed doorway. */
 export const SEALED_GLYPH = "?";
+
+/** Bone at full alpha: the removed door and its dashed outline are one of the first two things the eye finds (design pass 2, item 6). */
+export const REMOVED_ALPHA = 1;
+
+/** The width in scene units of the dashed removed outline: 3 screen pixels at the zoom the map has when it is drawn, never thinner than 3 units. */
+export function removedStrokeWidth(zoom: number): number {
+  return Math.min(16, Math.max(3, 3 / Math.max(zoom, 0.0001)));
+}

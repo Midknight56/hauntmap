@@ -2,7 +2,7 @@ import { Graphics, Sprite, Text } from "pixi.js";
 import { FONT } from "./elements";
 import { pinText, type DrawContext } from "./rooms";
 import type { LayoutResult, Point } from "./layout/types";
-import { SEALED_GLYPH, TOKENS, type State } from "./styles";
+import { REMOVED_ALPHA, SEALED_GLYPH, TOKENS, removedStrokeWidth, type State } from "./styles";
 
 /** The color of a passage: dim by default, so that only the passages of a selection, a loop or a comparison stand out. */
 function passageColor(state: State): string {
@@ -63,15 +63,16 @@ export function drawDoors(ctx: DrawContext, layout: LayoutResult): void {
     const layer = info.state === "default" ? ctx.layers.rooms : ctx.layers.selected;
     const faded = ctx.related !== null && info.state === "default" && !ctx.related.has(door.relationId);
     const color = passageColor(info.state);
-    const width = info.state === "default" ? 2 : info.state === "comparison-added" ? 4.5 : 3;
+    const removed = info.state === "comparison-removed";
+    const width = removed ? removedStrokeWidth(ctx.zoom) : info.state === "default" ? 2 : info.state === "comparison-added" ? 4.5 : 3;
     const points = door.arrow;
     const shared = info.state === "default";
     const line = shared ? (faded ? dim : plain) : new Graphics();
     const first = points[0] as Point;
     const to = points[points.length - 1] as Point;
     if (info.state === "comparison-removed") {
-      dashedPolyline(line, points, 7, 5);
-      line.stroke({ width, color, alpha: 1, join: "round", cap: "round" });
+      dashedPolyline(line, points, Math.max(7, width * 2.2), Math.max(5, width * 1.4));
+      line.stroke({ width, color, alpha: REMOVED_ALPHA, join: "round", cap: "butt" });
     } else {
       line.moveTo(first.x, first.y);
       for (const p of points.slice(1)) line.lineTo(p.x, p.y);

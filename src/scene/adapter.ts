@@ -13,7 +13,7 @@ import { clearMeasureCache, drawRooms, drawWings, haloRect, type DrawContext, ty
 import { currentTheme, onThemeChange } from "../styles/theme";
 import { deriveStates } from "./stateMap";
 import { TOKENS } from "./styles";
-import { fitBounds, clampZoom, toScene, toScreen, type Viewport } from "./camera";
+import { clampZoom, FIRST_VIEW_MIN_ZOOM, fitBounds, MAX_ZOOM, toScene, toScreen, type Viewport } from "./camera";
 import { visibleRoomIds } from "./culling";
 import { watchContext } from "./fallback";
 import { createLayers } from "./layers";
@@ -206,7 +206,8 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
   }
 
   function moveCamera(camera: Camera, transition: "animate" | "jump"): void {
-    const next: Camera = { x: camera.x, y: camera.y, zoom: clampZoom(camera.zoom) };
+    // The store has clamped the zoom already; the first view on a phone may be under the 0.25 floor (FIRST_VIEW_MIN_ZOOM).
+    const next: Camera = { x: camera.x, y: camera.y, zoom: Number.isFinite(camera.zoom) ? Math.min(MAX_ZOOM, Math.max(FIRST_VIEW_MIN_ZOOM, camera.zoom)) : 1 };
     const from = displayed;
     target = next;
     const token = ++cameraToken;
@@ -337,11 +338,11 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
       moveCamera(camera, "animate");
       return camera;
     },
-    focusOn(on, zoomFloor) {
+    focusOn(on, zoomFloor, zoom) {
       guard();
       const rect = layout === null ? null : rectOfTarget(layout, on);
       if (rect === null) return { ...target };
-      const camera: Camera = { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2, zoom: clampZoom(Math.max(target.zoom, zoomFloor)) };
+      const camera: Camera = { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2, zoom: clampZoom(zoom ?? Math.max(target.zoom, zoomFloor)) };
       moveCamera(camera, "animate");
       return camera;
     },
@@ -385,7 +386,11 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
         frames,
         labels: labels
           .filter((label) => label.visible())
-          .map((label) => ({ kind: label.kind, id: label.id, text: label.node.text, px: label.fontUnits * label.node.scale.y * displayed.zoom })),
+          .map((label) => {
+            const b = label.node.getBounds();
+            const box = container.getBoundingClientRect();
+            return { kind: label.kind, id: label.id, text: label.node.text, px: label.fontUnits * label.node.scale.y * displayed.zoom, rect: { x: box.left + b.x, y: box.top + b.y, width: b.width, height: b.height } };
+          }),
         ghost: route?.ghost() ?? null,
         glow: route?.glow ?? false,
         glowAlpha: route?.glowAlpha() ?? null,

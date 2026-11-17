@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { expandAllWings, openManor, settled, shot, storeAction } from "./helpers";
 
 // Three look checks of the manor map at 1,280 x 720 and 1,920 x 1,080 (dev build, headless):
-// the map pane fills the screen below the toolbar, the first view fits every wing, and the
+// the map pane fills the screen below the toolbar, Fit to view fits every wing, and the
 // import-count labels on the corridors overlap neither each other nor rooms, doors or wing names.
 
 const SIZES = [
@@ -96,9 +96,11 @@ for (const size of SIZES) {
       expect(Math.abs((m.column?.bottom ?? 0) - m.innerHeight)).toBeLessThanOrEqual(1);
       expect((m.wrapper?.height ?? 0)).toBeGreaterThanOrEqual(0.5 * m.innerHeight);
     });
-    test("the first view fits every wing", async ({ page }) => {
+    // Design pass 2, item 1: the first view frames the three wings of the loop (tests/e2e/design-pass-2.spec.ts); Fit to view fits every wing.
+    test("Fit to view fits every wing", async ({ page }) => {
       await openManor(page);
       await settled(page);
+      await page.getByRole("button", { name: "Fit to view" }).click();
       const wings = (await readLayout(page)).wings.map((w) => w.wing);
       expect(wings.length).toBeGreaterThan(3);
       await expect

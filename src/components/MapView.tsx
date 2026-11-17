@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { ambientLoops } from "../features/investigation/ambientLoops";
 import type { InvestigationStore, ViewState } from "../features/investigation/store";
-import { fitBounds, zoomAround } from "../scene/camera";
-import { focusTargetOf } from "./focusTarget";
+import { FIRST_VIEW_MIN_ZOOM, zoomAround } from "../scene/camera";
+import { frameAround, frameRects } from "../scene/frame";
+import type { Rect } from "../scene/layout/types";
+import { focusTargetOf, stepRectsOf } from "./focusTarget";
 import type { createScene as CreateScene } from "../scene/adapter";
 import type { HitTarget, SceneHandle } from "../scene/types";
-import { fitView, FIT_PADDING, pan, PAN_STEP, PAN_STEP_SHIFT, zoomBy, ZOOM_STEP } from "./cameraControls";
+import { fitView, pan, PAN_STEP, PAN_STEP_SHIFT, zoomBy, ZOOM_STEP } from "./cameraControls";
 import { DEVHOOK_ENABLED, devState } from "./devHook";
-import { firstFitBounds } from "./firstFit";
+import { COMPACT_WIDTH, firstViewPlan } from "./firstFit";
 import { Minimap } from "./Minimap";
 import { Tooltip } from "./Tooltip";
 import { useReducedMotion } from "./useReducedMotion";
@@ -59,13 +61,57 @@ function selectHit(store: InvestigationStore, hit: HitTarget): void {
   }
 }
 
-/** The first layout of an investigation fits every wing in the map area, whatever is expanded. */
-function firstFit(state: ViewState, viewport: { width: number; height: number }) {
-  const layout = state.layout;
-  if (layout === null) return null;
-  return fitBounds(firstFitBounds(layout, viewport.width), viewport, FIT_PADDING);
+/** Screen pixels kept free around what the first view and a selected step frame. */
+const FRAME_PADDING = 16;
+/** A step is framed at most at this zoom. */
+const STEP_MAX_ZOOM = 1;
+
+/**
+ * The zoom stack and the minimap lie over the map: their rectangles, relative to the map's top left corner, so that framed
+ * content stays clear of them. A control that is hidden or does not overlap the map (the zoom buttons sit behind `More` on a
+ * phone) gives nothing.
+ */
+function overlayRects(wrapper: HTMLElement | null): Rect[] {
+  if (wrapper === null) return [];
+  const map = wrapper.getBoundingClientRect();
+  const out: Rect[] = [];
+  for (const selector of [".toolbar-zoom", ".minimap"]) {
+    const el = document.querySelector(selector);
+    if (el === null) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2 || r.right <= map.left || r.left >= map.right || r.bottom <= map.top || r.top >= map.bottom) continue;
+    out.push({ x: r.left - map.left, y: r.top - map.top, w: r.width, h: r.height });
+  }
+  return out;
 }
 
+/** A room name on its plate, in screen pixels: mono 500 at 12.5 px is about 7.5 px a letter, plus the plate's padding and its gap under the room. */
+const plateSize = (label: string): { w: number; h: number } => ({ w: label.length * 7.6 + 10, h: 12.5 * 1.25 + 14 });
+
+/** The first layout of an investigation frames its dependency loop (every wing when there is none) clear of the controls over the map. */
+function firstFit(state: ViewState, viewport: { width: number; height: number }, wrapper: HTMLElement | null) {
+  const layout = state.layout;
+  if (layout === null) return null;
+  const loops = ambientLoops(state.investigation, state.preset);
+  const plan = firstViewPlan(layout, loops, viewport.width);
+  const obstacles = overlayRects(wrapper);
+  if (!plan.compact) return frameRects(plan.rects, viewport, { padding: FRAME_PADDING, obstacles });
+  // A phone: the loop's rooms carry their names on plates under them, whose size is fixed in screen pixels, so the frame is found
+  // in a few rounds (the plates grow in scene units as the zoom falls). The zoom may go under 0.25 here (FIRST_VIEW_MIN_ZOOM).
+  const members = new Set(loops.flatMap((l) => [...l.modules]));
+  const rooms = layout.rooms.filter((r) => members.has(r.id));
+  let camera = frameRects(plan.rects, viewport, { padding: 8, obstacles, maxZoom: 1, minZoom: FIRST_VIEW_MIN_ZOOM });
+  for (let round = 0; round < 4; round++) {
+    const z = camera.zoom;
+    const plates = rooms.map((r) => {
+      const size = plateSize(r.label);
+      const w = Math.max(r.w, size.w / z);
+      return { x: r.x + r.w / 2 - w / 2, y: r.y, w, h: r.h + size.h / z };
+    });
+    camera = frameRects([...plan.rects, ...plates], viewport, { padding: 8, obstacles, maxZoom: 1, minZoom: FIRST_VIEW_MIN_ZOOM });
+  }
+  return camera;
+}
 export function MapView({ store, createScene, forceFailure, comparison }: Props) {
   const state = useViewState(store);
   const [comparisonValue, setComparisonValue] = useState<unknown>(() => comparison?.get());
@@ -199,8 +245,18 @@ export function MapView({ store, createScene, forceFailure, comparison }: Props)
     const selection = state.selection;
     if (selection.kind === "none" || state.selectionOrigin !== "dom" || centeredFor.current === selection) return;
     centeredFor.current = selection;
+    // The camera centers on the target. A chosen import whose rooms are drawn is framed whole: the zoom is the largest (at most 1)
+    // at which both rooms, the door and the corridor lie in the part of the map the zoom stack and the minimap leave free.
     const target = focusTargetOf(selection, state.layout, state.investigation);
-    if (target !== null) store.actions.setCamera(scene.focusOn(target, 1));
+    const step = stepRectsOf(selection, state.layout);
+    if (target !== null && target.kind === "door" && step !== null) {
+      const door = state.layout.doors.find((d) => d.relationId === target.id);
+      if (door !== undefined) {
+        const framed = frameAround({ x: door.x + door.w / 2, y: door.y + door.h / 2 }, step, getViewportSize(), { padding: FRAME_PADDING, maxZoom: STEP_MAX_ZOOM, obstacles: overlayRects(wrapperRef.current) });
+        store.actions.setCamera(scene.focusOn(target, 1, framed.zoom));
+        return;
+      }
+    }    if (target !== null) store.actions.setCamera(scene.focusOn(target, 1));
   }, [store, scene, state.layout, state.layoutStatus, state.selection, state.selectionOrigin, state.investigation]);
   // The first layout of an investigation fits the camera; later layouts keep the camera center (3.6). An
   // investigation opened with `openInvestigation` starts with no layout; one swapped in with `replaceInvestigation`
@@ -214,10 +270,41 @@ export function MapView({ store, createScene, forceFailure, comparison }: Props)
     fittedFor.current = state.investigation;
     const wrapper = wrapperRef.current;
     if (wrapper !== null) setViewportSize({ width: wrapper.clientWidth, height: wrapper.clientHeight });
-    const camera = firstFit(state, getViewportSize());
-    if (camera !== null) store.actions.setCamera(camera);
+    const camera = firstFit(state, getViewportSize(), wrapper);
+    if (camera !== null) store.actions.setFirstViewCamera(camera);
   }, [store, state, state.layout, state.investigation]);
 
+  // On a phone a comparison that starts frames its removed and added doors with their rooms (design 4f, design pass 2 item 10).
+  // On a larger map the camera stays where it is (snapshot-comparison 6.1): the whole manor is already in view there.
+  const framedComparison = useRef<string>("");
+  useEffect(() => {
+    const style = comparisonValue as { removedRelationIds?: string[]; addedRelationIds?: string[] } | null | undefined;
+    if (style === null || style === undefined) {
+      framedComparison.current = "";
+      return;
+    }
+    if (scene === null || state.layout === null || state.layoutStatus === "pending") return;
+    const viewport = getViewportSize();
+    if (viewport.width >= COMPACT_WIDTH) return;
+    const ids = [...(style.removedRelationIds ?? []), ...(style.addedRelationIds ?? [])];
+    const key = JSON.stringify(ids);
+    if (ids.length === 0 || framedComparison.current === key) return;
+    const layout = state.layout;
+    const rects: Rect[] = [];
+    for (const id of ids) {
+      const door = layout.doors.find((d) => d.relationId === id);
+      if (door === undefined) continue;
+      rects.push({ x: door.x, y: door.y, w: door.w, h: door.h });
+      for (const end of [door.from, door.to]) {
+        const room = layout.rooms.find((r) => r.id === end);
+        if (room !== undefined) rects.push({ x: room.x, y: room.y, w: room.w, h: room.h });
+      }
+    }
+    if (rects.length === 0) return;
+    framedComparison.current = key;
+    const camera = frameRects(rects, viewport, { padding: 12, maxZoom: 1, obstacles: overlayRects(wrapperRef.current) });
+    store.actions.setCamera(camera);
+  }, [store, scene, comparisonValue, state.layout, state.layoutStatus]);
   // `hauntmap:usable`: the first room is drawn. No time is asserted anywhere.
   useEffect(() => {
     if (scene === null || state.layout === null || state.layout.rooms.length === 0) return;

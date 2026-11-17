@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MIN_LABEL_PX, TARGET_LABEL_PX, fitLines, labelScale, stemOfId, wingTitleFor } from "../../src/scene/labels";
+import { MIN_LABEL_PX, MIN_NAME_LETTERS, TARGET_LABEL_PX, fitLines, labelScale, roomNameFor, stemOfId, wingTitleFor } from "../../src/scene/labels";
 
 // A stand-in for text measurement: every character is 6 units wide.
 const measure = (s: string): number => s.length * 6;
@@ -52,6 +52,42 @@ describe("room label words", () => {
 
   it("never returns more lines than allowed", () => {
     expect(fitLines(["aVeryLongModuleNameThatCannotFit.ts", "aVeryLongModuleNameThatCannotFit"], 60, measure, 2).length).toBeLessThanOrEqual(2);
+  });
+});
+
+describe("room names (design pass 2, item 2)", () => {
+  it("is the full file name when it fits, else the name without its extension", () => {
+    expect(roomNameFor(["receipt.ts", "receipt"], 100, measure)).toBe("receipt.ts");
+    expect(roomNameFor(["receipt.ts", "receipt"], 50, measure)).toBe("receipt");
+  });
+
+  it("cuts the name with an ellipsis only when at least 4 letters stay before it", () => {
+    expect(MIN_NAME_LETTERS).toBe(4);
+    expect(roomNameFor(["receipt.ts", "receipt"], 36, measure)).toBe("recei\u2026");
+    expect(roomNameFor(["receipt.ts", "receipt"], 30, measure)).toBe("rece\u2026");
+  });
+
+  it("is hidden (null) when no form of 4 letters or more fits, never `r\u2026`", () => {
+    expect(roomNameFor(["receipt.ts", "receipt"], 29, measure)).toBeNull();
+    expect(roomNameFor(["receipt.ts", "receipt"], 6, measure)).toBeNull();
+    expect(roomNameFor(["c.ts", "c"], 5, measure)).toBeNull();
+  });
+
+  it("keeps a short name whole when it fits, even under 4 letters", () => {
+    expect(roomNameFor(["cart.ts", "cart"], 24, measure)).toBe("cart");
+    expect(roomNameFor(["a.ts", "a"], 12, measure)).toBe("a");
+  });
+
+  it("never returns an ellipsis with fewer than 4 letters before it, for any width", () => {
+    for (const id of ["receipt.ts", "checkout.ts", "orderRepo.ts", "preferences.ts", "o.ts", "queue.ts"]) {
+      const stem = id.slice(0, id.lastIndexOf("."));
+      for (let width = 0; width <= 120; width++) {
+        const out = roomNameFor([id, stem], width, measure);
+        if (out === null) continue;
+        expect(measure(out)).toBeLessThanOrEqual(width);
+        if (out.endsWith("\u2026")) expect(out.length - 1).toBeGreaterThanOrEqual(4);
+      }
+    }
   });
 });
 

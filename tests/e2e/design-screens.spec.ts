@@ -41,8 +41,7 @@ for (const size of SIZES) {
       await openManor(page);
       await still(page);
       await storeAction(page, "chooseLoop", 0);
-      // The design shows the whole map with the chosen loop. A door chosen in the page centers the camera on it, so on a large screen the map is fitted again.
-      if (size.name === "1920") await page.getByRole("button", { name: "Fit to view" }).click();
+      // The chosen step (both rooms, the door and the corridor) is framed clear of the zoom stack and the minimap (design pass 2, item 4).
       await still(page);
       await expect(page.getByRole("region", { name: "Evidence trail" })).toBeVisible();
       await shot(page, `docs/acceptance/img/design-room-${size.name}.png`);

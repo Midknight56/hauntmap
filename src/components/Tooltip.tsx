@@ -3,6 +3,7 @@ import { analysisApi, type AnalysisApi } from "../features/investigation/analysi
 import { tooltipLines } from "../features/investigation/tooltip";
 import type { InvestigationStore } from "../features/investigation/store";
 import type { HitKind, SceneHandle } from "../scene/types";
+import { useMediaQuery } from "./useMediaQuery";
 import { useViewState } from "./useStore";
 
 export { tooltipLines };
@@ -15,6 +16,14 @@ interface Target {
 }
 
 const TIP_WIDTH = 320;
+
+/** Under this width, and on a touch device, no tooltip shows over the map: the evidence sheet carries the same words (design pass 2, item 8). */
+export const TOOLTIP_MIN_WIDTH = 768;
+export const TOOLTIP_OFF_QUERY = `(max-width: ${TOOLTIP_MIN_WIDTH - 1}px), (pointer: coarse)`;
+
+export function tooltipSuppressed(width: number, coarsePointer: boolean): boolean {
+  return width < TOOLTIP_MIN_WIDTH || coarsePointer;
+}
 
 function same(a: Target | null, b: Target | null): boolean {
   return a === b || (a !== null && b !== null && a.kind === b.kind && a.id === b.id && a.element === b.element);
@@ -40,6 +49,7 @@ export function Tooltip({
   const state = useViewState(store);
   const [hover, setHover] = useState<Target | null>(null);
   const [focused, setFocused] = useState<Target | null>(null);
+  const suppressed = useMediaQuery(TOOLTIP_OFF_QUERY);
 
   useEffect(() => {
     const host = wrapper.current;
@@ -81,7 +91,7 @@ export function Tooltip({
     };
   }, []);
 
-  const target = focused ?? hover;
+  const target = suppressed ? null : (focused ?? hover);
   const inv = state.investigation;
   if (target === null || inv === null) return null;
 

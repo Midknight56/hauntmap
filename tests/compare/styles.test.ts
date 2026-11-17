@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { COMPANIONS } from "../../src/scene/compare";
-import { STATE_STYLES, TOKENS } from "../../src/scene/styles";
+import { REMOVED_ALPHA, STATE_STYLES, TOKENS, removedStrokeWidth } from "../../src/scene/styles";
 import { REPO } from "./loadFolder";
 
 /** WCAG 2.x relative luminance and contrast ratio, written here so that the test does not reuse the source. */
@@ -41,6 +41,16 @@ describe("comparison states (5.4)", () => {
 
   it("TOKENS has the three comparison tokens", () => {
     expect({ changed: TOKENS.changed, removed: TOKENS.removed, added: TOKENS.added }).toEqual(TOKEN_HEX);
+  });
+
+  // Design pass 2, item 6: the removed door is one of the first two things the eye finds: bone at full alpha, 3 screen pixels or more.
+  it("draws the dashed removed outline 3 screen pixels thick or more at every zoom the map allows, in bone at full alpha", () => {
+    expect(REMOVED_ALPHA).toBe(1);
+    expect(TOKENS.removed.toLowerCase()).toBe("#ede3d0");
+    for (const zoom of [0.25, 0.3, 0.5, 0.58, 0.82, 1, 2, 4]) {
+      expect(removedStrokeWidth(zoom) * zoom, `zoom ${zoom}`).toBeGreaterThanOrEqual(3 - 1e-9);
+    }
+    expect(removedStrokeWidth(4)).toBeGreaterThanOrEqual(3);
   });
 
   for (const [name, hex] of Object.entries(TOKEN_HEX)) {

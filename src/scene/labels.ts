@@ -77,6 +77,24 @@ export function fitLines(candidates: readonly string[], maxWidth: number, measur
   return [truncate(last, maxWidth, measure)];
 }
 
+/** An ellipsis never follows fewer letters than this: `r\u2026` says nothing. */
+export const MIN_NAME_LETTERS = 4;
+
+/**
+ * The words of a room name. `candidates` run from the full file name to the name without its extension. The first that
+ * fits on one line wins; otherwise the shortest is cut with an ellipsis when at least `MIN_NAME_LETTERS` letters remain
+ * before it; otherwise null, and the name is not drawn.
+ */
+export function roomNameFor(candidates: readonly string[], maxWidth: number, measure: (s: string) => number): string | null {
+  for (const candidate of candidates) if (measure(candidate) <= maxWidth) return candidate;
+  const last = candidates[candidates.length - 1] ?? "";
+  for (let n = last.length - 1; n >= MIN_NAME_LETTERS; n--) {
+    const cut = `${last.slice(0, n)}\u2026`;
+    if (measure(cut) <= maxWidth) return cut;
+  }
+  return null;
+}
+
 /** The title of a wing plate: the full words when they fit, then the wing path, then its last folder, then that folder cut with an ellipsis. */
 export function wingTitleFor(wing: string, moduleCount: number, maxWidth: number, measure: (s: string) => number): string {
   const full = `${wing} \u00B7 ${moduleCount} ${moduleCount === 1 ? "module" : "modules"}`;

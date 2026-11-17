@@ -194,7 +194,7 @@ test.describe("the three palettes and the texture cache (items 1 and 3)", () => 
   });
 });
 
-// Every text the scene draws, not only names: wing titles, room names, the words under a subdued room, the import counts on
+// Every text the scene draws, not only names: wing titles, room names, the import counts on
 // the corridors, the step numbers, and the `+` and `?` marks. Each is at least 12 CSS pixels on screen or is not drawn at that zoom.
 /** The `0` key on the focused map fits every wing in the view. */
 async function fitMap(page: Page): Promise<void> {
@@ -217,7 +217,7 @@ for (const size of [
   test.describe(`every drawn text at ${size.width} x ${size.height} (item 5)`, () => {
     test.use({ viewport: size });
 
-    test("subdued rooms: no text under 12 px at the fitted view and the words come back when zoomed in", async ({ page }) => {
+    test("subdued rooms: no text under 12 px, and the words `Not in this traversal` are not drawn in the room at any zoom (design pass 2, item 3)", async ({ page }) => {
       await openManor(page);
       await expandAllWings(page);
       await settled(page);
@@ -227,17 +227,17 @@ for (const size of [
       await fitMap(page);
       const fitted = await everyTextAtLeast12(page, "fitted");
       expect(fitted.filter((l) => l.kind === "room").length).toBeGreaterThan(0);
-      // Not drawn at the fitted zoom: the words would be about 6 px there.
       expect(fitted.filter((l) => l.kind === "note")).toEqual([]);
       const layout = await layoutOf(page);
       const sample = layout.rooms[0] as { x: number; y: number; w: number; h: number };
       await storeAction(page, "setCamera", { x: sample.x + sample.w / 2, y: sample.y + sample.h / 2, zoom: 2.5 });
       const near = await everyTextAtLeast12(page, "zoomed in");
-      const notes = near.filter((l) => l.kind === "note");
-      expect(notes.length, "the words of a subdued room are drawn once the view is close").toBeGreaterThan(0);
-      for (const note of notes) expect(note.text.replace("\n", " ")).toBe("Not in this traversal");
+      // The cue that is not colour alone stays: a subdued room is drawn at reduced opacity with a dotted rail, and the legend names it.
+      expect(near.filter((l) => l.kind === "note")).toEqual([]);
+      expect(near.filter((l) => l.text.includes("Not in this")), "no room carries the words").toEqual([]);
+      expect(near.filter((l) => l.kind === "room").length).toBeGreaterThan(0);
+      await expect(page.getByRole("list", { name: "Legend entries" })).toContainText("Not in this traversal: subdued room");
     });
-
     test("a loop shown and a comparison: step numbers, import counts and the + and ? marks are 12 px or more, or not drawn", async ({ page }) => {
       await openManor(page);
       await settled(page);

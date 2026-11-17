@@ -46,6 +46,8 @@ export interface DebugLabel {
   id: string;
   text: string;
   px: number;
+  /** Where the text is drawn, in client pixels (design pass 2: names are never cut by the edge of the map). */
+  rect?: { x: number; y: number; width: number; height: number };
 }
 
 export interface SceneDebug {
@@ -78,8 +80,8 @@ export interface SceneHandle {
   setCamera(camera: Camera, transition: "animate" | "jump"): void;
   getCamera(): Camera;
   fit(padding: number): Camera;
-  /** Centers on the target; zoom is `max(current, zoomFloor)`. */
-  focusOn(target: { kind: HitKind; id: string }, zoomFloor: number): Camera;
+  /** Centers on the target; zoom is `max(current, zoomFloor)`, or exactly `zoom` when it is given (a selected step framed whole). */
+  focusOn(target: { kind: HitKind; id: string }, zoomFloor: number, zoom?: number): Camera;
   screenRectOf(target: { kind: HitKind; id: string }): DOMRect | null;
   hitTest(clientX: number, clientY: number): HitTarget | null;
   on(event: "select", cb: (hit: HitTarget | null) => void): () => void;

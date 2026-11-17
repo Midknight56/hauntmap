@@ -24,7 +24,7 @@ export interface HookSceneDebug {
   drawnDoors: number;
   particleCount: number;
   frames: number;
-  labels: { kind: "wing" | "wing-note" | "room" | "note" | "step" | "glyph" | "count"; id: string; text: string; px: number }[];
+  labels: { kind: "wing" | "wing-note" | "room" | "note" | "step" | "glyph" | "count"; id: string; text: string; px: number; rect?: { x: number; y: number; width: number; height: number } }[];
   ghost: { leg: number; x: number; y: number } | null;
   glow: boolean;
   glowAlpha: number | null;
