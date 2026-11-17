@@ -1,5 +1,7 @@
 import { useEffect, useMemo } from "react";
+import { DEFAULT_ANALYSIS_OPTIONS } from "../contracts/options";
 import type { Investigation } from "../contracts/types";
+import { validateInvestigation } from "../contracts/validate";
 import { place } from "../features/compare/placement";
 import { registerCompare } from "../features/compare/register";
 import { createCompareStore, type CompareStore } from "../features/compare/store";
@@ -9,6 +11,7 @@ import { createLayoutClient, type LayoutWorkerLike } from "../features/investiga
 import { createPrefsStore } from "../features/investigation/prefs";
 import { registry as defaultRegistry, type Registry } from "../features/investigation/registry";
 import { createInvestigationStore, type InvestigationStore } from "../features/investigation/store";
+import { registerLiveSnapshot } from "../features/liveSnapshot";
 import { loadSample, openSample, type SampleId } from "../features/samples/loadSample";
 import { createScene } from "../scene/adapter";
 import { createAnalysisClient, type AnalysisClient, type WorkerLike } from "../workers/client";
@@ -102,6 +105,16 @@ export function createServices(): AppServices {
   });
   const base = import.meta.env.BASE_URL;
   const compareStore = createCompareServices({ store, registry, analysisClient, base });
+  // kiro-integration task 10: the `Open live snapshot` control (one call, ownership exception).
+  registerLiveSnapshot({
+    store,
+    registry,
+    base,
+    loadSample: (id, root) => loadSample(id, root),
+    analysisClient,
+    defaults: DEFAULT_ANALYSIS_OPTIONS,
+    validate: validateInvestigation,
+  });
   if (DEVHOOK_ENABLED) {
     installDevHook(store, registry);
     installCompareHook(store, registry, compareStore);

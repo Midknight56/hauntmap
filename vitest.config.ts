@@ -1,7 +1,7 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
-const exclude = ["**/node_modules/**", "tests/pending/**"];
+const exclude = ["**/node_modules/**"];
 
 // Two projects: `node` runs every tests/**/*.test.ts file; `jsdom` runs tests/**/*.test.tsx and the
 // DOM-touching tests/ui files named *.dom.test.ts.

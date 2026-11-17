@@ -16,5 +16,5 @@
     "allowImportingTsExtensions": true
   },
   "include": ["src", "tests", "scripts", "vitest.config.ts", "vite.config.ts", "playwright.config.ts", "eslint.config.js"],
-  "exclude": ["tests/fixtures/*/**", "tests/pending/**"]
+  "exclude": ["tests/fixtures/*/**"]
 }

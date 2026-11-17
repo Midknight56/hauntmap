@@ -83,8 +83,8 @@ test.describe("landing screen", () => {
     await expect(page.getByRole("button", { name: "Show steps" })).toBeVisible();
     const steps = page.getByRole("region", { name: "Investigation steps" });
     await expect(steps.getByRole("heading", { name: "Investigate the manor" })).toBeVisible();
-    await expect(steps.getByText("0 of 2 steps")).toBeVisible();
-    await expect(steps.getByRole("button", { name: "Do it" })).toHaveCount(2);
+    await expect(steps.getByText("0 of 3 steps")).toBeVisible();
+    await expect(steps.getByRole("button", { name: "Do it" })).toHaveCount(3);
     await shot(page, "docs/acceptance/img/manor-map.png");
 
     await page.getByRole("button", { name: "Restart demo" }).click();

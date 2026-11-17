@@ -109,14 +109,14 @@ A task is done only after `pnpm verify` and, where named, `pnpm verify:e2e` pass
 - [ ] 13. Not done (same revision). No export journeys, no `tests/compare/e2e/export.spec.ts`; `manor-pair.test.ts` moved to task 2 and the agreement test of `kiro-integration` reads the development hook, not an export.
   - _Requirements: 8.1, 8.2, 8.3, 8.5, 8.8, 9.2, 9.3, 9.6 (withdrawn)_
 
-- [ ] 14. Acceptance evidence
+- [x] 14. Acceptance evidence
   - Run `pnpm verify; if ($LASTEXITCODE -eq 0) { pnpm verify:e2e }; if ($LASTEXITCODE -eq 0) { pnpm build }` on the branch after task 12; with `$env:HAUNTMAP_SHOTS = "1"` a headless run writes `docs/acceptance/img/compare-newer.png` and `docs/acceptance/img/compare-earlier.png` from the development build. Writing the evidence file `docs/acceptance/2026-11-24-gate.md` is Kiro's (the file name is the identifier that `kiro-integration` 8.10 cites): per requirement 1 to 7 and 10, the test names, the screenshots and the log rows; for 3.9 and 4.9 the printed figures marked as not recorded on the named laptop; for 11 this task's own row. Left for the owner: the by-eye check on the named laptop that no room moves and the corridor closes, any figure under `HAUNTMAP_PERF_DEVICE`, and any session with a person; the file says the tool was not tested with users.
   - Add to `docs/limitations.md` the sentence `Comparison accepts the bundled manor pair and the live snapshot; comparing two arbitrary folders is not available in this build.` and the sentence `The export feature is not built.`
   - Verify: the three commands exit 0; the two screenshots exist; `Select-String -Path docs/limitations.md -Pattern "Comparison accepts the bundled manor pair and the live snapshot"` finds one line; the evidence file names a test, a screenshot or a log row for every requirement it lists.
   - _Requirements: 11.3, 11.4_
   - _Owner: Kiro_
 
-- [ ] 15. Record the evidence in `docs/kiro-log.md`
+- [x] 15. Record the evidence in `docs/kiro-log.md`
   - Check that every task part (1a, 1b, 1c, 2, 3, 4a, 4b, 8, 9, 10, 11, 12, 14) has its row (date, surface and model, `snapshot-comparison/<n>`, files, verify command and result, credits, what changed because of a failure or `none`) and that tasks 5, 6, 7 and 13 have one row each saying `not done (revision of 2026-11-16)`.
   - Append the package row: the results of `Measure-Command { pnpm verify }` and `pnpm verify:e2e`, the measured `perf1000` times for `compareInvestigations` and `extendLayout` with the machine and `HAUNTMAP_PERF_DEVICE not set` (or set, if the owner ran it), the repairs made, the *verify* items settled in task 1a and the ones still open (the live-session confirmation of 1.4 and 6.8 from `kiro-integration` task 12), the gates G1 to G4 and whether each exception existed.
   - Verify: `(Select-String -Path docs/kiro-log.md -Pattern "snapshot-comparison/").Count` is at least 18 (13 task-part rows, 4 not-done rows and the package row).

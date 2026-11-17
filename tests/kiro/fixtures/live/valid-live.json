@@ -2,14 +2,1139 @@
   "schemaVersion": 1,
   "resolverMode": "documented-source-subset",
   "sourceLabel": "live:samples/manor",
-  "modules": [],
-  "imports": [],
-  "diagnostics": [],
+  "modules": [
+    {
+      "id": "src/catalog/catalogService.ts",
+      "sourceHash": "2da0174b049ae0005e3d06a57952dc07a600f3f10d4c2c24a2ebe21fa94c96e6",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/catalog/category.ts",
+      "sourceHash": "f18c6ff62107696434384ca733a71a91cb15704f37cf671615d6d4fd18d817ff",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/catalog/index.ts",
+      "sourceHash": "1d1fd5ff2a192ceb5c75a38851389ba26d528292ea958a33d92c2a8a92d39050",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/catalog/inventory.ts",
+      "sourceHash": "6c49a1657cb8832ad9ab97263ca443d0e7ab0a48a2ee4c7a86322eeb41d252ea",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/catalog/price.ts",
+      "sourceHash": "a7a149a79fb468672169c7e5b123732a685be0034b6ad4623f91769c46de49ce",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/catalog/product.ts",
+      "sourceHash": "0712e17102397ce8862032e43e3e2ed3cdf03dd1abd52d7693edf6bceee72342",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/catalog/search.ts",
+      "sourceHash": "454f49a466358d3571772002ba021bb1c8da36ff5fb6d4cee689db2a6dbab01f",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/catalog/stock.ts",
+      "sourceHash": "cf7c3b11dcce4420c579a7073898077c7891184e5580e5dd57543838479fbf9b",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/config/env.ts",
+      "sourceHash": "e142fb41a869f6e8dc7a20da38d47d237de664d8d5626527f22cd1e58bd8ed40",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/config/flags.ts",
+      "sourceHash": "9d0511c28c542321c369d762d3cd2f2d27bf4446fd4dc462d8363d87104474cc",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/config/index.ts",
+      "sourceHash": "ef89cc2975a24eaf52806d1dce1915ab051a8bb9fa7312c1447f6b5b7235788c",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/config/limits.ts",
+      "sourceHash": "18461237d833989b6369268aee0c31fcc503bfc101ca839bef2ec2f24513b24e",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/notifications/mailer.ts",
+      "sourceHash": "18d14adefaca75721442d88f8de921bb5ab5a7253613c43a8bc76fe006210a2f",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/notifications/preferences.ts",
+      "sourceHash": "da563b61c37cbf858dbb66f733e6bed392469c8192e5523868b0e041fa34843f",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/notifications/queue.ts",
+      "sourceHash": "9a31e00f5f5c70fda444af671994ffd99b3f37a3f33fa3543c90cfbefb6ab8ed",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/notifications/receipt.ts",
+      "sourceHash": "391a41af97da929444e11187638458ba1f2c5a079cd73c38c3cb5da2975ced3e",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/notifications/templates.ts",
+      "sourceHash": "67b882558c5aee5a2b8704fd003ba9e8dbc9bcfd1b6d897ecae04a4a80cf49de",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/orders/cart.ts",
+      "sourceHash": "df39859c87628c81eee471aefd7359f9e0176c59cea9f08679b5abe7a325fa2a",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/orders/checkout.ts",
+      "sourceHash": "1606c85c4d9e86125cef2e5132891d2d47ba89922e6cd9418299e85586a6121b",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/orders/discounts.ts",
+      "sourceHash": "bdd55f14eeda2190f3e587fd308bb9ee70cdeff704dd802a44cb820f22b35bf3",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/orders/order.ts",
+      "sourceHash": "478d30632d9b855da348ddb9eda81d4ffcd1d1543c22304752156caca033154d",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/orders/orderRepo.ts",
+      "sourceHash": "7d38f3325ac1aafc3a8ee4b193ac0b6de4217de6eb5c858f5e86739cc5c6a436",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/orders/shipping.ts",
+      "sourceHash": "1a2f3635d652bccebcbb9c6ad5d6eb94f6a450a02eaf6b8e07ca406f4300a861",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/orders/status.ts",
+      "sourceHash": "bda545ad9edf9de50843d6d9b3d58848687b613bef80687eb0c4559d2039e296",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/orders/summary.ts",
+      "sourceHash": "10304a5af71e050f47f88b017a3463055f5588c71cd225abb77cdf51cb56b57b",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/orders/totals.ts",
+      "sourceHash": "d4541527f7fcec8e3947f472da52f801d3ac68ba97b87accc0f6bf55f210ca88",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/payments/charge.ts",
+      "sourceHash": "197fe48d7a3021116d30926b9838435edbc05d7adf823b5256d33482fcdda88e",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/payments/fees.ts",
+      "sourceHash": "8f55088e43c601111c54099511b5825e0ec3b33489d8c0b7de3e740f44bfa68e",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/payments/gateway.ts",
+      "sourceHash": "ac26e28dd361264fa6a9f57b01f4e9ac41447fc6b42788b6d1ab7c14ec51cf76",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/payments/invoice.ts",
+      "sourceHash": "7ae2fd21a03bc82e1861052a8bb40a51039314b0abf45072b0ceb5c4af93b081",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/payments/ledger.ts",
+      "sourceHash": "e9c237794ae69d616e759cdbef40fa5465097cfc2380618a8e406641ba0bba75",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/payments/methods.ts",
+      "sourceHash": "e5943785bf99bb471e37f6e6ab9baf41a5aa375170c6452644dcfa999264a1d7",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/payments/refund.ts",
+      "sourceHash": "5f2bc260264b07ebb55de63c1820fe594845c410d7b6f5ee1df48e3d04d54b90",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/shared/dates.ts",
+      "sourceHash": "878bf063757528f2967ee1f44e853ad94c7887361d4ce680ab9dd3aa54f82511",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/shared/ids.ts",
+      "sourceHash": "af2c62ed351c84c9e9b6468b9c0dbff550fb21877d1a07831ef153463ff04efb",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/shared/logger.ts",
+      "sourceHash": "8f988173877dfa22cec94216acd2f4834ea638af55157e19a41ae73ad912bc3d",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/shared/money.ts",
+      "sourceHash": "78c91f118fc5601a68228320eb2adaf6730354e2c77fafa0ecbfce84f4b0f111",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/shared/result.ts",
+      "sourceHash": "df439798b4fb79b56dd15aeb31132744c238ff5e7bdf8d749808d745ab220d05",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/shared/types.ts",
+      "sourceHash": "b4426679e6f90d195f51ce4f9d528cc2f42c9c2a5a3cc5052870bd1d1496fd31",
+      "language": "ts",
+      "parseStatus": "ok"
+    },
+    {
+      "id": "src/shared/validation.ts",
+      "sourceHash": "b5a98dd304e116ff9c1e2ca35875f4ea1421904ab1f2e2a14becd13dddde163b",
+      "language": "ts",
+      "parseStatus": "ok"
+    }
+  ],
+  "imports": [
+    {
+      "from": "src/catalog/catalogService.ts",
+      "specifier": "./product",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/catalog/catalogService.ts\",1,1,\"./product\"]",
+      "relationId": "[\"src/catalog/catalogService.ts\",[\"local\",\"src/catalog/product.ts\"],\"import\",\"value\"]",
+      "to": "src/catalog/product.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/catalog/catalogService.ts",
+      "specifier": "./price",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/catalog/catalogService.ts\",2,1,\"./price\"]",
+      "relationId": "[\"src/catalog/catalogService.ts\",[\"local\",\"src/catalog/price.ts\"],\"import\",\"value\"]",
+      "to": "src/catalog/price.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/catalog/catalogService.ts",
+      "specifier": "./inventory",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 3,
+      "column": 1,
+      "occurrenceId": "[\"src/catalog/catalogService.ts\",3,1,\"./inventory\"]",
+      "relationId": "[\"src/catalog/catalogService.ts\",[\"local\",\"src/catalog/inventory.ts\"],\"import\",\"value\"]",
+      "to": "src/catalog/inventory.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/catalog/catalogService.ts",
+      "specifier": "./search",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 4,
+      "column": 1,
+      "occurrenceId": "[\"src/catalog/catalogService.ts\",4,1,\"./search\"]",
+      "relationId": "[\"src/catalog/catalogService.ts\",[\"local\",\"src/catalog/search.ts\"],\"import\",\"value\"]",
+      "to": "src/catalog/search.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/catalog/category.ts",
+      "specifier": "./product",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/catalog/category.ts\",1,1,\"./product\"]",
+      "relationId": "[\"src/catalog/category.ts\",[\"local\",\"src/catalog/product.ts\"],\"import\",\"value\"]",
+      "to": "src/catalog/product.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/catalog/index.ts",
+      "specifier": "./catalogService",
+      "syntaxKind": "re-export",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/catalog/index.ts\",1,1,\"./catalogService\"]",
+      "relationId": "[\"src/catalog/index.ts\",[\"local\",\"src/catalog/catalogService.ts\"],\"re-export\",\"value\"]",
+      "to": "src/catalog/catalogService.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/catalog/index.ts",
+      "specifier": "./search",
+      "syntaxKind": "re-export",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/catalog/index.ts\",2,1,\"./search\"]",
+      "relationId": "[\"src/catalog/index.ts\",[\"local\",\"src/catalog/search.ts\"],\"re-export\",\"value\"]",
+      "to": "src/catalog/search.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/catalog/inventory.ts",
+      "specifier": "./product",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/catalog/inventory.ts\",1,1,\"./product\"]",
+      "relationId": "[\"src/catalog/inventory.ts\",[\"local\",\"src/catalog/product.ts\"],\"import\",\"value\"]",
+      "to": "src/catalog/product.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/catalog/inventory.ts",
+      "specifier": "./stock",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/catalog/inventory.ts\",2,1,\"./stock\"]",
+      "relationId": "[\"src/catalog/inventory.ts\",[\"local\",\"src/catalog/stock.ts\"],\"import\",\"value\"]",
+      "to": "src/catalog/stock.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/catalog/price.ts",
+      "specifier": "./product",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/catalog/price.ts\",1,1,\"./product\"]",
+      "relationId": "[\"src/catalog/price.ts\",[\"local\",\"src/catalog/product.ts\"],\"import\",\"value\"]",
+      "to": "src/catalog/product.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/catalog/price.ts",
+      "specifier": "../shared/money",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/catalog/price.ts\",2,1,\"../shared/money\"]",
+      "relationId": "[\"src/catalog/price.ts\",[\"local\",\"src/shared/money.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/money.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/catalog/product.ts",
+      "specifier": "../shared/ids",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/catalog/product.ts\",1,1,\"../shared/ids\"]",
+      "relationId": "[\"src/catalog/product.ts\",[\"local\",\"src/shared/ids.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/ids.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/catalog/product.ts",
+      "specifier": "./price",
+      "syntaxKind": "re-export",
+      "dependencyKind": "type",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/catalog/product.ts\",2,1,\"./price\"]",
+      "relationId": "[\"src/catalog/product.ts\",[\"local\",\"src/catalog/price.ts\"],\"re-export\",\"type\"]",
+      "to": "src/catalog/price.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/catalog/search.ts",
+      "specifier": "./category",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/catalog/search.ts\",1,1,\"./category\"]",
+      "relationId": "[\"src/catalog/search.ts\",[\"local\",\"src/catalog/category.ts\"],\"import\",\"value\"]",
+      "to": "src/catalog/category.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/catalog/search.ts",
+      "specifier": "./synonyms",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/catalog/search.ts\",2,1,\"./synonyms\"]",
+      "relationId": "[\"src/catalog/search.ts\",[\"unresolved\",\"./synonyms\"],\"import\",\"value\"]",
+      "to": null,
+      "resolution": "unresolved",
+      "reason": "absent-file"
+    },
+    {
+      "from": "src/catalog/stock.ts",
+      "specifier": "../shared/result",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/catalog/stock.ts\",1,1,\"../shared/result\"]",
+      "relationId": "[\"src/catalog/stock.ts\",[\"local\",\"src/shared/result.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/result.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/config/flags.ts",
+      "specifier": "./env",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/config/flags.ts\",1,1,\"./env\"]",
+      "relationId": "[\"src/config/flags.ts\",[\"local\",\"src/config/env.ts\"],\"import\",\"value\"]",
+      "to": "src/config/env.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/config/index.ts",
+      "specifier": "./env",
+      "syntaxKind": "re-export",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/config/index.ts\",1,1,\"./env\"]",
+      "relationId": "[\"src/config/index.ts\",[\"local\",\"src/config/env.ts\"],\"re-export\",\"value\"]",
+      "to": "src/config/env.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/config/index.ts",
+      "specifier": "./flags",
+      "syntaxKind": "re-export",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/config/index.ts\",2,1,\"./flags\"]",
+      "relationId": "[\"src/config/index.ts\",[\"local\",\"src/config/flags.ts\"],\"re-export\",\"value\"]",
+      "to": "src/config/flags.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/config/index.ts",
+      "specifier": "./limits",
+      "syntaxKind": "re-export",
+      "dependencyKind": "value",
+      "line": 3,
+      "column": 1,
+      "occurrenceId": "[\"src/config/index.ts\",3,1,\"./limits\"]",
+      "relationId": "[\"src/config/index.ts\",[\"local\",\"src/config/limits.ts\"],\"re-export\",\"value\"]",
+      "to": "src/config/limits.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/config/limits.ts",
+      "specifier": "./flags",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/config/limits.ts\",1,1,\"./flags\"]",
+      "relationId": "[\"src/config/limits.ts\",[\"local\",\"src/config/flags.ts\"],\"import\",\"value\"]",
+      "to": "src/config/flags.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/notifications/mailer.ts",
+      "specifier": "./queue",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/notifications/mailer.ts\",1,1,\"./queue\"]",
+      "relationId": "[\"src/notifications/mailer.ts\",[\"local\",\"src/notifications/queue.ts\"],\"import\",\"value\"]",
+      "to": "src/notifications/queue.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/notifications/mailer.ts",
+      "specifier": "../payments/invoice",
+      "syntaxKind": "dynamic-literal",
+      "dependencyKind": "value",
+      "line": 11,
+      "column": 25,
+      "occurrenceId": "[\"src/notifications/mailer.ts\",11,25,\"../payments/invoice\"]",
+      "relationId": "[\"src/notifications/mailer.ts\",[\"local\",\"src/payments/invoice.ts\"],\"dynamic-literal\",\"value\"]",
+      "to": "src/payments/invoice.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/notifications/mailer.ts",
+      "specifier": "./preferences",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/notifications/mailer.ts\",2,1,\"./preferences\"]",
+      "relationId": "[\"src/notifications/mailer.ts\",[\"local\",\"src/notifications/preferences.ts\"],\"import\",\"value\"]",
+      "to": "src/notifications/preferences.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/notifications/mailer.ts",
+      "specifier": "../config/env",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 3,
+      "column": 1,
+      "occurrenceId": "[\"src/notifications/mailer.ts\",3,1,\"../config/env\"]",
+      "relationId": "[\"src/notifications/mailer.ts\",[\"local\",\"src/config/env.ts\"],\"import\",\"value\"]",
+      "to": "src/config/env.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/notifications/preferences.ts",
+      "specifier": "../shared/validation",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/notifications/preferences.ts\",1,1,\"../shared/validation\"]",
+      "relationId": "[\"src/notifications/preferences.ts\",[\"local\",\"src/shared/validation.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/validation.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/notifications/queue.ts",
+      "specifier": "../shared/logger",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/notifications/queue.ts\",1,1,\"../shared/logger\"]",
+      "relationId": "[\"src/notifications/queue.ts\",[\"local\",\"src/shared/logger.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/logger.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/notifications/receipt.ts",
+      "specifier": "./templates",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/notifications/receipt.ts\",1,1,\"./templates\"]",
+      "relationId": "[\"src/notifications/receipt.ts\",[\"local\",\"src/notifications/templates.ts\"],\"import\",\"value\"]",
+      "to": "src/notifications/templates.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/notifications/receipt.ts",
+      "specifier": "./mailer",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/notifications/receipt.ts\",2,1,\"./mailer\"]",
+      "relationId": "[\"src/notifications/receipt.ts\",[\"local\",\"src/notifications/mailer.ts\"],\"import\",\"value\"]",
+      "to": "src/notifications/mailer.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/notifications/receipt.ts",
+      "specifier": "../shared/money",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 3,
+      "column": 1,
+      "occurrenceId": "[\"src/notifications/receipt.ts\",3,1,\"../shared/money\"]",
+      "relationId": "[\"src/notifications/receipt.ts\",[\"local\",\"src/shared/money.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/money.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/cart.ts",
+      "specifier": "../catalog",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/cart.ts\",1,1,\"../catalog\"]",
+      "relationId": "[\"src/orders/cart.ts\",[\"local\",\"src/catalog/index.ts\"],\"import\",\"value\"]",
+      "to": "src/catalog/index.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/cart.ts",
+      "specifier": "../shared/ids",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/cart.ts\",2,1,\"../shared/ids\"]",
+      "relationId": "[\"src/orders/cart.ts\",[\"local\",\"src/shared/ids.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/ids.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/cart.ts",
+      "specifier": "../config/limits",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 3,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/cart.ts\",3,1,\"../config/limits\"]",
+      "relationId": "[\"src/orders/cart.ts\",[\"local\",\"src/config/limits.ts\"],\"import\",\"value\"]",
+      "to": "src/config/limits.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/checkout.ts",
+      "specifier": "../payments/charge",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/checkout.ts\",1,1,\"../payments/charge\"]",
+      "relationId": "[\"src/orders/checkout.ts\",[\"local\",\"src/payments/charge.ts\"],\"import\",\"value\"]",
+      "to": "src/payments/charge.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/checkout.ts",
+      "specifier": "./cart",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/checkout.ts\",2,1,\"./cart\"]",
+      "relationId": "[\"src/orders/checkout.ts\",[\"local\",\"src/orders/cart.ts\"],\"import\",\"value\"]",
+      "to": "src/orders/cart.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/checkout.ts",
+      "specifier": "./totals",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 3,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/checkout.ts\",3,1,\"./totals\"]",
+      "relationId": "[\"src/orders/checkout.ts\",[\"local\",\"src/orders/totals.ts\"],\"import\",\"value\"]",
+      "to": "src/orders/totals.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/checkout.ts",
+      "specifier": "./order",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 4,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/checkout.ts\",4,1,\"./order\"]",
+      "relationId": "[\"src/orders/checkout.ts\",[\"local\",\"src/orders/order.ts\"],\"import\",\"value\"]",
+      "to": "src/orders/order.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/checkout.ts",
+      "specifier": "./orderRepo",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 5,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/checkout.ts\",5,1,\"./orderRepo\"]",
+      "relationId": "[\"src/orders/checkout.ts\",[\"local\",\"src/orders/orderRepo.ts\"],\"import\",\"value\"]",
+      "to": "src/orders/orderRepo.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/checkout.ts",
+      "specifier": "../shared/logger",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 6,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/checkout.ts\",6,1,\"../shared/logger\"]",
+      "relationId": "[\"src/orders/checkout.ts\",[\"local\",\"src/shared/logger.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/logger.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/discounts.ts",
+      "specifier": "../config/flags",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/discounts.ts\",1,1,\"../config/flags\"]",
+      "relationId": "[\"src/orders/discounts.ts\",[\"local\",\"src/config/flags.ts\"],\"import\",\"value\"]",
+      "to": "src/config/flags.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/order.ts",
+      "specifier": "../shared/ids",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/order.ts\",1,1,\"../shared/ids\"]",
+      "relationId": "[\"src/orders/order.ts\",[\"local\",\"src/shared/ids.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/ids.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/order.ts",
+      "specifier": "./status",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/order.ts\",2,1,\"./status\"]",
+      "relationId": "[\"src/orders/order.ts\",[\"local\",\"src/orders/status.ts\"],\"import\",\"value\"]",
+      "to": "src/orders/status.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/order.ts",
+      "specifier": "./totals",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 3,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/order.ts\",3,1,\"./totals\"]",
+      "relationId": "[\"src/orders/order.ts\",[\"local\",\"src/orders/totals.ts\"],\"import\",\"value\"]",
+      "to": "src/orders/totals.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/orderRepo.ts",
+      "specifier": "./order",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/orderRepo.ts\",1,1,\"./order\"]",
+      "relationId": "[\"src/orders/orderRepo.ts\",[\"local\",\"src/orders/order.ts\"],\"import\",\"value\"]",
+      "to": "src/orders/order.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/orderRepo.ts",
+      "specifier": "../shared/logger",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/orderRepo.ts\",2,1,\"../shared/logger\"]",
+      "relationId": "[\"src/orders/orderRepo.ts\",[\"local\",\"src/shared/logger.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/logger.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/shipping.ts",
+      "specifier": "../config/limits",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/shipping.ts\",1,1,\"../config/limits\"]",
+      "relationId": "[\"src/orders/shipping.ts\",[\"local\",\"src/config/limits.ts\"],\"import\",\"value\"]",
+      "to": "src/config/limits.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/summary.ts",
+      "specifier": "./totals",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/summary.ts\",1,1,\"./totals\"]",
+      "relationId": "[\"src/orders/summary.ts\",[\"local\",\"src/orders/totals.ts\"],\"import\",\"value\"]",
+      "to": "src/orders/totals.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/summary.ts",
+      "specifier": "../shared/money",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/summary.ts\",2,1,\"../shared/money\"]",
+      "relationId": "[\"src/orders/summary.ts\",[\"local\",\"src/shared/money.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/money.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/summary.ts",
+      "specifier": "./status",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 3,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/summary.ts\",3,1,\"./status\"]",
+      "relationId": "[\"src/orders/summary.ts\",[\"local\",\"src/orders/status.ts\"],\"import\",\"value\"]",
+      "to": "src/orders/status.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/totals.ts",
+      "specifier": "../shared/money",
+      "syntaxKind": "import",
+      "dependencyKind": "mixed",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/totals.ts\",1,1,\"../shared/money\"]",
+      "relationId": "[\"src/orders/totals.ts\",[\"local\",\"src/shared/money.ts\"],\"import\",\"mixed\"]",
+      "to": "src/shared/money.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/totals.ts",
+      "specifier": "./discounts",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/totals.ts\",2,1,\"./discounts\"]",
+      "relationId": "[\"src/orders/totals.ts\",[\"local\",\"src/orders/discounts.ts\"],\"import\",\"value\"]",
+      "to": "src/orders/discounts.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/orders/totals.ts",
+      "specifier": "./shipping",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 3,
+      "column": 1,
+      "occurrenceId": "[\"src/orders/totals.ts\",3,1,\"./shipping\"]",
+      "relationId": "[\"src/orders/totals.ts\",[\"local\",\"src/orders/shipping.ts\"],\"import\",\"value\"]",
+      "to": "src/orders/shipping.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/payments/charge.ts",
+      "specifier": "../notifications/receipt",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/payments/charge.ts\",1,1,\"../notifications/receipt\"]",
+      "relationId": "[\"src/payments/charge.ts\",[\"local\",\"src/notifications/receipt.ts\"],\"import\",\"value\"]",
+      "to": "src/notifications/receipt.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/payments/charge.ts",
+      "specifier": "./gateway",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/payments/charge.ts\",2,1,\"./gateway\"]",
+      "relationId": "[\"src/payments/charge.ts\",[\"local\",\"src/payments/gateway.ts\"],\"import\",\"value\"]",
+      "to": "src/payments/gateway.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/payments/charge.ts",
+      "specifier": "./fees",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 3,
+      "column": 1,
+      "occurrenceId": "[\"src/payments/charge.ts\",3,1,\"./fees\"]",
+      "relationId": "[\"src/payments/charge.ts\",[\"local\",\"src/payments/fees.ts\"],\"import\",\"value\"]",
+      "to": "src/payments/fees.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/payments/charge.ts",
+      "specifier": "./ledger",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 4,
+      "column": 1,
+      "occurrenceId": "[\"src/payments/charge.ts\",4,1,\"./ledger\"]",
+      "relationId": "[\"src/payments/charge.ts\",[\"local\",\"src/payments/ledger.ts\"],\"import\",\"value\"]",
+      "to": "src/payments/ledger.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/payments/charge.ts",
+      "specifier": "./methods",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 5,
+      "column": 1,
+      "occurrenceId": "[\"src/payments/charge.ts\",5,1,\"./methods\"]",
+      "relationId": "[\"src/payments/charge.ts\",[\"local\",\"src/payments/methods.ts\"],\"import\",\"value\"]",
+      "to": "src/payments/methods.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/payments/fees.ts",
+      "specifier": "../config/limits",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/payments/fees.ts\",1,1,\"../config/limits\"]",
+      "relationId": "[\"src/payments/fees.ts\",[\"local\",\"src/config/limits.ts\"],\"import\",\"value\"]",
+      "to": "src/config/limits.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/payments/gateway.ts",
+      "specifier": "../config/env",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/payments/gateway.ts\",1,1,\"../config/env\"]",
+      "relationId": "[\"src/payments/gateway.ts\",[\"local\",\"src/config/env.ts\"],\"import\",\"value\"]",
+      "to": "src/config/env.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/payments/gateway.ts",
+      "specifier": "../shared/result",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/payments/gateway.ts\",2,1,\"../shared/result\"]",
+      "relationId": "[\"src/payments/gateway.ts\",[\"local\",\"src/shared/result.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/result.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/payments/invoice.ts",
+      "specifier": "./ledger",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/payments/invoice.ts\",1,1,\"./ledger\"]",
+      "relationId": "[\"src/payments/invoice.ts\",[\"local\",\"src/payments/ledger.ts\"],\"import\",\"value\"]",
+      "to": "src/payments/ledger.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/payments/invoice.ts",
+      "specifier": "../shared/money",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/payments/invoice.ts\",2,1,\"../shared/money\"]",
+      "relationId": "[\"src/payments/invoice.ts\",[\"local\",\"src/shared/money.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/money.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/payments/ledger.ts",
+      "specifier": "../shared/ids",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/payments/ledger.ts\",1,1,\"../shared/ids\"]",
+      "relationId": "[\"src/payments/ledger.ts\",[\"local\",\"src/shared/ids.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/ids.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/payments/ledger.ts",
+      "specifier": "../shared/dates",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/payments/ledger.ts\",2,1,\"../shared/dates\"]",
+      "relationId": "[\"src/payments/ledger.ts\",[\"local\",\"src/shared/dates.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/dates.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/payments/methods.ts",
+      "specifier": "../shared/validation",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/payments/methods.ts\",1,1,\"../shared/validation\"]",
+      "relationId": "[\"src/payments/methods.ts\",[\"local\",\"src/shared/validation.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/validation.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/payments/refund.ts",
+      "specifier": "./gateway",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/payments/refund.ts\",1,1,\"./gateway\"]",
+      "relationId": "[\"src/payments/refund.ts\",[\"local\",\"src/payments/gateway.ts\"],\"import\",\"value\"]",
+      "to": "src/payments/gateway.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/payments/refund.ts",
+      "specifier": "./ledger",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/payments/refund.ts\",2,1,\"./ledger\"]",
+      "relationId": "[\"src/payments/refund.ts\",[\"local\",\"src/payments/ledger.ts\"],\"import\",\"value\"]",
+      "to": "src/payments/ledger.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/shared/ids.ts",
+      "specifier": "nanoid",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/shared/ids.ts\",1,1,\"nanoid\"]",
+      "relationId": "[\"src/shared/ids.ts\",[\"external\",\"nanoid\"],\"import\",\"value\"]",
+      "to": null,
+      "resolution": "external"
+    },
+    {
+      "from": "src/shared/logger.ts",
+      "specifier": "../config",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/shared/logger.ts\",1,1,\"../config\"]",
+      "relationId": "[\"src/shared/logger.ts\",[\"local\",\"src/config/index.ts\"],\"import\",\"value\"]",
+      "to": "src/config/index.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/shared/validation.ts",
+      "specifier": "./result",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 1,
+      "column": 1,
+      "occurrenceId": "[\"src/shared/validation.ts\",1,1,\"./result\"]",
+      "relationId": "[\"src/shared/validation.ts\",[\"local\",\"src/shared/result.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/result.ts",
+      "resolution": "local"
+    },
+    {
+      "from": "src/shared/validation.ts",
+      "specifier": "./dates",
+      "syntaxKind": "import",
+      "dependencyKind": "value",
+      "line": 2,
+      "column": 1,
+      "occurrenceId": "[\"src/shared/validation.ts\",2,1,\"./dates\"]",
+      "relationId": "[\"src/shared/validation.ts\",[\"local\",\"src/shared/dates.ts\"],\"import\",\"value\"]",
+      "to": "src/shared/dates.ts",
+      "resolution": "local"
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "unresolved",
+      "module": "src/catalog/search.ts",
+      "line": 2,
+      "column": 1,
+      "specifier": "./synonyms",
+      "message": "The import \"./synonyms\" points to a file that is not in the analyzed folder."
+    }
+  ],
   "options": {
     "preset": "static-value",
-    "includeExtensions": [".js", ".jsx", ".ts", ".tsx", ".mjs", ".mts"],
-    "excludeDirectories": [".git", "node_modules", "dist", "build", "out", ".next", "coverage"],
-    "excludeFilePatterns": [".env", ".env.*", "*.pem", "*.key", "id_rsa*"],
+    "includeExtensions": [
+      ".js",
+      ".jsx",
+      ".ts",
+      ".tsx",
+      ".mjs",
+      ".mts"
+    ],
+    "excludeDirectories": [
+      ".git",
+      "node_modules",
+      "dist",
+      "build",
+      "out",
+      ".next",
+      "coverage"
+    ],
+    "excludeFilePatterns": [
+      ".env",
+      ".env.*",
+      "*.pem",
+      "*.key",
+      "id_rsa*"
+    ],
     "maxFiles": 1000,
     "maxFileBytes": 1048576,
     "maxTotalBytes": 26214400,

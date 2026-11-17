@@ -224,7 +224,7 @@ describe("8.11 failures after the file is valid", () => {
       },
     });
     expect(await openLiveSnapshot(deps)).toBe("sample-failed");
-    expect(store.calls.setStatus).toEqual(["The manor sample could not be analyzed (worker failed). Reload the page or analyze a local folder."]);
+    expect(store.calls.setStatus).toEqual(["The manor sample could not be analyzed (worker failed). Reload the page."]);
     expect(store.getState().investigation).toBeNull();
     expect(registry.handoffCalls).toEqual([]);
   });

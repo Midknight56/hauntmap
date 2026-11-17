@@ -38,6 +38,8 @@ test.describe("hosted controls (dev build)", () => {
       "Clear selection",
       "Map",
       "Evidence",
+      "Compare revisions",
+      "Open live snapshot",
     ]);
     await page.evaluate(() => {
       const hook = (window as unknown as { __hauntmap: StubHook }).__hauntmap;

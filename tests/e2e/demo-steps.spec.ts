@@ -35,19 +35,19 @@ async function registerCompare(page: Page, mode: "resolve" | "reject"): Promise<
 }
 
 test.describe("investigation steps (dev build)", () => {
-  test("8.1 the manor opens with the panel, two steps without a compare handoff, each with Do it and Skip", async ({ page }) => {
+  test("8.1 the manor opens with the panel, three steps with the registered compare handoff, each with Do it and Skip", async ({ page }) => {
     await openManor(page);
     await expect(panel(page).getByRole("heading", { name: "Investigate the manor", level: 2 })).toBeVisible();
-    await expect(panel(page).getByText("0 of 2 steps")).toBeVisible();
-    await expect(panel(page).locator("[data-step]")).toHaveCount(2);
-    await expect(step(page, "compare")).toHaveCount(0);
+    await expect(panel(page).getByText("0 of 3 steps")).toBeVisible();
+    await expect(panel(page).locator("[data-step]")).toHaveCount(3);
+    await expect(step(page, "compare")).toContainText("Compare revisions");
     await expect(step(page, "follow")).toContainText("Follow a dependency");
     await expect(step(page, "follow")).toContainText("Select src/orders/checkout.ts and open one of its doors.");
     await expect(step(page, "follow")).toContainText("To do");
     await expect(step(page, "loop")).toContainText("Reveal a loop");
     await expect(step(page, "loop")).toContainText("Open Dependency loops and choose the 3-module loop.");
-    await expect(panel(page).getByRole("button", { name: "Do it" })).toHaveCount(2);
-    await expect(panel(page).getByRole("button", { name: "Skip" })).toHaveCount(2);
+    await expect(panel(page).getByRole("button", { name: "Do it" })).toHaveCount(3);
+    await expect(panel(page).getByRole("button", { name: "Skip" })).toHaveCount(3);
     await expect(panel(page).getByRole("button", { name: "Close" })).toBeVisible();
     await expect(page.locator('[role="dialog"], [aria-modal="true"]')).toHaveCount(0);
   });
@@ -64,7 +64,7 @@ test.describe("investigation steps (dev build)", () => {
     await expect(step(page, "follow")).toContainText("To do");
     await firstImports.click();
     await expect(step(page, "follow")).toContainText("Done");
-    await expect(panel(page).getByText("1 of 2 steps")).toBeVisible();
+    await expect(panel(page).getByText("1 of 3 steps")).toBeVisible();
   });
 
   test("8.3 Do it on step 2 opens the loops panel with focus on its first component, and choosing it completes the step", async ({ page }) => {
@@ -75,21 +75,21 @@ test.describe("investigation steps (dev build)", () => {
     await expect(step(page, "loop")).toContainText("To do");
     await page.keyboard.press("Enter");
     await expect(step(page, "loop")).toContainText("Done");
-    await expect(panel(page).getByText("1 of 2 steps")).toBeVisible();
+    await expect(panel(page).getByText("1 of 3 steps")).toBeVisible();
   });
 
   test("8.5 steps can be done in any order; Skip marks Skipped as text and a skipped step can still become Done", async ({ page }) => {
     await openManor(page);
     await step(page, "follow").getByRole("button", { name: "Skip" }).click();
     await expect(step(page, "follow")).toContainText("Skipped");
-    await expect(panel(page).getByText("0 of 2 steps")).toBeVisible();
+    await expect(panel(page).getByText("0 of 3 steps")).toBeVisible();
     await step(page, "loop").getByRole("button", { name: "Do it" }).click();
     await page.keyboard.press("Enter");
     await expect(step(page, "loop")).toContainText("Done");
     await step(page, "follow").getByRole("button", { name: "Do it" }).click();
     await page.locator('[aria-label="Inspector"] section', { has: page.locator("h3", { hasText: /^Imports \(/ }) }).getByRole("button").first().click();
     await expect(step(page, "follow")).toContainText("Done");
-    await expect(panel(page).getByText("2 of 2 steps")).toBeVisible();
+    await expect(panel(page).getByText("2 of 3 steps")).toBeVisible();
   });
 
   test("8.7 Close hides the panel and returns focus to Show steps; Show steps reopens it with the same state; Restart demo resets", async ({ page }) => {
@@ -115,9 +115,9 @@ test.describe("investigation steps (dev build)", () => {
     await expect(page.getByRole("button", { name: "Show steps" })).toHaveCount(0);
   });
 
-  test("8.4 step 3 is absent with no handoff; with a stub handoff it appears, receives the arguments and completes", async ({ page }) => {
+  test("8.4 step 3 is present with the registered handoff; with a stub handoff replacing it, Do it passes the arguments and completes", async ({ page }) => {
     await openManor(page);
-    await expect(step(page, "compare")).toHaveCount(0);
+    await expect(step(page, "compare")).toHaveCount(1);
     await registerCompare(page, "resolve");
     await expect(step(page, "compare")).toContainText("Compare revisions");
     await expect(step(page, "compare")).toContainText("Load the revised manor and watch which door disappears.");

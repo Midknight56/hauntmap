@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import type { ToolErrorCode } from "./errors";
 import { nodeFs } from "./loader";
 import type { FsLike } from "./loader";
-import { analyzeTool, createContext, PRESETS } from "./tools";
+import { analyzeTool, compareTool, createContext, PRESETS } from "./tools";
 import type { ToolContext } from "./tools";
 
 // The `hauntmap` command line tool, launched by bin/hauntmap.js. It runs the same tool functions as
@@ -115,27 +115,28 @@ export async function main(argv: string[], io: CliIo): Promise<ExitCode> {
     io.stderr(`hauntmap: Preset "${parsed.preset}" is not one of ${PRESETS.join(", ")}.\n`);
     return 2;
   }
-  if (parsed.command === "compare") {
-    io.stderr("hauntmap: compare is not available until snapshot-comparison lands\n");
-    return 4;
-  }
-
   const ctx = io.context ?? createContext(await realpath(io.cwd), { fs: io.fs, log: () => undefined });
-  const result = await analyzeTool(ctx, { root: parsed.roots[0], ...(parsed.preset === null ? {} : { preset: parsed.preset }) });
+  const result =
+    parsed.command === "compare"
+      ? await compareTool(ctx, { rootBefore: parsed.roots[0], rootAfter: parsed.roots[1] })
+      : await analyzeTool(ctx, { root: parsed.roots[0], ...(parsed.preset === null ? {} : { preset: parsed.preset }) });
   if (!result.ok) {
     io.stderr(`hauntmap: ${result.error.message}\n`);
     return exitFor(result.error.code, result.error.message);
   }
-
-  const investigation = result.value;
+  const value = result.value;
   const target = resolve(io.cwd, parsed.out);
   try {
-    await writeAtomically(target, `${JSON.stringify(investigation, null, 2)}\n`);
+    await writeAtomically(target, `${JSON.stringify(value, null, 2)}\n`);
   } catch (thrown) {
     io.stderr(`hauntmap: cannot write ${parsed.out} (${(thrown as NodeJS.ErrnoException).code ?? "unknown"}).\n`);
     return 6;
   }
-  const relations = new Set(investigation.imports.map((record) => record.relationId)).size;
-  io.stdout(`analyze: ${investigation.modules.length} modules, ${relations} relations, ${investigation.diagnostics.length} diagnostics ${ARROW} ${parsed.out}\n`);
+  if ("removedRelations" in value) {
+    io.stdout(`compare: ${value.removedRelations.length} removed, ${value.addedRelations.length} added, ${value.changedModules.length} changed modules ${ARROW} ${parsed.out}\n`);
+    return 0;
+  }
+  const relations = new Set(value.imports.map((record) => record.relationId)).size;
+  io.stdout(`analyze: ${value.modules.length} modules, ${relations} relations, ${value.diagnostics.length} diagnostics ${ARROW} ${parsed.out}\n`);
   return 0;
 }

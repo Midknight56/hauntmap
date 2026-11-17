@@ -1,6 +1,7 @@
 import process from "node:process";
 import { analyze, DEFAULT_ANALYSIS_OPTIONS, findCycles, selectSources, trace } from "../../../src/analysis/index";
 import type { HashFn } from "../../../src/analysis/index";
+import { compareInvestigations } from "../../../src/analysis/graph/compare";
 import type { AnalysisOptions, ComparisonResult, CycleReport, Diagnostic, Investigation, Preset, SourceSet, TraceResult } from "../../../src/contracts/types";
 import { validateComparison, validateInvestigation } from "../../../src/contracts/validate";
 import type { ValidationResult } from "../../../src/contracts/validate";
@@ -24,6 +25,8 @@ export interface ToolContext {
     analyze: typeof analyze;
     findCycles: typeof findCycles;
     trace: typeof trace;
+    /** Absent only in tests that check the precondition message. */
+    compareInvestigations?: typeof compareInvestigations;
   };
   hash: HashFn;
   validate: { investigation(value: unknown): ValidationResult; comparison(value: unknown): ValidationResult };
@@ -37,7 +40,7 @@ export const PRESETS: readonly Preset[] = ["static-value", "type-inclusive", "dy
 export function createContext(workspaceRoot: string, overrides: Partial<ToolContext> = {}): ToolContext {
   return {
     workspaceRoot,
-    analysis: { selectSources, analyze, findCycles, trace },
+    analysis: { selectSources, analyze, findCycles, trace, compareInvestigations },
     hash: sha256Hex,
     validate: { investigation: validateInvestigation, comparison: validateComparison },
     defaults: DEFAULT_ANALYSIS_OPTIONS,
@@ -132,9 +135,22 @@ export async function whoImportsTool(ctx: ToolContext, args: unknown): Promise<T
   }
 }
 
-/** Placeholder until snapshot-comparison provides compareInvestigations (task 9 of this spec replaces it). */
-export async function compareTool(_ctx: ToolContext, args: unknown): Promise<ToolResult<ComparisonResult>> {
+/** Both roots go through the shared steps under static-value; compareInvestigations is called unaltered and its `detail` is dropped. */
+export async function compareTool(ctx: ToolContext, args: unknown): Promise<ToolResult<ComparisonResult>> {
   const parsed = parseArgs(args, ["rootBefore", "rootAfter"] as const);
   if (!parsed.ok) return parsed;
-  return failure("analysis-failed", "compare is not available until snapshot-comparison lands");
+  const compare = ctx.analysis.compareInvestigations;
+  if (compare === undefined) return failure("analysis-failed", "compare is not available until snapshot-comparison lands");
+  const before = await analyzeRoot(ctx, parsed.values.rootBefore, "static-value", "rootBefore: ");
+  if (!before.ok) return before;
+  const after = await analyzeRoot(ctx, parsed.values.rootAfter, "static-value", "rootAfter: ");
+  if (!after.ok) return after;
+  let outcome: ReturnType<typeof compareInvestigations>;
+  try {
+    outcome = compare(before.value, after.value);
+  } catch (thrown) {
+    return failure("analysis-failed", `The snapshots cannot be compared: ${messageOf(thrown)}.`);
+  }
+  if (!outcome.ok) return failure("analysis-failed", `The snapshots cannot be compared: ${outcome.error.message}.`);
+  return validated(ctx, outcome.result, ctx.validate.comparison);
 }
