@@ -67,7 +67,7 @@ test.describe("landing screen", () => {
     expect(await page.evaluate(() => "__hauntmap" in window)).toBe(false);
   });
 
-  test("1.3 the manor opens from one request, with src/orders expanded and the camera fitted to it; the annex opens without steps", async ({ page }) => {
+  test("1.3 the manor opens from one request, with src/orders expanded and the camera fitted to the whole map; the annex opens without steps", async ({ page }) => {
     const requests: string[] = [];
     page.on("request", (request) => {
       if (request.url().endsWith("sources.json")) requests.push(new URL(request.url()).pathname);
@@ -75,17 +75,23 @@ test.describe("landing screen", () => {
     await page.goto("/");
     await openSample(page, "Explore the manor");
     expect(requests).toEqual(["/demo/manor/before/sources.json"]);
-    await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toHaveText("manor/before \u203A src/orders");
+    // The first view fits every wing (checked in map-look.spec.ts), so the wing under the map center is not fixed.
+    await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toContainText("manor/before");
     await expect(page.getByRole("application", { name: "Haunted map" })).toBeVisible();
     const canvas = await page.locator("canvas").boundingBox();
     expect(canvas?.width ?? 0).toBeGreaterThan(300);
     await expect(page.getByRole("button", { name: "Show steps" })).toBeVisible();
+    const steps = page.getByRole("region", { name: "Investigation steps" });
+    await expect(steps.getByRole("heading", { name: "Investigate the manor" })).toBeVisible();
+    await expect(steps.getByText("0 of 2 steps")).toBeVisible();
+    await expect(steps.getByRole("button", { name: "Do it" })).toHaveCount(2);
     await shot(page, "docs/acceptance/img/manor-map.png");
 
     await page.getByRole("button", { name: "Restart demo" }).click();
     await page.getByRole("button", { name: "Explore the annex" }).click();
     await page.getByRole("application", { name: "Haunted map" }).waitFor();
     await expect(page.getByRole("button", { name: "Show steps" })).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "Investigation steps" })).toHaveCount(0);
     await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toContainText("annex");
   });
 

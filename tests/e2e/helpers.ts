@@ -76,7 +76,7 @@ export async function openFixture(page: Page, name: string, source?: Record<stri
 }
 
 /** The accessible name of the focused element, as far as the specs need it (aria-label, labelledby, label, text, title). */
-async function focusedName(page: Page): Promise<string> {
+export async function focusedName(page: Page): Promise<string> {
   return page.evaluate(() => {
     const el = document.activeElement;
     if (el === null || el === document.body) return "";

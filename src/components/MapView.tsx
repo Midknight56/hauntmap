@@ -53,13 +53,11 @@ function selectHit(store: InvestigationStore, hit: HitTarget): void {
   }
 }
 
-/** Where to fit on the first layout of an investigation: the one expanded wing, or everything. */
+/** The first layout of an investigation fits every wing in the map area, whatever is expanded. */
 function firstFit(state: ViewState, viewport: { width: number; height: number }) {
   const layout = state.layout;
   if (layout === null) return null;
-  const expanded = layout.wings.filter((w) => w.expanded);
-  const rect = expanded.length === 1 && expanded[0] !== undefined ? { x: expanded[0].x, y: expanded[0].y, w: expanded[0].w, h: expanded[0].h } : layout.bounds;
-  return fitBounds(rect, viewport, FIT_PADDING);
+  return fitBounds(layout.bounds, viewport, FIT_PADDING);
 }
 
 export function MapView({ store, createScene, forceFailure }: Props) {
@@ -167,6 +165,12 @@ export function MapView({ store, createScene, forceFailure }: Props) {
     const next = state.camera;
     if (now.x !== next.x || now.y !== next.y || now.zoom !== next.zoom) scene.setCamera(next, "jump");
   }, [scene, state.camera]);
+
+  // A scene that starts (or restarts after `Retry map`) draws the camera the store holds. A selection made before it
+  // existed was not made for it, so it must not move the camera (12.2).
+  useEffect(() => {
+    if (scene !== null) centeredFor.current = store.getState().selection;
+  }, [store, scene]);
 
   // A selection made in the DOM centers the camera on its room, door or wing, at zoom 1 or more
   // (4.2, 6.7). It waits for a layout that is still being computed; a scene click never moves it.

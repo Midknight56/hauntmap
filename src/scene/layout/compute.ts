@@ -1,3 +1,4 @@
+import { placeBadges } from "./badges";
 import { placeDoors } from "./doorsPlacement";
 import type {
   CorridorBox,
@@ -255,11 +256,13 @@ export function computeLayout(
   const { doors, sealed } = placeDoors({ rooms: roomRects, relations, boundaries });
 
   const wingRects = new Map(wings.map((w) => [w.wing, w]));
-  const corridors: CorridorBox[] = pairs.map((pair) => {
+  const lines: CorridorBox[] = pairs.map((pair) => {
     const a = wingRects.get(pair.from) as WingBox;
     const b = wingRects.get(pair.to) as WingBox;
     return { fromWing: pair.from, toWing: pair.to, count: pair.count, path: [clamp(centerOf(b), a), clamp(centerOf(a), b)] };
   });
+  const badges = placeBadges(lines, { rooms, grouped, doors, sealed, wings });
+  const corridors: CorridorBox[] = lines.map((line, i) => ({ ...line, badge: badges[i] as Point }));
 
   let bounds: Rect = { x: 0, y: 0, w: 0, h: 0 };
   if (wings.length > 0) {

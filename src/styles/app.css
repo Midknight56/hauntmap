@@ -143,6 +143,7 @@ code {
 .workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 20rem;
+  grid-template-rows: minmax(0, 1fr);
   flex: 1;
   min-height: 0;
 }
@@ -230,11 +231,40 @@ code {
   stroke-width: 2;
 }
 
-.inspector {
-  padding: 12px;
+.side-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
   background: var(--panel);
   border-left: 1px solid var(--ink-muted);
+}
+
+.inspector {
+  flex: 1;
+  min-height: 0;
+  padding: 12px;
+  background: var(--panel);
   overflow-y: auto;
+}
+
+.result-panel.steps-panel {
+  flex: none;
+  max-height: none;
+  border-top: 0;
+  border-bottom: 1px solid var(--ink-muted);
+}
+
+.steps-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.steps-list h3 {
+  margin: 8px 0 2px;
+  font-size: 0.9rem;
+  color: var(--ink);
 }
 
 .error-boundary {
@@ -450,11 +480,21 @@ code {
   border-width: 3px;
 }
 @media (max-width: 720px) {
+  /* Stacked: the page grows and scrolls vertically; nothing is clipped to the window height. */
+  .boundary-child,
+  .investigation {
+    flex: none;
+  }
+
   .workspace {
-    grid-template-columns: minmax(0, 1fr);
+    display: block;
   }
 
   .inspector {
+    overflow: visible;
+  }
+
+  .side-column {
     border-left: 0;
     border-top: 1px solid var(--ink-muted);
   }

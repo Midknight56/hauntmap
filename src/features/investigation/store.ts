@@ -556,10 +556,12 @@ export function createInvestigationStore(deps: StoreDeps): InvestigationStore {
     stepAction(id, action) {
       const steps = state.steps;
       if (steps === null || action === "do") return;
+      // A compare handoff registered after the manor opened adds its step on first use.
+      const list = id === "compare" && !steps.steps.some((s) => s.id === "compare") ? [...steps.steps, { id, status: "todo" as const }] : steps.steps;
       set({
         steps: {
           ...steps,
-          steps: steps.steps.map((s) => {
+          steps: list.map((s) => {
             if (s.id !== id) return s;
             if (action === "done") return { ...s, status: "done" as const };
             return s.status === "done" ? s : { ...s, status: "skipped" as const };

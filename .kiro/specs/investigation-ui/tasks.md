@@ -110,27 +110,27 @@ Ownership. `.kiro/steering/ownership.md` gives this spec `src/scene/**`, `src/fe
   - _Requirements: 1.4, 2.4, 5.4, 6.4, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8_
   - _Owner: Kiro_
 
-- [ ] 11. Investigation steps panel and the manor demo opening
+- [x] 11. Investigation steps panel and the manor demo opening
   - Create `src/features/demo/steps.ts` (`DemoStepState`, the completion rules, `stepsSummary`, the `compare` step present only when the handoff is registered) and `src/components/DemoSteps.tsx` (`Investigate the manor`, `<section aria-label="Investigation steps">`, the three titles and instructions of 8.1, `Do it`, `Skip`, `Close`, status text per step; step 3 through `callCompareHandoff` with `{ sample: "manor/after" }`; the toolbar's `Show steps` button reopens it with focus return); the manor opens with `demo: true`. No `compare` handoff exists in this build until `snapshot-comparison` lands, so the panel shows `<done> of 2 steps`.
   - Write `tests/ui/demo-steps.test.ts` and `tests/e2e/demo-steps.spec.ts` (step 3 absent with no handoff, present and completing with a stub handoff registered through the hook, `To do` after a rejecting stub); add the steps-panel assertion to the landing case 1.3.
   - Verify: `pnpm verify` passes with `demo-steps.test.ts` green; `pnpm verify:e2e -- tests/e2e/demo-steps.spec.ts tests/e2e/landing.spec.ts` passes.
   - _Requirements: 1.3, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7_
   - _Owner: Kiro_
 
-- [ ] 12. Hosted controls: slot and handoff tests, the feature boundary and the integration note
+- [x] 12. Hosted controls: slot and handoff tests, the feature boundary and the integration note
   - Fill the rest of `tests/ui/feature-boundary.test.ts` (10.6: no import from `src/components/**` or `src/features/investigation/**` into `src/features/liveSnapshot` or `compare`) and `tests/e2e/hosted-controls.spec.ts` with stub controls and handoffs registered through the hook (10.3 the backtick message, 10.4 `layoutKey` and the unchanged camera, selection and wings, 10.5 deep-equal state after a stub failure, 10.7 a stub export control focusing a stub dialog headed `Export investigation`). Document the registration API in `docs/ui-integration.md` for the `snapshot-comparison` and `kiro-integration` writers (slot names, accessible names, the `compare` and `export` handoff signatures, the backtick-to-`<code>` rule, the single status region, the `callCompareHandoff` helper, the `applyLayout`, `replaceInvestigation` and `setLayoutRequestBuilder` actions). There is no `Export is not available in this build.` text: with no export control registered, the slot renders nothing.
   - Verify: `pnpm verify` passes with `feature-boundary.test.ts` green; `pnpm verify:e2e -- tests/e2e/hosted-controls.spec.ts` passes, including the deep-equal state check; `docs/ui-integration.md` exists and names the three slots and the two handoffs.
   - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7_
   - _Owner: Kiro_
 
-- [ ] 13. Keyboard-only journey, reduced motion and viewport checks
+- [x] 13. Keyboard-only journey, reduced motion and viewport checks
   - Write `tests/e2e/keyboard-journey.spec.ts` (`prod` project; the journey of 11.1 without an export step, with the inspector heading asserted after every step and `assertFocusVisibleAndUnobscured` after every Tab; the names and patterns of 11.4; no horizontal scroll at 1,024 × 640 and 1,280 × 720; the stacked inspector at 640 × 360; the screenshot `docs/acceptance/img/keyboard-journey.png` when `HAUNTMAP_SHOTS=1`) and `tests/e2e/reduced-motion.spec.ts` (`prod` project; the journey with reduced motion emulated and with the `Motion` toggle set to `Reduce`; `activeTweens === 0` and `particleCount === 0` are sampled through `sceneDebug()` only in a `dev`-project twin case, since the release build has no hook; static light markers; `transitionDuration` `0s` in both).
   - Fix any defect these specs find in components, features or scene code of this spec under the two-repair rule.
   - Verify: `pnpm verify:e2e -- tests/e2e/keyboard-journey.spec.ts tests/e2e/reduced-motion.spec.ts` passes; `pnpm verify` passes. Do not write "keyboard accessible" or "works with reduced motion" anywhere until these have passed on the final build.
   - _Requirements: 2.4, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7_
   - _Owner: Kiro_
 
-- [ ] 14. Renderer fallback and context-loss journeys (the performance recording is not done)
+- [x] 14. Renderer fallback and context-loss journeys (the performance recording is not done)
   - Write `tests/e2e/renderer-fallback.spec.ts` (`dev` project; banner, Evidence view and focus on `Retry map` with `forceRendererFailure(true)` and with `?renderer=off`; `Retry map` success and failure with deep-equal state; context loss through `loseContext()` or the dispatched event: the retrying text, ticker stopped, restore within 1,000 ms, the 5,000 ms fallback with the restore suppressed; the error boundary through `crashNextRender()`; the screenshot `docs/acceptance/img/renderer-banner.png` when `HAUNTMAP_SHOTS=1`).
   - Not done, left for the owner: `pnpm perf:record`, `tests/e2e/performance.spec.ts`, any `docs/performance.md` row, `docs/limitations.md` changes, the two-browser check of 1.8 on a hosted build.
   - Verify: `pnpm verify:e2e -- tests/e2e/renderer-fallback.spec.ts` passes (the context-loss cases may be skipped with the printed WebGL reason).

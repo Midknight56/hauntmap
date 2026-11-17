@@ -77,6 +77,8 @@ export interface CorridorBox {
   toWing: string;
   count: number;
   path: Point[];
+  /** The center of the import-count label; absent in a layout made elsewhere, where the middle of the path is used. */
+  badge?: Point;
 }
 
 export interface LayoutResult {

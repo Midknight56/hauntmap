@@ -25,7 +25,7 @@ export function drawCorridors(ctx: DrawContext, layout: LayoutResult): void {
     ctx.layers.corridors.addChild(line);
     const a = first;
     const b = corridor.path[corridor.path.length - 1] as Point;
-    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    const mid = corridor.badge ?? { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
     const badge = new Sprite(ctx.textures.get("corridor", "default"));
     badge.anchor.set(0.5);
     badge.position.set(mid.x, mid.y);

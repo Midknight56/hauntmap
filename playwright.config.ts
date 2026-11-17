@@ -2,11 +2,11 @@ import { defineConfig } from "@playwright/test";
 
 // Two projects, one fresh browser context per test, headless Chromium at 1,280 x 720.
 // `prod` runs against the release build (no development hook); `dev` runs against the build made
-// with `--mode devhook`, where `window.__hauntmap` exists. The preview ports are 4183 and 4184 (another project on this PC uses 4173 and 4174);
+// with `--mode devhook`, where `window.__hauntmap` exists. The preview ports are 4373 and 4374 (other projects on this PC use 4173, 4174, 4273, 4274, 4473 and 4474);
 // set HAUNTMAP_PROD_PORT and HAUNTMAP_DEV_PORT when another server on this PC uses them.
 const PROD_SPECS = ["**/landing.spec.ts", "**/keyboard-journey.spec.ts", "**/reduced-motion.spec.ts"];
-const PROD_PORT = Number(process.env.HAUNTMAP_PROD_PORT ?? 4183);
-const DEV_PORT = Number(process.env.HAUNTMAP_DEV_PORT ?? 4184);
+const PROD_PORT = Number(process.env.HAUNTMAP_PROD_PORT ?? 4373);
+const DEV_PORT = Number(process.env.HAUNTMAP_DEV_PORT ?? 4374);
 
 const launchOptions = {
   args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],

@@ -113,7 +113,7 @@ export function Toolbar({ store, registry, search }: Props) {
         ))}
       </div>
       {state.steps !== null ? (
-        <button type="button" onClick={() => store.actions.openSteps()}>
+        <button type="button" id="show-steps" onClick={() => store.actions.openSteps()}>
           Show steps
         </button>
       ) : null}

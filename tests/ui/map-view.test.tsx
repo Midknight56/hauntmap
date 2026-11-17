@@ -2,10 +2,12 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Breadcrumb } from "../../src/components/Breadcrumb";
 import { MAP_HELP, MapView } from "../../src/components/MapView";
+import { getViewportSize } from "../../src/components/viewport";
 import { Minimap } from "../../src/components/Minimap";
 import { analysisApi } from "../../src/features/investigation/analysisApi";
 import { createPrefsStore } from "../../src/features/investigation/prefs";
 import { createInvestigationStore } from "../../src/features/investigation/store";
+import { toScreen } from "../../src/scene/camera";
 import type { LayoutResult } from "../../src/scene/layout/types";
 import type { SceneInit, SceneOptions } from "../../src/scene/types";
 import { createFakeLayoutClient, flush, makeLayoutResult } from "./fakeLayoutClient";
@@ -252,14 +254,22 @@ describe("layout failure and the usable mark (3.7, 1.9)", () => {
     expect(performance.getEntriesByName("hauntmap:usable")).toHaveLength(1);
   });
 
-  it("fits the camera to the one expanded wing on the first layout and not again", async () => {
+  it("fits the camera to every wing on the first layout, whatever is expanded, and not again", async () => {
     const ctx = setup();
     act(() => ctx.store.actions.expandWing("src"));
     await mount(ctx);
     act(() => ctx.store.actions.layoutResult(layout, ctx.store.getState().layoutRevision));
     const fitted = ctx.store.getState().camera;
-    expect(fitted).toMatchObject({ x: 200, y: 100 });
-    expect(fitted.zoom).toBeGreaterThan(1);
+    expect(fitted).toMatchObject({ x: layout.bounds.x + layout.bounds.w / 2, y: layout.bounds.y + layout.bounds.h / 2 });
+    const view = getViewportSize();
+    for (const wing of layout.wings) {
+      const topLeft = toScreen(fitted, view, { x: wing.x, y: wing.y });
+      const bottomRight = toScreen(fitted, view, { x: wing.x + wing.w, y: wing.y + wing.h });
+      expect(topLeft.x).toBeGreaterThanOrEqual(0);
+      expect(topLeft.y).toBeGreaterThanOrEqual(0);
+      expect(bottomRight.x).toBeLessThanOrEqual(view.width);
+      expect(bottomRight.y).toBeLessThanOrEqual(view.height);
+    }
     act(() => ctx.store.actions.setCamera({ x: 1, y: 2, zoom: 3 }));
     act(() => ctx.store.actions.layoutResult({ ...layout, layoutKey: "k2" }, ctx.store.getState().layoutRevision));
     expect(ctx.store.getState().camera).toEqual({ x: 1, y: 2, zoom: 3 });

@@ -8,6 +8,7 @@ import { openSample, type SampleId } from "../features/samples/loadSample";
 import { createScene } from "../scene/adapter";
 import { createAnalysisClient, type AnalysisClient, type WorkerLike } from "../workers/client";
 import { DEVHOOK_ENABLED, devState, forcedFailureGate, installDevHook } from "./devHook";
+import { DemoSteps } from "./DemoSteps";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { EvidenceView } from "./EvidenceView";
 import { Inspector } from "./Inspector";
@@ -67,8 +68,8 @@ function useMotionAttribute(store: InvestigationStore): void {
 }
 
 function InvestigationScreen({ services }: { services: AppServices }) {
+  // The flag stays set until the error boundary has caught the error: React renders once more after a throw, and that render must fail too.
   if (DEVHOOK_ENABLED && devState.crashNext) {
-    devState.crashNext = false;
     throw new Error("forced render error");
   }
   const { store, registry } = services;
@@ -88,7 +89,10 @@ function InvestigationScreen({ services }: { services: AppServices }) {
             </div>
           ) : null}
         </section>
-        <Inspector store={store} />
+        <div className="side-column">
+          <DemoSteps store={store} registry={registry} />
+          <Inspector store={store} />
+        </div>
       </div>
     </div>
   );

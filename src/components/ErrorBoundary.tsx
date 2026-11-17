@@ -1,4 +1,5 @@
 import { Component, createRef, type ReactNode } from "react";
+import { forcedCrashHandled } from "./devHook";
 
 export const ERROR_BOUNDARY_TEXT = "Something went wrong drawing the map. Your investigation is still loaded.";
 
@@ -27,6 +28,7 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error): void {
     const stack = (error.stack ?? "").split("\n").filter((line) => line.trimStart().startsWith("at ")).join("\n");
     console.error(`hauntmap: ${error.name}\n${stack}`);
+    forcedCrashHandled();
   }
 
   componentDidMount(): void {

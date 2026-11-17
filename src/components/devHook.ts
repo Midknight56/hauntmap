@@ -26,6 +26,11 @@ export function forcedFailureGate(name: "cycles" | "trace"): void {
   }
 }
 
+/** Called by the error boundary once it has caught the forced render error. */
+export function forcedCrashHandled(): void {
+  devState.crashNext = false;
+}
+
 export interface DevHook {
   store: InvestigationStore;
   registry: Registry;
