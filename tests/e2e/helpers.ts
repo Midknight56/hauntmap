@@ -214,3 +214,108 @@ export async function shot(page: Page, path: string): Promise<void> {
   if (process.env["HAUNTMAP_SHOTS"] !== "1") return;
   await page.screenshot({ path });
 }
+
+/** The parts of the view state the specs compare, read through the development hook. */
+export interface StateSnapshot {
+  camera: { x: number; y: number; zoom: number };
+  selection: { kind: string; [key: string]: unknown };
+  routeFilter: { kind: string; modules: string[]; relationIds: string[] } | null;
+  expandedWings: string[];
+  status: string;
+  activeView: string;
+  panelKind: string;
+  layoutStatus: string;
+  layout: {
+    rooms: { id: string; wing: string; label: string }[];
+    doors: { relationId: string; from: string; to: string }[];
+    sealed: { relationId: string; from: string }[];
+    grouped: { wing: string; label: string; hiddenCount: number }[];
+    corridors: { fromWing: string; toWing: string; count: number }[];
+    wings: { wing: string; expanded: boolean; rank: number; shownIds: string[]; hiddenCount: number }[];
+    bounds: { x: number; y: number; w: number; h: number };
+  } | null;
+}
+
+export async function snapshot(page: Page): Promise<StateSnapshot> {
+  return page.evaluate(() => {
+    const hook = (window as HookWindow).__hauntmap;
+    if (hook === undefined) throw new Error("window.__hauntmap is missing: run this case in the dev project");
+    const s = hook.store.getState() as unknown as StateSnapshot & { panel: { kind: string } };
+    return JSON.parse(
+      JSON.stringify({
+        camera: s.camera,
+        selection: s.selection,
+        routeFilter: s.routeFilter,
+        expandedWings: s.expandedWings,
+        status: s.status,
+        activeView: s.activeView,
+        panelKind: s.panel.kind,
+        layoutStatus: s.layoutStatus,
+        layout: s.layout,
+      }),
+    ) as StateSnapshot;
+  });
+}
+
+/** Call a store action by name through the development hook. */
+export async function storeAction(page: Page, name: string, ...args: unknown[]): Promise<void> {
+  await page.evaluate(
+    ([action, params]) => {
+      const hook = (window as HookWindow).__hauntmap;
+      if (hook === undefined) throw new Error("window.__hauntmap is missing: run this case in the dev project");
+      (hook.store.actions[action as string] as unknown as (...a: unknown[]) => void)(...(params as unknown[]));
+    },
+    [name, args] as const,
+  );
+}
+
+/** Wait until the layout worker has answered the last request. */
+export async function settled(page: Page): Promise<void> {
+  await page.waitForFunction(() => (window as HookWindow).__hauntmap?.store.getState().layoutStatus === "idle");
+}
+
+/** A client point inside a room that hits the room itself and none of its doors; null when the room is not drawn. */
+export async function roomPoint(page: Page, id: string): Promise<{ x: number; y: number } | null> {
+  return page.evaluate((moduleId) => {
+    type Scene = { screenRectOf(t: { kind: string; id: string }): DOMRect | null; hitTest(x: number, y: number): { kind: string; id: string } | null };
+    const scene = (window as HookWindow).__hauntmap?.scene() as unknown as Scene | null | undefined;
+    const rect = scene?.screenRectOf({ kind: "room", id: moduleId });
+    if (!scene || !rect) return null;
+    for (let fy = 0.1; fy < 1; fy += 0.1) {
+      for (let fx = 0.1; fx < 1; fx += 0.1) {
+        const x = rect.x + rect.width * fx;
+        const y = rect.y + rect.height * fy;
+        const hit = scene.hitTest(x, y);
+        if (hit?.kind === "room" && hit.id === moduleId) return { x, y };
+      }
+    }
+    return null;
+  }, id);
+}
+
+/** How far the center of a drawn target is from the center of the map area, in CSS pixels; null when it is not drawn. */
+export async function offsetFromMapCenter(page: Page, target: { kind: string; id: string }): Promise<{ dx: number; dy: number } | null> {
+  return page.evaluate((t) => {
+    const scene = (window as HookWindow).__hauntmap?.scene();
+    const rect = scene?.screenRectOf(t as never);
+    const box = document.querySelector(".map-wrapper")?.getBoundingClientRect();
+    if (!rect || !box) return null;
+    return { dx: rect.x + rect.width / 2 - (box.left + box.width / 2), dy: rect.y + rect.height / 2 - (box.top + box.height / 2) };
+  }, target);
+}
+
+/** The wing of a module ID, as the interface names it. */
+export function wingOfId(id: string): string {
+  const slash = id.lastIndexOf("/");
+  return slash < 0 ? "(root)" : id.slice(0, slash);
+}
+
+/** Under static-value: import and re-export syntax with value or mixed dependency. This is the spec's own oracle, read from expected.json. */
+export function inStaticValue(r: { syntaxKind: string; dependencyKind: string }): boolean {
+  return (r.syntaxKind === "import" || r.syntaxKind === "re-export") && (r.dependencyKind === "value" || r.dependencyKind === "mixed");
+}
+
+/** One key per relation: the same identity the interface uses, built from expected.json fields. */
+export function relationKeyOf(r: { from: string; to: string | null; specifier: string; resolution: string; syntaxKind: string; dependencyKind: string }): string {
+  return JSON.stringify([r.from, r.resolution === "local" ? ["local", r.to] : [r.resolution, r.specifier], r.syntaxKind, r.dependencyKind]);
+}

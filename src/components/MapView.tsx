@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import type { InvestigationStore, ViewState } from "../features/investigation/store";
 import { fitBounds, zoomAround } from "../scene/camera";
+import { focusTargetOf } from "./focusTarget";
 import type { createScene as CreateScene } from "../scene/adapter";
 import type { HitTarget, SceneHandle } from "../scene/types";
 import { Breadcrumb } from "./Breadcrumb";
 import { fitView, FIT_PADDING, pan, PAN_STEP, PAN_STEP_SHIFT, zoomBy, ZOOM_STEP } from "./cameraControls";
 import { DEVHOOK_ENABLED, devState } from "./devHook";
 import { Minimap } from "./Minimap";
+import { Tooltip } from "./Tooltip";
 import { useReducedMotion } from "./useReducedMotion";
 import { useViewState } from "./useStore";
 import { getViewportSize, setViewportSize } from "./viewport";
@@ -71,6 +73,7 @@ export function MapView({ store, createScene, forceFailure }: Props) {
   const [attempt, setAttempt] = useState(0);
   const fittedFor = useRef<unknown>(null);
   const usableFor = useRef<unknown>(null);
+  const centeredFor = useRef<unknown>(null);
   const reducedRef = useRef(reduced);
   reducedRef.current = reduced;
 
@@ -165,6 +168,16 @@ export function MapView({ store, createScene, forceFailure }: Props) {
     if (now.x !== next.x || now.y !== next.y || now.zoom !== next.zoom) scene.setCamera(next, "jump");
   }, [scene, state.camera]);
 
+  // A selection made in the DOM centers the camera on its room, door or wing, at zoom 1 or more
+  // (4.2, 6.7). It waits for a layout that is still being computed; a scene click never moves it.
+  useEffect(() => {
+    if (scene === null || state.layout === null || state.layoutStatus === "pending") return;
+    const selection = state.selection;
+    if (selection.kind === "none" || state.selectionOrigin !== "dom" || centeredFor.current === selection) return;
+    centeredFor.current = selection;
+    const target = focusTargetOf(selection, state.layout, state.investigation);
+    if (target !== null) store.actions.setCamera(scene.focusOn(target, 1));
+  }, [store, scene, state.layout, state.layoutStatus, state.selection, state.selectionOrigin, state.investigation]);
   // The first layout of an investigation fits the camera; later layouts keep the camera center (3.6).
   useEffect(() => {
     if (state.layout === null || state.investigation === null || fittedFor.current === state.investigation) return;
@@ -321,6 +334,7 @@ export function MapView({ store, createScene, forceFailure }: Props) {
         <Breadcrumb store={store} />
         <Minimap store={store} />
       </div>
+      <Tooltip store={store} scene={scene} wrapper={wrapperRef} />
     </>
   );
 }

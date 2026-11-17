@@ -19,6 +19,7 @@ test.describe("hosted controls (dev build)", () => {
     await expect(page.getByRole("button", { name: "Restart demo" })).toBeVisible();
     expect(await toolbarNames(page)).toEqual([
       "Restart demo",
+      "Search modules",
       "Relation preset",
       "Dependency loops",
       "Legend",

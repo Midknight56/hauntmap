@@ -11,6 +11,8 @@ import { makeInvestigation, mulberry32 } from "./generators";
 import { inside, intersects, layoutOf, rankMap, requestFor } from "./layoutRequests";
 import { layoutKey } from "../../src/scene/layout/key";
 import type { LayoutRequest } from "../../src/scene/layout/types";
+import { tooltipLines } from "../../src/features/investigation/tooltip";
+import { LEGEND_ENTRIES } from "../../src/features/investigation/legend";
 import { createAnimator } from "../../src/scene/animation";
 import { buildHitTargets, hitTest } from "../../src/scene/hitTest";
 
@@ -439,4 +441,30 @@ describe("P4 hit targets (9.1, 9.2)", () => {
       { numRuns: RUNS },
     );
   }, 300_000);
+});
+describe("P8 tooltip wording (5.2)", () => {
+  it("the first line is one of the seven legend concepts and the second names the target", () => {
+    const concepts = new Set(LEGEND_ENTRIES.map((e) => `${e.concept} \u2014 ${e.costume}`));
+    fc.assert(
+      fc.property(investigationArb, (inv) => {
+        const rect = { x: 0, y: 0, w: 1, h: 1 };
+        const module = inv.modules[0]!;
+        const [roomFirst, roomSecond] = tooltipLines({ kind: "room", id: module.id, rect }, inv, analysisApi);
+        expect(concepts.has(roomFirst)).toBe(true);
+        expect(roomSecond).toContain(module.id);
+        for (const record of inv.imports) {
+          const kind = record.resolution === "local" ? "door" : "sealed";
+          const [first, second] = tooltipLines({ kind, id: record.relationId, rect }, inv, analysisApi);
+          expect(concepts.has(first)).toBe(true);
+          expect(second).toContain(record.from);
+          expect(second).toContain(record.to ?? record.specifier);
+        }
+        const wing = module.id.slice(0, module.id.lastIndexOf("/"));
+        const [wingFirst, wingSecond] = tooltipLines({ kind: "wing", id: wing, rect }, inv, analysisApi);
+        expect(concepts.has(wingFirst)).toBe(true);
+        expect(wingSecond).toContain(wing);
+      }),
+      { numRuns: RUNS },
+    );
+  });
 });

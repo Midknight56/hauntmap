@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { readStatus, shot } from "./helpers";
+import { expected, readStatus, shot } from "./helpers";
 
 /** Open a sample and wait for the first room to be drawn; skip the case when headless Chromium has no WebGL. */
 async function openSample(page: Page, name: "Explore the manor" | "Explore the annex"): Promise<void> {
@@ -10,6 +10,8 @@ async function openSample(page: Page, name: "Explore the manor" | "Explore the a
   ]);
   test.skip(outcome === "banner", "no WebGL in headless Chromium");
 }
+
+const manor = expected();
 
 const SENTENCE =
   "Find how the modules of a JavaScript or TypeScript project import each other: rooms are files, doors are imports, and a corridor that returns to its start is a dependency cycle.";
@@ -87,6 +89,20 @@ test.describe("landing screen", () => {
     await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toContainText("annex");
   });
 
+  test("1.4 the manor shows Modules (40) in the Evidence view and one loop with its three members", async ({ page }) => {
+    await page.goto("/");
+    await openSample(page, "Explore the manor");
+    await page.getByRole("tab", { name: "Evidence" }).click();
+    await expect(page.getByRole("heading", { name: "Evidence (static-value)" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: `Modules (${manor.modules.length})`, level: 3 })).toBeVisible();
+    expect(manor.modules).toHaveLength(40);
+    await page.getByRole("button", { name: "Dependency loops" }).click();
+    const members = manor.cycles["static-value"]?.[0]?.members ?? [];
+    expect(manor.cycles["static-value"]).toHaveLength(1);
+    const labels = await page.getByRole("list", { name: "Loops" }).getByRole("button").allTextContents();
+    expect(labels).toEqual([`3 modules: ${members.join(", ")}`]);
+    expect(labels[0]).toBe("3 modules: src/notifications/receipt.ts, src/orders/checkout.ts, src/payments/charge.ts");
+  });
   test("1.7 Restart demo returns to the landing screen and keeps only the preferences record in localStorage", async ({ page }) => {
     await page.goto("/");
     await openSample(page, "Explore the manor");

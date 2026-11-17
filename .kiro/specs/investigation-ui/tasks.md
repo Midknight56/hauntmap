@@ -82,28 +82,28 @@ Ownership. `.kiro/steering/ownership.md` gives this spec `src/scene/**`, `src/fe
   - _Requirements: 1.3, 1.7, 1.8, 3.7, 4.4, 4.5, 4.6, 4.7, 11.2, 12.1, 12.2, 12.3_
   - _Owner: Kiro_
 
-- [ ] 9. Inspector, evidence trail, Evidence view and source excerpt
+- [x] 9. Inspector, evidence trail, Evidence view and source excerpt
   - Create `src/components/Inspector.tsx` (module, relation and wing cards with the exact lines of 6.2 and 6.3, lists sorted by relation ID, `Focus` → `focusModule`, `Who imports this?` → `openWhoImports` (wired here), `Expand wing` / `Collapse wing`, diagnostics, the `Preset:` line from `analysisApi.presetMembership`), `SourceExcerpt.tsx` (`excerpt`, two lines before and after, one-based, the no-source and out-of-range messages), `EvidenceTrail.tsx` (`Step <k>: <from> imports <to> (line <line>)`, `aria-current="step"`, roving tabindex with ArrowUp, ArrowDown, Home, End, the empty-state sentence) and `EvidenceView.tsx` (`Evidence (<preset>)`, Wings, Modules, Relations with `in preset` / `not in preset`, Diagnostics, the wing filter from the grouped room, every item a selecting button); every string a React text node; render them from `App.tsx`.
   - Write `tests/ui/inspector.test.tsx`, `evidence-view.test.tsx`, `selection-roundtrip.test.tsx` (including the stubbed-scene variant of 6.8), `no-html-injection.test.ts`, `vocabulary.test.ts` (2.5 words), the P7 and P12 runs, and `tests/e2e/inspector-evidence.spec.ts` (6.2, 6.3, 6.5, 6.6, 6.7; the trail case 6.4 on the manor is added by task 10, which supplies a route filter).
   - Verify: `pnpm verify` passes with those files and P7, P12 green; `pnpm verify:e2e -- tests/e2e/inspector-evidence.spec.ts` passes, including `escaped.json` with `document.querySelector("img") === null`.
   - _Requirements: 2.5, 5.3, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 7.4_
   - _Owner: Kiro_
 
-- [ ] 7. Search and the search-camera journeys
+- [x] 7. Search and the search-camera journeys
   - Create `src/components/Search.tsx` (combobox pattern, `searchModules`, `<n> matches` / `20 of <n> matches`, the no-match message to the listbox and the status region, choice → `select`, `expandWing(wing, id)`, `focusOn` at `max(zoom, 1)`, focus to the inspector heading) and mount it in the toolbar's `Search modules` slot.
   - Write `tests/e2e/search-camera.spec.ts` and `tests/e2e/map-scene.spec.ts` (2.2 with the hand count of 11 doors in `src/orders`, 2.3 on `src/catalog/search.ts` and `src/shared/ids.ts`, 2.9 with `long-name.json`, 3.4 to 3.6, 9.2 to 9.5, 9.7, and the screenshot `docs/acceptance/img/orders-wing.png` when `HAUNTMAP_SHOTS=1`). This is the first task that sees the scene in a browser: confirm `scene().debug().tickerRunning` is true on the manor and false once the document is hidden.
   - Verify: `pnpm verify:e2e -- tests/e2e/search-camera.spec.ts tests/e2e/map-scene.spec.ts` passes (or the scene cases are skipped with the printed WebGL reason); `pnpm verify` passes.
   - _Requirements: 2.2, 2.3, 2.9, 3.4, 3.5, 3.6, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 9.2, 9.3, 9.4, 9.5, 9.7_
   - _Owner: Kiro_
 
-- [ ] 8. Legend and tooltips
+- [x] 8. Legend and tooltips
   - Create `src/components/Legend.tsx` (`LEGEND_ENTRIES` in the order and wording of 5.1, `registry.legendEntries()` appended, `LEGEND_FOOTER`, `legendOpen` through prefs; the toolbar's `Legend` toggle opens it) and `Tooltip.tsx` (`tooltipLines`, anchored to `screenRectOf`, shown on hover and on focus of the matching inspector or Evidence-view item, hidden on blur, pointer leave and Escape).
   - Write `tests/e2e/legend-tooltips.spec.ts`, the `tooltipLines` cases of `tests/ui/inspector.test.tsx` and the P8 run.
   - Verify: `pnpm verify:e2e -- tests/e2e/legend-tooltips.spec.ts` passes; `pnpm verify` passes with P8 green and `no-html-injection.test.ts` clean.
   - _Requirements: 2.5, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
   - _Owner: Kiro_
 
-- [ ] 10. Dependency loops and who-imports panels
+- [x] 10. Dependency loops and who-imports panels
   - Create `src/components/LoopsPanel.tsx` (`Dependency loops (<preset>)`, `<k> loops`, component buttons with the 7.1 labels, the 7.3 preset sentences, `chooseLoop`, the 7.8 error text) and `WhoImportsPanel.tsx` (`Who imports <id> (<preset>)`, `Direct importers (<a>)`, `Indirect (<b>)` with `<module> · <distance> steps`, the limits sentence of 7.4, `chooseImporter`, the prose of 7.5, the 7.8 error text); `App.tsx` renders the panel for `panel.kind`; a chosen component or importer keeps focus on its button.
   - Write `tests/ui/loops-panel.test.tsx`, `who-imports-panel.test.tsx`, the 7.x words in `vocabulary.test.ts`, and `tests/e2e/loops-trace.spec.ts` (7.1 to 7.8, 2.4 and 5.4 as listed in `design.md`, distances from a breadth-first search written in the spec over `expected.json`). Add to other specs: the landing case 1.4 (`Modules (40)` and the loop members) and the trail case 6.4 on the manor in `inspector-evidence.spec.ts`.
   - Verify: `pnpm verify` passes with both unit files green and `vocabulary.test.ts` clean; `pnpm verify:e2e -- tests/e2e/loops-trace.spec.ts tests/e2e/landing.spec.ts tests/e2e/inspector-evidence.spec.ts` passes, including the manor label `3 modules: src/notifications/receipt.ts, src/orders/checkout.ts, src/payments/charge.ts`.

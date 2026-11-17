@@ -9,12 +9,18 @@ import { createScene } from "../scene/adapter";
 import { createAnalysisClient, type AnalysisClient, type WorkerLike } from "../workers/client";
 import { DEVHOOK_ENABLED, devState, forcedFailureGate, installDevHook } from "./devHook";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { EvidenceView } from "./EvidenceView";
+import { Inspector } from "./Inspector";
+import { Legend } from "./Legend";
+import { LoopsPanel } from "./LoopsPanel";
 import { Landing } from "./Landing";
 import { MapView } from "./MapView";
+import { Search } from "./Search";
 import { StatusRegion } from "./StatusRegion";
 import { Toolbar } from "./Toolbar";
 import { useReducedMotion } from "./useReducedMotion";
 import { useViewState } from "./useStore";
+import { WhoImportsPanel } from "./WhoImportsPanel";
 
 export interface AppServices {
   store: InvestigationStore;
@@ -69,15 +75,20 @@ function InvestigationScreen({ services }: { services: AppServices }) {
   const state = useViewState(store);
   return (
     <div className="investigation">
-      <Toolbar store={store} registry={registry} />
+      <Toolbar store={store} registry={registry} search={<Search store={store} />} />
       <div className="workspace">
         <section id="view-panel" role="tabpanel" aria-labelledby={`tab-${state.activeView}`} className="view">
           <MapView store={store} createScene={services.createScene ?? createScene} />
-          {state.activeView === "evidence" ? <div className="evidence-area" /> : null}
+          <LoopsPanel store={store} />
+          <WhoImportsPanel store={store} />
+          <Legend store={store} registry={registry} />
+          {state.activeView === "evidence" ? (
+            <div className="evidence-area">
+              <EvidenceView store={store} />
+            </div>
+          ) : null}
         </section>
-        <aside aria-label="Inspector" className="inspector">
-          <h2 tabIndex={-1}>Inspector</h2>
-        </aside>
+        <Inspector store={store} />
       </div>
     </div>
   );
