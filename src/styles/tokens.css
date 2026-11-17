@@ -1,30 +1,35 @@
 /* Design tokens, written from src/styles/theme.ts by themeCss(); tests/ui/theme.test.ts and tests/ui/styles.test.ts compare them. */
 
 :root {
-  --floor: #130e0a;
-  --wing: #261c15;
-  --wing-ink: #ecdfc6;
-  --room: #3d2d21;
-  --room-ink: #f6eedd;
-  --room-subdued: #1d1612;
-  --room-subdued-ink: #cdbfa2;
-  --door: #f4a83a;
-  --corridor: #4fe0b5;
-  --sealed: #c9b79a;
-  --light: #aeeaff;
-  --panel: #19130f;
-  --ink: #f3ead8;
-  --ink-muted: #c4b595;
-  --focus: #ffe27a;
-  --changed: #f0b429;
-  --removed: #c2b59c;
-  --added: #8fdc5a;
-  --wall: #8f6e4c;
-  --joint: #2a1e16;
-  --plate: #3c2b1c;
-  --plate-ink: #f6e7c2;
-  --passage: #8c7355;
-  --ghost: #e9fff4;
+  --floor: #170d10;
+  --wing: #1e1115;
+  --wing-ink: #ede3d0;
+  --room: #2a181e;
+  --room-ink: #ede3d0;
+  --room-subdued: #2a181e;
+  --room-subdued-ink: #ede3d0;
+  --door: #8c6f74;
+  --corridor: #7df2c6;
+  --sealed: #bba9a6;
+  --light: #ffd98f;
+  --panel: #22141a;
+  --ink: #ede3d0;
+  --ink-muted: #bba9a6;
+  --focus: #f2b24c;
+  --changed: #f2b24c;
+  --removed: #ede3d0;
+  --added: #a6e06a;
+  --wall: #8c6f74;
+  --joint: #120a0d;
+  --plate: #22141a;
+  --plate-ink: #ede3d0;
+  --passage: #8c6f74;
+  --ghost: #f2fff8;
+  --edge: #8c6f74;
+  --on-fill: #3a232a;
+  --selected-fill: #3b2616;
+  --map-glow: #2c171d;
+  --wall-line: #6b464c;
 }
 
 [data-theme="moonlit-crypt"] {
@@ -52,6 +57,11 @@
   --plate-ink: #e8eef8;
   --passage: #6c7fa4;
   --ghost: #f2f6ff;
+  --edge: #8497bd;
+  --on-fill: #24304a;
+  --selected-fill: #2d3350;
+  --map-glow: #17203a;
+  --wall-line: #4a5c82;
 }
 
 [data-theme="graveyard-fog"] {
@@ -79,11 +89,23 @@
   --plate-ink: #f5efd9;
   --passage: #6f8576;
   --ghost: #f0fbf8;
+  --edge: #8fa595;
+  --on-fill: #2c3b31;
+  --selected-fill: #3a3a28;
+  --map-glow: #1c2a20;
+  --wall-line: #55695c;
 }
 
 :root {
-  --font-display: "Cinzel", "Palatino Linotype", Georgia, serif;
-  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Almendra SC", Georgia, serif;
+  --font-ui: "Spectral", Georgia, serif;
+  --font-mono: "Spline Sans Mono", ui-monospace, Consolas, monospace;
+  --font-body: var(--font-ui);
+  --radius: 4px;
+  --hit: 44px;
+  --edge-pad: 16px;
+  --glow-loop: 0 0 12px var(--corridor);
+  --glow-selected: 0 0 24px rgb(242 178 76 / 0.55);
 }
 
 :focus-visible {

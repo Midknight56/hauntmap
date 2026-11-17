@@ -116,7 +116,7 @@ export function drawDoors(ctx: DrawContext, layout: LayoutResult): void {
     if (ctx.related !== null && state === "default" && !ctx.related.has(sealed.relationId)) sprite.alpha = FADED_DOOR_ALPHA;
     const layer = state === "default" ? ctx.layers.rooms : ctx.layers.selected;
     layer.addChild(sprite);
-    // The `?` that marks the sealed doorway is a text of the scene, so that it keeps 11 CSS pixels at every zoom.
+    // The `?` that marks the sealed doorway is a text of the scene, so that it keeps 12 CSS pixels at every zoom.
     const mark = new Text({ text: SEALED_GLYPH, style: { fontFamily: FONT, fontSize: 12, fill: TOKENS.sealed, fontWeight: "700" } });
     mark.anchor.set(0.5);
     mark.position.set(sealed.x + sealed.w / 2, sealed.y + sealed.h * 0.42);

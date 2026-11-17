@@ -1,11 +1,11 @@
 import type { CorridorBox, DoorBox, GroupedRoomBox, Point, Rect, RoomBox, SealedBox, WingBox } from "./types";
 
-// Where the import-count label of each corridor sits. The label is a 72 x 20 pill. Putting it at the
+// Where the import-count label of each corridor sits. The label is an 84 x 24 pill (12 px mono words such as `12 imports` fit in it). Putting it at the
 // middle of the corridor drew it over rooms and over other labels, so each label takes the position
 // along its corridor (or just beside it) that overlaps the least. Pure and deterministic.
 
-export const BADGE_W = 72;
-export const BADGE_H = 20;
+export const BADGE_W = 84;
+export const BADGE_H = 24;
 /** The wing name fills the top strip of an expanded wing and the whole box of a collapsed one. */
 const NAME_STRIP = 40;
 const MARGIN = 2;

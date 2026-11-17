@@ -42,7 +42,10 @@ export function SourceExcerpt({ text, line, hasSource }: Props): ReactElement {
         <ol className="excerpt-lines" aria-label="Source lines">
           {lines.map((l) => (
             <li key={l.line} aria-current={l.line === line ? "true" : undefined}>
-              <pre>{`${l.line} ${l.text}`}</pre>
+              <pre>
+                <span className="excerpt-number">{l.line}</span>
+                {` ${l.text}`}
+              </pre>
             </li>
           ))}
         </ol>

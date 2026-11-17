@@ -64,12 +64,38 @@ export function witnessLegs(layout: Pick<LayoutResult, "rooms" | "doors" | "wing
   return legs;
 }
 
-/** The ghost at time `clockMs`: one leg for each `stepMs`, looping. */
-export function ghostAt(legs: readonly Leg[], clockMs: number, stepMs: number): { leg: number; at: Point } {
+/** The ghost walks at a steady 60 px per second on screen and pauses 400 ms at each door (the README, "Motion"). */
+export const GHOST_SPEED_PX_S = 60;
+export const GHOST_PAUSE_MS = 400;
+/** The traveling light runs the selected path in 900 ms, ease in and out, and starts again every 2.5 s. */
+export const LIGHT_RUN_MS = 900;
+export const LIGHT_PERIOD_MS = 2500;
+
+/**
+ * The ghost at time `clockMs`. Each leg is a pause at its first door and then a walk of `length / unitsPerSecond`
+ * seconds; the loop starts again after the last leg. `unitsPerSecond` is the screen speed divided by the camera zoom, so
+ * that the ghost keeps the same speed on screen. At time zero the ghost stands at the first door.
+ */
+export function ghostAtSpeed(legs: readonly Leg[], clockMs: number, unitsPerSecond: number, pauseMs: number): { leg: number; at: Point } {
   if (legs.length === 0) return { leg: 0, at: { x: 0, y: 0 } };
-  const steps = Math.max(0, clockMs) / stepMs;
-  const leg = Math.floor(steps) % legs.length;
-  const f = steps - Math.floor(steps);
-  const current = legs[leg] as Leg;
-  return { leg, at: pointOnPolyline(current.points, current.length * f) };
+  const speed = Math.max(unitsPerSecond, 1e-6);
+  const walkMs = legs.map((leg) => (leg.length / speed) * 1000);
+  const round = walkMs.reduce((sum, ms) => sum + pauseMs + ms, 0);
+  let t = round > 0 ? Math.max(0, clockMs) % round : 0;
+  for (let k = 0; k < legs.length; k++) {
+    const leg = legs[k] as Leg;
+    if (t < pauseMs) return { leg: k, at: pointOnPolyline(leg.points, 0) };
+    t -= pauseMs;
+    if (t < (walkMs[k] as number)) return { leg: k, at: pointOnPolyline(leg.points, (t / (walkMs[k] as number)) * leg.length) };
+    t -= walkMs[k] as number;
+  }
+  return { leg: 0, at: pointOnPolyline((legs[0] as Leg).points, 0) };
+}
+
+/** Progress (0 to 1, ease in and out) of the traveling light at `clockMs`, or null in the rest of its period. */
+export function lightProgress(clockMs: number): number | null {
+  const m = ((clockMs % LIGHT_PERIOD_MS) + LIGHT_PERIOD_MS) % LIGHT_PERIOD_MS;
+  if (m > LIGHT_RUN_MS) return null;
+  const t = m / LIGHT_RUN_MS;
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 }

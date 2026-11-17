@@ -1,7 +1,8 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { DEFAULT_ANALYSIS_OPTIONS } from "../contracts/options";
 import type { Investigation } from "../contracts/types";
 import { validateInvestigation } from "../contracts/validate";
+import { ComparisonDock } from "../features/compare/ComparisonDock";
 import { place } from "../features/compare/placement";
 import { registerCompare } from "../features/compare/register";
 import { createCompareStore, type CompareStore } from "../features/compare/store";
@@ -16,6 +17,7 @@ import { loadSample, openSample, type SampleId } from "../features/samples/loadS
 import { createScene } from "../scene/adapter";
 import { createAnalysisClient, type AnalysisClient, type WorkerLike } from "../workers/client";
 import { DEVHOOK_ENABLED, devState, forcedFailureGate, installDevHook } from "./devHook";
+import { Breadcrumb } from "./Breadcrumb";
 import { DemoSteps } from "./DemoSteps";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { EvidenceView } from "./EvidenceView";
@@ -141,30 +143,43 @@ function InvestigationScreen({ services }: { services: AppServices }) {
     () => (compareStore === undefined ? undefined : { get: () => styleOf(compareStore.getState()), subscribe: compareStore.subscribe }),
     [compareStore],
   );
+  const comparing = useSyncExternalStore(
+    compareStore?.subscribe ?? noopSubscribe,
+    () => compareStore?.getState().status === "active",
+  );
   return (
-    <div className="investigation">
-      <Toolbar store={store} registry={registry} search={<Search store={store} />} />
-      <div className="workspace">
-        <section id="view-panel" role="tabpanel" aria-labelledby={`tab-${state.activeView}`} className="view">
-          <MapView store={store} createScene={services.createScene ?? createScene} comparison={comparison} />
+    <div
+      className="investigation"
+      data-view={state.activeView}
+      data-selection={state.selection.kind === "none" ? "off" : "on"}
+      data-comparing={comparing ? "" : undefined}
+    >
+      <Toolbar store={store} registry={registry} search={<Search store={store} />} trailing={<Breadcrumb store={store} />} />
+      <section id="view-panel" role="tabpanel" aria-labelledby={`tab-${state.activeView}`} className="view">
+        <MapView store={store} createScene={services.createScene ?? createScene} comparison={comparison} />
+        {state.activeView === "evidence" ? (
+          <div className="evidence-area">
+            <EvidenceView store={store} />
+          </div>
+        ) : null}
+      </section>
+      <div className="side-column">
+        <DemoSteps store={store} registry={registry} />
+        <Inspector store={store} />
+      </div>
+      <div className="dock">
+        <div className="dock-left">
+          <ComparisonDock />
           <LoopsPanel store={store} />
           <WhoImportsPanel store={store} />
-          <Legend store={store} registry={registry} />
-          {state.activeView === "evidence" ? (
-            <div className="evidence-area">
-              <EvidenceView store={store} />
-            </div>
-          ) : null}
-        </section>
-        <div className="side-column">
-          <DemoSteps store={store} registry={registry} />
-          <Inspector store={store} />
         </div>
+        <Legend store={store} registry={registry} />
       </div>
     </div>
   );
 }
 
+const noopSubscribe = (): (() => void) => () => undefined;
 export function App({ services }: { services: AppServices }) {
   const { store } = services;
   const state = useViewState(store);

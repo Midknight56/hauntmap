@@ -1,13 +1,13 @@
 // What a room name or a wing title says at a given room of space and zoom. Pure: no PixiJS, so tests can run it.
-// The map keeps every drawn name at least 11 CSS pixels tall: the text is scaled up as the camera zooms out, and
+// The map keeps every drawn name at least 12 CSS pixels tall: the text is scaled up as the camera zooms out, and
 // when the longer words no longer fit in a room, a shorter form is chosen (the full ID stays in the tooltip and
 // the inspector).
 
-export const MIN_LABEL_PX = 11;
-/** A little above the minimum, so that rounding of the font metrics never lands under 11. */
-export const TARGET_LABEL_PX = 11.5;
+export const MIN_LABEL_PX = 12;
+/** A little above the minimum, so that rounding of the font metrics never lands under 12. */
+export const TARGET_LABEL_PX = 12.5;
 
-/** The factor that keeps text of `fontUnits` scene units at `TARGET_LABEL_PX` on screen at `zoom`; 1 once zoomed in. */
+/** The factor that keeps text of `fontUnits` scene units at `TARGET_LABEL_PX` (12.5 px) on screen at `zoom`; 1 once zoomed in. */
 export function labelScale(zoom: number, fontUnits: number): number {
   return Math.max(1, TARGET_LABEL_PX / (fontUnits * Math.max(zoom, 0.0001)));
 }

@@ -119,12 +119,13 @@ test.describe("Open live snapshot", () => {
     expect(await stateWithoutStatus(page)).toEqual(before);
   });
 
-  for (const expanded of ["every wing", "src/orders only"] as const) {
+  for (const expanded of ["every wing", "the wings of the first screen"] as const) {
     test(`8.6 and 8.7 valid-live.json loads over manor/before with ${expanded} expanded and no room or wing moves`, async ({ page }) => {
       await page.route("**/demo/live.json*", routeValid);
       await openManor(page);
       if (expanded === "every wing") await expandAllWings(page);
       else {
+        // The first screen has src/orders, src/notifications and src/payments open (the wings of the loop).
         await storeAction(page, "expandWing", "src/orders");
         await settled(page);
       }

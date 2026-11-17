@@ -47,6 +47,20 @@ describe("loops panel (7.1 to 7.3, 7.8)", () => {
     expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Dependency loops (static-value)" }));
   });
 
+  it("an open panel does not take focus, and asking for it again (the Dependency loops button) moves focus to the heading", () => {
+    const store = setup("cycle");
+    const outside = document.createElement("button");
+    document.body.appendChild(outside);
+    outside.focus();
+    act(() => store.actions.openLoops());
+    render(<LoopsPanel store={store} />);
+    outside.focus();
+    // Same panel, another request: a preset change or a chosen component must not do this, the button does.
+    act(() => store.actions.openLoops());
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Dependency loops (static-value)" }));
+    outside.remove();
+  });
+
   it("choosing a component sets the witness filter, selects the first relation and keeps focus on the button", () => {
     const store = setup("cycle");
     act(() => store.actions.openLoops());

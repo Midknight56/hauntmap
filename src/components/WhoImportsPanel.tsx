@@ -14,10 +14,10 @@ export function WhoImportsPanel({ store }: { store: InvestigationStore }): React
   const heading = useRef<HTMLHeadingElement>(null);
   const panel = state.panel;
   const open = panel.kind === "whoImports";
-  // The panel takes focus when it opens, so that the next Tab reaches the first importer.
+  // The panel takes focus when a button asks for it, so that the next Tab reaches the first importer.
   useEffect(() => {
-    if (open) heading.current?.focus();
-  }, [open]);
+    if (open && state.panelFocus > 0) heading.current?.focus();
+  }, [open, state.panelFocus]);
   if (panel.kind !== "whoImports") return null;
   const result = panel.result;
   const route = state.routeFilter?.kind === "trace" && panel.chosen !== null ? state.routeFilter : null;
@@ -29,7 +29,7 @@ export function WhoImportsPanel({ store }: { store: InvestigationStore }): React
     </li>
   );
   return (
-    <section className="result-panel" aria-labelledby={headingId}>
+    <section className="result-panel who-panel" aria-labelledby={headingId}>
       <h2 id={headingId} ref={heading} tabIndex={-1}>{`Who imports ${panel.origin} (${state.preset})`}</h2>
       {panel.error !== null ? <p>{panel.error}</p> : null}
       {result === null ? null : (

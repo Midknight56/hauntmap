@@ -26,9 +26,11 @@ function focusFirstImports(): void {
   document.getElementById("inspector-heading")?.focus();
 }
 
-function focusFirstLoop(): void {
+function focusFirstLoop(): boolean {
   const first = document.querySelector<HTMLElement>("ul[aria-label='Loops'] button");
-  if (first !== null) first.focus();
+  if (first === null) return false;
+  first.focus();
+  return true;
 }
 
 interface Props {
@@ -53,6 +55,8 @@ export function DemoSteps({ store, registry }: Props): ReactElement | null {
 
   useEffect(() => {
     if (request === null) return;
+    // The loops list is on the first screen already, so focus can move at once; the key the reader presses next reaches it.
+    if (request.kind === "loops" && focusFirstLoop()) return;
     // One frame later, so that the inspector or the loops panel has rendered what is to receive focus.
     const frame = requestAnimationFrame(() => {
       if (request.kind === "imports") focusFirstImports();
@@ -70,7 +74,7 @@ export function DemoSteps({ store, registry }: Props): ReactElement | null {
       selectModule(store, CHECKOUT_ID);
       ask("imports");
     } else if (id === "loop") {
-      store.actions.openLoops();
+      store.actions.openLoops({ focus: false });
       ask("loops");
     } else {
       void callCompareHandoff(store, registry, { sample: "manor/after" }).then((result) => {
@@ -79,30 +83,41 @@ export function DemoSteps({ store, registry }: Props): ReactElement | null {
     }
   };
 
+  const shown = visibleSteps(steps, compareAvailable);
+  // The step the reader is on: the first one still to do. A phone shows only that one.
+  const current = shown.find((s) => s.status === "todo")?.id ?? null;
+
   return (
     <section className="result-panel steps-panel" aria-label="Investigation steps">
-      <h2 id={headingId}>Investigate the manor</h2>
-      <p>{stepsSummary(steps, compareAvailable)}</p>
-      <ol className="steps-list" aria-labelledby={headingId}>
-        {visibleSteps(steps, compareAvailable).map((step) => (
-          <li key={step.id} data-step={step.id}>
-            <h3>
-              {STEP_COPY[step.id].title}
-              {": "}
-              <span>{statusLabel(step.status)}</span>
-            </h3>
-            <p>{STEP_COPY[step.id].instruction}</p>
-            <button type="button" onClick={() => doIt(step.id)}>
-              Do it
-            </button>{" "}
-            <button type="button" onClick={() => store.actions.stepAction(step.id, "skip")}>
-              Skip
-            </button>
+      <div className="panel-head">
+        <h2 id={headingId}>Investigate the manor</h2>
+        <p className="panel-count">{stepsSummary(steps, compareAvailable)}</p>
+      </div>
+      <ol className="steps-list" aria-labelledby={headingId} data-has-current={current === null ? undefined : ""}>
+        {shown.map((step) => (
+          <li key={step.id} data-step={step.id} data-status={step.status} data-current={step.id === current ? "" : undefined}>
+            <div className="step-text">
+              <h3>
+                {STEP_COPY[step.id].title}
+                {": "}
+                <span>{statusLabel(step.status)}</span>
+              </h3>
+              <p>{STEP_COPY[step.id].instruction}</p>
+            </div>
+            <div className="step-actions">
+              <button type="button" onClick={() => doIt(step.id)}>
+                Do it
+              </button>
+              <button type="button" onClick={() => store.actions.stepAction(step.id, "skip")}>
+                Skip
+              </button>
+            </div>
           </li>
         ))}
       </ol>
       <button
         type="button"
+        className="steps-close"
         onClick={() => {
           store.actions.closeSteps();
           ask("toggle");

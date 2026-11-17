@@ -23,21 +23,21 @@ const names = (container: HTMLElement): string[] =>
   [...container.querySelectorAll<HTMLElement>("button, select, input, [role=tab]")].map((el) => el.getAttribute("aria-label") ?? el.textContent ?? "");
 
 describe("toolbar (10.1, 11.4)", () => {
-  it("lists the controls in the Tab order of the spec (View, Find, Help, slots, Restart demo), with no empty slots", () => {
+  it("lists the controls in the Tab order of the spec (View, Snapshots, Help, Find, Zoom, Restart demo), with no empty slots", () => {
     const { store, registry } = setup();
     const { container } = render(<Toolbar store={store} registry={registry} />);
     expect(names(container)).toEqual([
       "Map",
       "Evidence",
+      "Legend",
+      "Show steps",
+      "Motion",
+      "Relation preset",
+      "Dependency loops",
       "Fit to view",
       "Zoom in",
       "Zoom out",
       "Clear selection",
-      "Relation preset",
-      "Dependency loops",
-      "Legend",
-      "Show steps",
-      "Motion",
       "Restart demo",
     ]);
   });
@@ -51,8 +51,11 @@ describe("toolbar (10.1, 11.4)", () => {
       const group = groups.find((g) => (g.getAttribute("aria-label") ?? g.getAttribute("aria-labelledby") ?? "") !== "" && screen.getByRole("group", { name: label }) === g) as HTMLElement;
       return names(group);
     };
-    expect(inGroup("View")).toEqual(["Map", "Evidence", "Fit to view", "Zoom in", "Zoom out", "Clear selection"]);
+    expect(inGroup("View")).toEqual(["Map", "Evidence"]);
+    expect(inGroup("Zoom")).toEqual(["Fit to view", "Zoom in", "Zoom out", "Clear selection"]);
     expect(inGroup("Find")).toEqual(["Search modules", "Relation preset", "Dependency loops"]);
+    const order = [...document.querySelectorAll<HTMLElement>(".toolbar [role=group][aria-labelledby], .toolbar [role=group][aria-label]")].map((g) => g.getAttribute("aria-label") ?? document.getElementById(g.getAttribute("aria-labelledby") ?? "")?.textContent);
+    expect(order).toEqual(["View", "Snapshots", "Help", "Find", "Zoom"]);
     expect(inGroup("Help")).toEqual(["Legend", "Show steps", "Motion"]);
     expect(inGroup("Snapshots")).toEqual(["Compare revisions"]);
     const all = [...document.querySelectorAll<HTMLElement>(".toolbar button, .toolbar select, .toolbar input")].map((el) => el.getAttribute("aria-label") ?? el.textContent ?? "");
@@ -72,13 +75,14 @@ describe("toolbar (10.1, 11.4)", () => {
     }
   });
 
-  it("renders registered slot controls in the order export, compare, live-snapshot, just before Restart demo", () => {
+  it("renders registered slot controls in the order export, compare, live-snapshot, in the Snapshots group before Help", () => {
     const { store, registry } = setup();
     registry.registerControl("live-snapshot", () => createElement("button", { type: "button" }, "Open live snapshot"));
     registry.registerControl("export", () => createElement("button", { type: "button" }, "Export investigation"));
     registry.registerControl("compare", () => createElement("button", { type: "button" }, "Compare revisions"));
     const { container } = render(<Toolbar store={store} registry={registry} />);
-    expect(names(container).slice(-4)).toEqual(["Export investigation", "Compare revisions", "Open live snapshot", "Restart demo"]);
+    expect(names(container).slice(2, 5)).toEqual(["Export investigation", "Compare revisions", "Open live snapshot"]);
+    expect(names(container).slice(-1)).toEqual(["Restart demo"]);
   });
   it("gives every control a name, Legend aria-expanded and Motion aria-pressed", () => {
     const { store, registry } = setup();
@@ -145,5 +149,60 @@ describe("toolbar (10.1, 11.4)", () => {
     render(<Toolbar store={store} registry={registry} />);
     fireEvent.click(screen.getByRole("button", { name: "Restart demo" }));
     expect(store.getState().screen).toBe("landing");
+  });
+
+  describe("on a phone (360 x 640)", () => {
+    const original = window.matchMedia;
+    afterEach(() => {
+      window.matchMedia = original;
+    });
+    function phone(): void {
+      window.matchMedia = ((query: string) => ({
+        matches: /max-width:\s*720px/.test(query),
+        media: query,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      })) as unknown as typeof window.matchMedia;
+    }
+
+    it("shows the brand, More and the search row, and keeps every other control behind More", () => {
+      phone();
+      const { store, registry } = setup();
+      const { container } = render(<Toolbar store={store} registry={registry} search={<input aria-label="Search modules" />} />);
+      expect(names(container)).toEqual(["More", "Search modules", "Dependency loops"]);
+      const more = screen.getByRole("button", { name: "More" });
+      expect(more.getAttribute("aria-expanded")).toBe("false");
+      expect(container.textContent).toContain("HauntMap");
+    });
+
+    it("More opens View, Snapshots, Help, Restart demo and the zoom buttons, and closes again", () => {
+      phone();
+      const { store, registry } = setup();
+      registry.registerControl("compare", () => createElement("button", { type: "button" }, "Compare revisions"));
+      const { container } = render(<Toolbar store={store} registry={registry} search={<input aria-label="Search modules" />} />);
+      const more = screen.getByRole("button", { name: "More" });
+      fireEvent.click(more);
+      expect(more.getAttribute("aria-expanded")).toBe("true");
+      expect(names(container)).toEqual([
+        "More",
+        "Map",
+        "Evidence",
+        "Compare revisions",
+        "Legend",
+        "Show steps",
+        "Motion",
+        "Relation preset",
+        "Fit to view",
+        "Zoom in",
+        "Zoom out",
+        "Clear selection",
+        "Restart demo",
+        "Search modules",
+        "Dependency loops",
+      ]);
+      fireEvent.keyDown(screen.getByRole("button", { name: "Legend" }), { key: "Escape" });
+      expect(more.getAttribute("aria-expanded")).toBe("false");
+      expect(screen.queryByRole("button", { name: "Legend" })).toBeNull();
+    });
   });
 });

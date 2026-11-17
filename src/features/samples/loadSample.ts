@@ -56,6 +56,9 @@ export interface OpenSampleDeps {
  * Load a sample, analyze it and open the investigation. A failure at either step writes its
  * message to the status region and leaves the landing screen as it is.
  */
+/** The wings of the manor loop (receipt, checkout, charge): the first screen opens them, so that the loop is drawn room to room. */
+const LOOP_WINGS = ["src/notifications", "src/payments"];
+
 export async function openSample(id: SampleId, deps: OpenSampleDeps): Promise<void> {
   const { store } = deps;
   const loaded = await loadSample(id, deps.base, deps.fetchImpl);
@@ -77,5 +80,5 @@ export async function openSample(id: SampleId, deps: OpenSampleDeps): Promise<vo
   }
   const sourceText = new Map(loaded.sourceSet.files.map((f) => [f.path, f.text] as const));
   const demo = id === "manor/before";
-  store.actions.openInvestigation(investigation, sourceText, demo ? { expandWing: "src/orders", demo } : { demo });
+  store.actions.openInvestigation(investigation, sourceText, demo ? { expandWing: "src/orders", expandWings: LOOP_WINGS, demo } : { demo });
 }

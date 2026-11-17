@@ -277,19 +277,19 @@ describe("layout failure and the usable mark (3.7, 1.9)", () => {
 });
 
 describe("minimap and breadcrumb (4.6, 4.7)", () => {
-  it("draws the wing regions and the viewport in a 160 x 100 aria-hidden box, and a click moves the camera center", async () => {
+  it("draws the wing regions and the viewport in a 180 x 110 aria-hidden box, and a click moves the camera center", async () => {
     const ctx = setup();
     act(() => ctx.store.actions.layoutResult(layout, ctx.store.getState().layoutRevision));
     const { container } = render(<Minimap store={ctx.store} />);
     const box = container.querySelector("svg")!;
     expect(box.getAttribute("aria-hidden")).toBe("true");
-    expect(box.getAttribute("width")).toBe("160");
-    expect(box.getAttribute("height")).toBe("100");
+    expect(box.getAttribute("width")).toBe("180");
+    expect(box.getAttribute("height")).toBe("110");
     expect(container.querySelectorAll("rect[data-wing]")).toHaveLength(2);
     expect(container.querySelectorAll("rect[data-viewport]")).toHaveLength(1);
-    vi.spyOn(box, "getBoundingClientRect").mockReturnValue({ left: 0, top: 0, width: 160, height: 100, right: 160, bottom: 100, x: 0, y: 0, toJSON: () => ({}) });
+    vi.spyOn(box, "getBoundingClientRect").mockReturnValue({ left: 0, top: 0, width: 180, height: 110, right: 180, bottom: 110, x: 0, y: 0, toJSON: () => ({}) });
     const before = ctx.store.getState().camera;
-    fireEvent.click(box, { clientX: 80, clientY: 50 });
+    fireEvent.click(box, { clientX: 90, clientY: 55 });
     const after = ctx.store.getState().camera;
     expect(after.zoom).toBe(before.zoom);
     expect(after.x).toBeCloseTo(layout.bounds.x + layout.bounds.w / 2, 5);

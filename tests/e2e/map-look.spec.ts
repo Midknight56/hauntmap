@@ -26,8 +26,8 @@ interface LayoutProbe {
   corridors: { fromWing: string; toWing: string; count: number; path: { x: number; y: number }[]; badge?: { x: number; y: number } }[];
 }
 
-const BADGE_W = 72;
-const BADGE_H = 20;
+const BADGE_W = 84;
+const BADGE_H = 24;
 /** The wing title plate is drawn in the top strip of an expanded wing (40 units, with its margin), and fills a collapsed wing. */
 const WING_NAME_STRIP = 40;
 
@@ -69,41 +69,33 @@ for (const size of SIZES) {
   test.describe(`manor map at ${size.width} x ${size.height}`, () => {
     test.use({ viewport: size });
 
-    test("the map pane fills the space below the toolbar", async ({ page }) => {
+    test("the map pane fills the space between the top bar and the dock, the side bars reach the bottom, and the page is one screen", async ({ page }) => {
       await openManor(page);
       await settled(page);
       const m = await page.evaluate(() => {
         const box = (selector: string) => document.querySelector(selector)?.getBoundingClientRect();
-        const toolbar = box('[aria-label="Toolbar"]');
-        const workspace = box(".workspace");
-        const status = box('[role="status"]');
-        const wrapper = box(".map-wrapper");
-        const inspector = box('[aria-label="Inspector"]');
-        const view = box("#view-panel");
         return {
           innerHeight: window.innerHeight,
+          innerWidth: window.innerWidth,
           scrollHeight: document.documentElement.scrollHeight,
-          toolbarBottom: toolbar?.bottom ?? 0,
-          workspaceBottom: workspace?.bottom ?? 0,
-          statusTop: status?.top ?? 0,
-          statusBottom: status?.bottom ?? 0,
-          wrapperTop: wrapper?.top ?? 0,
-          wrapperBottom: wrapper?.bottom ?? 0,
-          inspectorBottom: inspector?.bottom ?? 0,
-          viewBottom: view?.bottom ?? 0,
+          scrollWidth: document.documentElement.scrollWidth,
+          top: box(".toolbar-top"),
+          wrapper: box(".map-wrapper"),
+          dock: box(".dock"),
+          side: box(".toolbar-side"),
+          column: box(".side-column"),
         };
       });
-      // The page is exactly one screen tall, the status line sits at its bottom, and the workspace fills what lies between.
+      // The page is exactly one screen. The map starts under the top bar and ends where the dock begins; the side bar and the right panel reach the bottom.
       expect(m.scrollHeight).toBe(m.innerHeight);
-      expect(Math.abs(m.statusBottom - m.innerHeight)).toBeLessThanOrEqual(1);
-      expect(Math.abs(m.workspaceBottom - m.statusTop)).toBeLessThanOrEqual(1);
-      // The map starts under the toolbar. The view column (map, legend, open panels) reaches the bottom of the workspace, and the map takes most of it.
-      expect(Math.abs(m.wrapperTop - m.toolbarBottom)).toBeLessThanOrEqual(1);
-      expect(Math.abs(m.viewBottom - m.workspaceBottom)).toBeLessThanOrEqual(1);
-      expect(Math.abs(m.inspectorBottom - m.workspaceBottom)).toBeLessThanOrEqual(1);
-      expect(m.wrapperBottom - m.wrapperTop).toBeGreaterThanOrEqual(0.75 * (m.workspaceBottom - m.toolbarBottom));
+      expect(m.scrollWidth).toBe(m.innerWidth);
+      expect(Math.abs((m.wrapper?.top ?? 0) - (m.top?.bottom ?? -1))).toBeLessThanOrEqual(1);
+      expect(Math.abs((m.wrapper?.bottom ?? 0) - (m.dock?.top ?? -1))).toBeLessThanOrEqual(1);
+      expect(Math.abs((m.dock?.bottom ?? 0) - m.innerHeight)).toBeLessThanOrEqual(1);
+      expect(Math.abs((m.side?.bottom ?? 0) - m.innerHeight)).toBeLessThanOrEqual(1);
+      expect(Math.abs((m.column?.bottom ?? 0) - m.innerHeight)).toBeLessThanOrEqual(1);
+      expect((m.wrapper?.height ?? 0)).toBeGreaterThanOrEqual(0.5 * m.innerHeight);
     });
-
     test("the first view fits every wing", async ({ page }) => {
       await openManor(page);
       await settled(page);

@@ -99,11 +99,13 @@ function RelationCard({ store, state, api }: { store: InvestigationStore; state:
   const chosen = occurrences.find((o) => o.occurrenceId === selection.occurrenceId);
   return (
     <>
-      <p>{`Syntax: ${record.syntaxKind}`}</p>
-      <p>{`Dependency: ${record.dependencyKind}`}</p>
-      <p>{`Resolution: ${record.resolution}`}</p>
-      {record.reason === undefined ? null : <p>{`Reason: ${record.reason}`}</p>}
-      <p>{presetLine(api.presetMembership(record))}</p>
+      <div className="facts">
+        <p>{`Syntax: ${record.syntaxKind}`}</p>
+        <p>{`Dependency: ${record.dependencyKind}`}</p>
+        <p>{`Resolution: ${record.resolution}`}</p>
+        {record.reason === undefined ? null : <p>{`Reason: ${record.reason}`}</p>}
+        <p>{presetLine(api.presetMembership(record))}</p>
+      </div>
       <NamedList title={`Occurrences (${occurrences.length})`}>
         {occurrences.map((o) => (
           <li key={o.occurrenceId}>
@@ -173,7 +175,7 @@ export function Inspector({ store, api = analysisApi }: Props): ReactElement {
   const selection = state.selection;
   const hasCard = state.investigation !== null && selection.kind !== "none";
   return (
-    <aside aria-label="Inspector" className="inspector">
+    <aside aria-label="Inspector" className="inspector" data-kind={selection.kind}>
       <h2 id={INSPECTOR_HEADING_ID} tabIndex={-1}>
         {inspectorTitle(state)}
       </h2>

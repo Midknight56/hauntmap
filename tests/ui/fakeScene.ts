@@ -92,7 +92,7 @@ export function createFakeScene(initial: Camera = { x: 0, y: 0, zoom: 1 }): Fake
       },
       debug(): SceneDebug {
         if (fake.destroyed) throw new Error("Scene destroyed");
-        return { textureCount: 0, visibleRooms: 0, tickerRunning: true, activeTweens: 0, drawnDoors: 0, particleCount: 0, frames: 0, labels: [], ghost: null, glow: false, theme: "candlelit-manor" };
+        return { textureCount: 0, visibleRooms: 0, tickerRunning: true, activeTweens: 0, drawnDoors: 0, particleCount: 0, frames: 0, labels: [], ghost: null, glow: false, glowAlpha: null, light: null, wingMarks: [], theme: "candlelit-manor" };
       },
       destroy() {
         record("destroy");

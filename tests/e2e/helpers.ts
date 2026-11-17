@@ -27,6 +27,9 @@ export interface HookSceneDebug {
   labels: { kind: "wing" | "wing-note" | "room" | "note" | "step" | "glyph" | "count"; id: string; text: string; px: number }[];
   ghost: { leg: number; x: number; y: number } | null;
   glow: boolean;
+  glowAlpha: number | null;
+  light: { x: number; y: number } | null;
+  wingMarks: { wing: string; kind: "removed" | "added" }[];
   theme: string;
 }
 

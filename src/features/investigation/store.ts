@@ -31,6 +31,8 @@ export interface ViewState {
   activeView: "map" | "evidence";
   evidenceWingFilter: string | null;
   panel: Panel;
+  /** Counts the times a button asked a panel to take focus (`Dependency loops`, `Who imports this?`); a panel that is open from the start never asks. */
+  panelFocus: number;
   steps: DemoStepState | null;
   layout: LayoutResult | null;
   layoutStatus: "idle" | "pending" | "failed";
@@ -50,7 +52,7 @@ export interface InvestigationStore {
     openInvestigation(
       inv: Investigation,
       source: ReadonlyMap<string, string> | null,
-      opts: { expandWing?: string; demo: boolean },
+      opts: { expandWing?: string; /** More wings to open with it (the wings of the loop on the first screen); a name that is not a wing is ignored. */ expandWings?: string[]; demo: boolean },
     ): void;
     restart(): void;
     select(sel: Selection, opts: { from: "scene" | "dom" }): void;
@@ -60,7 +62,8 @@ export interface InvestigationStore {
     collapseWing(wing: string): void;
     setSearch(query: string): void;
     setView(view: "map" | "evidence", wingFilter?: string | null): void;
-    openLoops(): void;
+    /** `focus: false` leaves the focus request counter alone: the caller moves focus itself (the `Do it` of the steps panel). */
+    openLoops(opts?: { focus?: boolean }): void;
     chooseLoop(index: number): void;
     openWhoImports(origin: string): void;
     chooseImporter(id: string): void;
@@ -133,6 +136,7 @@ function initialState(prefs: Prefs): ViewState {
     activeView: "map",
     evidenceWingFilter: null,
     panel: { kind: "none" },
+    panelFocus: 0,
     steps: null,
     layout: null,
     layoutStatus: "idle",
@@ -362,8 +366,9 @@ export function createInvestigationStore(deps: StoreDeps): InvestigationStore {
     openInvestigation(inv, source, opts) {
       brought.clear();
       const wings = wingMap(inv);
-      const expanded = opts.expandWing !== undefined && wings.has(opts.expandWing) ? [opts.expandWing] : [];
-      const members = expanded[0] === undefined ? [] : (wings.get(expanded[0]) ?? []);
+      const first = opts.expandWing !== undefined && wings.has(opts.expandWing) ? opts.expandWing : undefined;
+      const expanded = [...new Set([...(first === undefined ? [] : [first]), ...(opts.expandWings ?? []).filter((w) => wings.has(w))])].sort(compareText);
+      const members = first === undefined ? [] : (wings.get(first) ?? []);
       commitWithLayoutRequest({
         screen: "investigation",
         investigation: inv,
@@ -376,11 +381,13 @@ export function createInvestigationStore(deps: StoreDeps): InvestigationStore {
         searchQuery: "",
         activeView: "map",
         evidenceWingFilter: null,
-        panel: { kind: "none" },
+        // The manor opens with its loops list already shown (the first screen of the design); the annex waits for the button.
+        panel: opts.demo ? computeLoops(inv, state.preset, null) : { kind: "none" },
+        panelFocus: 0,
         steps: opts.demo ? demoSteps() : null,
         layout: null,
         camera: { ...DEFAULT_CAMERA },
-        status: members.length > WING_CAP && expanded[0] !== undefined ? cappedStatus(expanded[0], members.length) : "",
+        status: members.length > WING_CAP && first !== undefined ? cappedStatus(first, members.length) : "",
       });
     },
 
@@ -440,10 +447,10 @@ export function createInvestigationStore(deps: StoreDeps): InvestigationStore {
       set({ activeView: view, evidenceWingFilter: view === "evidence" ? (wingFilter ?? null) : null });
     },
 
-    openLoops() {
+    openLoops(opts) {
       const inv = state.investigation;
       if (inv === null) return;
-      set({ panel: computeLoops(inv, state.preset, null) });
+      set({ panel: computeLoops(inv, state.preset, null), panelFocus: opts?.focus === false ? state.panelFocus : state.panelFocus + 1 });
     },
 
     chooseLoop(index) {
@@ -463,7 +470,7 @@ export function createInvestigationStore(deps: StoreDeps): InvestigationStore {
     openWhoImports(origin) {
       const inv = state.investigation;
       if (inv === null) return;
-      set({ panel: computeWhoImports(inv, state.preset, origin, null) });
+      set({ panel: computeWhoImports(inv, state.preset, origin, null), panelFocus: state.panelFocus + 1 });
     },
 
     chooseImporter(id) {

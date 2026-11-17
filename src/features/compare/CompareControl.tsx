@@ -26,14 +26,15 @@ export function CompareControl({ store }: { store: HostStore }): ReactElement | 
   const compare = useCompareState(cs);
   const host = useHostState(store);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const [top, setTop] = useState<number | null>(null);
+  const [at, setAt] = useState<{ top: number; left: number | null } | null>(null);
   const open = compare?.panelOpen === true;
 
   useLayoutEffect(() => {
     if (!open) return;
     const place = (): void => {
       const rect = buttonRef.current?.getBoundingClientRect();
-      setTop(rect === undefined ? null : Math.round(rect.bottom + 6));
+      // On a larger screen the button is in the side bar and the popover opens to its right; on a phone it spans the screen under the button.
+      setAt(rect === undefined ? null : window.innerWidth > 720 ? { top: Math.round(rect.top), left: Math.round(rect.right + 8) } : { top: Math.round(rect.bottom + 6), left: null });
     };
     place();
     window.addEventListener("resize", place);
@@ -59,7 +60,10 @@ export function CompareControl({ store }: { store: HostStore }): ReactElement | 
         Compare revisions
       </button>
       {open ? (
-        <div className="compare-popover" style={top === null ? undefined : { top: `${top}px`, maxHeight: `calc(100vh - ${top + 12}px)` }}>
+        <div
+          className="compare-popover"
+          style={at === null ? undefined : { top: `${at.top}px`, ...(at.left === null ? {} : { left: `${at.left}px`, right: "auto" }), maxHeight: `calc(100vh - ${at.top + 12}px)` }}
+        >
           <ComparePanel
             cs={cs}
             compare={compare}

@@ -68,3 +68,52 @@ describe("element states (2.4, 2.5, 2.6)", () => {
     expect(some.rooms.get("src/a.ts")).toBe("subdued");
   });
 });
+
+describe("the loop that is shown from the start (design pass, item 5)", () => {
+  async function cycle() {
+    const inv = fixture("cycle");
+    const layout = await layoutOf(requestFor(inv, "all"));
+    const report = analysisApi.cycles(inv, "static-value");
+    const loops = report.components.map((c) => ({ modules: c.witness.modules, relationIds: c.witness.relationIds }));
+    return { layout, loops };
+  }
+
+  it("puts the rooms and the doors of every loop in the looping state, without step numbers and without subduing the others", async () => {
+    const { layout, loops } = await cycle();
+    const s = deriveStates(layout, { selection: { kind: "none" }, routeFilter: null, loops });
+    expect(s.rooms.get("src/x.ts")).toBe("witness");
+    expect(s.rooms.get("src/y.ts")).toBe("witness");
+    expect(s.rooms.get("src/z.ts")).toBe("witness");
+    for (const id of loops[0]!.relationIds) expect(s.doors.get(id)).toEqual({ state: "witness", step: null });
+    expect([...s.rooms.values()].filter((v) => v === "subdued")).toEqual([]);
+    expect(s.route).toBeNull();
+    expect(s.ambient.map((l) => l.modules)).toEqual(loops.map((l) => l.modules));
+  });
+
+  it("changes neither the selection nor the halo: a selected room stays selected on the loop", async () => {
+    const { layout, loops } = await cycle();
+    const s = deriveStates(layout, { selection: { kind: "module", id: "src/x.ts" }, routeFilter: null, loops });
+    expect(s.rooms.get("src/x.ts")).toBe("selected");
+    expect(s.rooms.get("src/y.ts")).toBe("witness");
+    expect(s.haloRoom).toBe("src/x.ts");
+  });
+
+  it("a selected relation on the loop is selected, the rest of the loop stays looping", async () => {
+    const { layout, loops } = await cycle();
+    const first = loops[0]!.relationIds[0]!;
+    const s = deriveStates(layout, { selection: { kind: "relation", relationId: first }, routeFilter: null, loops });
+    expect(s.doors.get(first)?.state).toBe("selected");
+    expect(s.doors.get(loops[0]!.relationIds[1]!)).toEqual({ state: "witness", step: null });
+  });
+
+  it("is off while a route filter is active, and without loops nothing is looping", async () => {
+    const { layout, loops } = await cycle();
+    const routeFilter: RouteFilter = { kind: "focus", modules: ["src/x.ts"], relationIds: [], label: "Focus" };
+    const withRoute = deriveStates(layout, { selection: { kind: "none" }, routeFilter, loops });
+    expect(withRoute.ambient).toEqual([]);
+    expect(withRoute.rooms.get("src/y.ts")).toBe("subdued");
+    const none = deriveStates(layout, { selection: { kind: "none" }, routeFilter: null });
+    expect(none.ambient).toEqual([]);
+    expect([...none.rooms.values()].every((v) => v === "default")).toBe(true);
+  });
+});

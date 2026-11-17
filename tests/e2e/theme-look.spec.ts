@@ -1,9 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 import { compareAction } from "../compare/e2e/scene";
-import { expandAllWings, openManor, sceneDebug, settled, storeAction } from "./helpers";
+import { expandAllWings, openFixture, openManor, sceneDebug, settled, storeAction } from "./helpers";
 
 // The theme pass (Costume Contest look), checked in the dev build at 1,280 x 720 with the scene's debug data:
-// item 5 (names at least 11 CSS pixels), item 6 (titles under no room, a right column that hides nothing),
+// item 5 (names at least 12 CSS pixels), item 6 (titles under no room, a right column that hides nothing),
 // item 4 (the ghost and the glow), item 1 (the three palettes) and item 3 (the texture cache).
 
 async function revealLoop(page: Page): Promise<void> {
@@ -22,7 +22,7 @@ async function layoutOf(page: Page): Promise<{
 }
 
 test.describe("names and titles at the first fitted view (item 5)", () => {
-  test("every wing title and every room name drawn is at least 11 CSS pixels tall on screen", async ({ page }) => {
+  test("every wing title and every room name drawn is at least 12 CSS pixels tall on screen", async ({ page }) => {
     await openManor(page);
     await settled(page);
     await expect.poll(async () => (await sceneDebug(page)).activeTweens).toBe(0);
@@ -34,7 +34,7 @@ test.describe("names and titles at the first fitted view (item 5)", () => {
     expect(names.length).toBeGreaterThan(0);
     for (const label of [...titles, ...names]) {
       expect(label.text.trim(), `${label.kind} ${label.id} has words`).not.toBe("");
-      expect(label.px, `${label.kind} ${label.id} "${label.text}" is ${label.px} px`).toBeGreaterThanOrEqual(11);
+      expect(label.px, `${label.kind} ${label.id} "${label.text}" is ${label.px} px`).toBeGreaterThanOrEqual(12);
     }
   });
 
@@ -48,7 +48,7 @@ test.describe("names and titles at the first fitted view (item 5)", () => {
     await expect.poll(async () => (await sceneDebug(page)).activeTweens).toBe(0);
     const near = (await sceneDebug(page)).labels.find((l) => l.kind === "room" && l.id === "src/orders/checkout.ts");
     expect(near?.text).toBe("checkout.ts");
-    expect(near?.px ?? 0).toBeGreaterThanOrEqual(11);
+    expect(near?.px ?? 0).toBeGreaterThanOrEqual(12);
   });
 });
 
@@ -67,36 +67,32 @@ test.describe("titles and the right column (item 6)", () => {
     }
   });
 
-  test("with a loop shown at 1,280 x 720 the steps panel and the inspector share the right column, each scrolls, and every line of the source excerpt can be scrolled to and is not covered", async ({ page }) => {
+  test("with a loop shown at 1,280 x 720 the right panel holds the steps and the inspector in one column that scrolls, and every line of the source excerpt can be scrolled to and is not covered", async ({ page }) => {
     await openManor(page);
     await settled(page);
     await revealLoop(page);
     const m = await page.evaluate(() => {
-      const column = document.querySelector<HTMLElement>(".inspector");
-      const steps = document.querySelector<HTMLElement>(".steps-panel");
+      const column = document.querySelector<HTMLElement>(".side-column");
       const lines = [...document.querySelectorAll<HTMLElement>(".excerpt li")];
-      if (column === null || steps === null || lines.length === 0) return null;
+      if (column === null || lines.length === 0) return null;
       const covered: string[] = [];
       for (const line of lines) {
         line.scrollIntoView({ block: "center" });
         const r = line.getBoundingClientRect();
         const c = column.getBoundingClientRect();
-        const s = steps.getBoundingClientRect();
         const top = document.elementFromPoint(r.left + 8, r.top + r.height / 2);
-        if (r.top < c.top - 1 || r.bottom > c.bottom + 1 || (r.top < s.bottom && r.bottom > s.top) || top === null || !line.contains(top)) covered.push(line.textContent ?? "");
+        if (r.top < c.top - 1 || r.bottom > c.bottom + 1 || top === null || !line.contains(top)) covered.push(line.textContent ?? "");
       }
-      return { overflow: getComputedStyle(column).overflowY, stepsOverflow: getComputedStyle(steps).overflowY, height: column.getBoundingClientRect().height, scrollable: column.scrollHeight > column.clientHeight, lines: lines.length, covered };
+      return { overflow: getComputedStyle(column).overflowY, height: column.getBoundingClientRect().height, scrollable: column.scrollHeight > column.clientHeight, lines: lines.length, covered };
     });
     expect(m).not.toBeNull();
     expect(["auto", "scroll"]).toContain(m?.overflow);
-    expect(["auto", "scroll"]).toContain(m?.stepsOverflow);
     expect(m?.height ?? 0).toBeGreaterThanOrEqual(190);
     expect(m?.scrollable).toBe(true);
     expect(m?.lines ?? 0).toBeGreaterThan(2);
     expect(m?.covered).toEqual([]);
   });
-});
-test.describe("the ghost and the glow (item 4)", () => {
+});test.describe("the ghost and the glow (item 4)", () => {
   test("with motion allowed the ghost walks the loop one leg for each 1,200 ms, in step order, and the particles stay at 40 or fewer", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "no-preference" });
     await openManor(page);
@@ -152,15 +148,31 @@ test.describe("the ghost and the glow (item 4)", () => {
     expect(first.ghost?.y).toBeCloseTo((door?.y ?? 0) + (door?.h ?? 0) / 2, 5);
   });
 
-  test("no ghost and no glow without a loop", async ({ page }) => {
+  test("the loop is shown from the start: a glowing corridor and a ghost, with no selection, no route filter and no step done", async ({ page }) => {
     await openManor(page);
+    await settled(page);
+    await expect.poll(async () => (await sceneDebug(page)).glow).toBe(true);
+    const d = await sceneDebug(page);
+    expect(d.ghost).not.toBeNull();
+    expect(d.glowAlpha).not.toBeNull();
+    const state = await page.evaluate(() => {
+      const s = (window as unknown as { __hauntmap: { store: { getState(): { selection: unknown; routeFilter: unknown; steps: { steps: { status: string }[] } } } } }).__hauntmap.store.getState();
+      return { selection: s.selection, routeFilter: s.routeFilter, statuses: s.steps.steps.map((x) => x.status) };
+    });
+    expect(state.selection).toEqual({ kind: "none" });
+    expect(state.routeFilter).toBeNull();
+    expect(state.statuses.every((s) => s === "todo")).toBe(true);
+  });
+
+  test("no ghost and no glow in an investigation without a loop", async ({ page }) => {
+    await openFixture(page, "triad");
     await settled(page);
     const d = await sceneDebug(page);
     expect(d.ghost).toBeNull();
     expect(d.glow).toBe(false);
+    expect(d.glowAlpha).toBeNull();
   });
 });
-
 test.describe("the three palettes and the texture cache (items 1 and 3)", () => {
   test("setTheme changes the page tokens and the scene, the texture count stays at 24 or fewer, and the default is Candlelit manor", async ({ page }) => {
     await openManor(page);
@@ -183,7 +195,7 @@ test.describe("the three palettes and the texture cache (items 1 and 3)", () => 
 });
 
 // Every text the scene draws, not only names: wing titles, room names, the words under a subdued room, the import counts on
-// the corridors, the step numbers, and the `+` and `?` marks. Each is at least 11 CSS pixels on screen or is not drawn at that zoom.
+// the corridors, the step numbers, and the `+` and `?` marks. Each is at least 12 CSS pixels on screen or is not drawn at that zoom.
 /** The `0` key on the focused map fits every wing in the view. */
 async function fitMap(page: Page): Promise<void> {
   await page.getByRole("application", { name: "Haunted map" }).focus();
@@ -191,10 +203,10 @@ async function fitMap(page: Page): Promise<void> {
   await expect.poll(async () => (await sceneDebug(page)).activeTweens).toBe(0);
 }
 
-async function everyTextAtLeast11(page: Page, what: string): Promise<Awaited<ReturnType<typeof sceneDebug>>["labels"]> {
+async function everyTextAtLeast12(page: Page, what: string): Promise<Awaited<ReturnType<typeof sceneDebug>>["labels"]> {
   await expect.poll(async () => (await sceneDebug(page)).activeTweens).toBe(0);
   const labels = (await sceneDebug(page)).labels;
-  for (const label of labels) expect(label.px, `${what}: ${label.kind} ${label.id} "${label.text}" is ${label.px} px`).toBeGreaterThanOrEqual(11);
+  for (const label of labels) expect(label.px, `${what}: ${label.kind} ${label.id} "${label.text}" is ${label.px} px`).toBeGreaterThanOrEqual(12);
   return labels;
 }
 
@@ -205,7 +217,7 @@ for (const size of [
   test.describe(`every drawn text at ${size.width} x ${size.height} (item 5)`, () => {
     test.use({ viewport: size });
 
-    test("subdued rooms: no text under 11 px at the fitted view and the words come back when zoomed in", async ({ page }) => {
+    test("subdued rooms: no text under 12 px at the fitted view and the words come back when zoomed in", async ({ page }) => {
       await openManor(page);
       await expandAllWings(page);
       await settled(page);
@@ -213,37 +225,37 @@ for (const size of [
       await settled(page);
       await expect.poll(async () => (await sceneDebug(page)).activeTweens).toBe(0);
       await fitMap(page);
-      const fitted = await everyTextAtLeast11(page, "fitted");
+      const fitted = await everyTextAtLeast12(page, "fitted");
       expect(fitted.filter((l) => l.kind === "room").length).toBeGreaterThan(0);
       // Not drawn at the fitted zoom: the words would be about 6 px there.
       expect(fitted.filter((l) => l.kind === "note")).toEqual([]);
       const layout = await layoutOf(page);
       const sample = layout.rooms[0] as { x: number; y: number; w: number; h: number };
       await storeAction(page, "setCamera", { x: sample.x + sample.w / 2, y: sample.y + sample.h / 2, zoom: 2.5 });
-      const near = await everyTextAtLeast11(page, "zoomed in");
+      const near = await everyTextAtLeast12(page, "zoomed in");
       const notes = near.filter((l) => l.kind === "note");
       expect(notes.length, "the words of a subdued room are drawn once the view is close").toBeGreaterThan(0);
       for (const note of notes) expect(note.text.replace("\n", " ")).toBe("Not in this traversal");
     });
 
-    test("a loop shown and a comparison: step numbers, import counts and the + and ? marks are 11 px or more, or not drawn", async ({ page }) => {
+    test("a loop shown and a comparison: step numbers, import counts and the + and ? marks are 12 px or more, or not drawn", async ({ page }) => {
       await openManor(page);
       await settled(page);
       await revealLoop(page);
-      const loop = await everyTextAtLeast11(page, "loop view");
+      const loop = await everyTextAtLeast12(page, "loop view");
       expect(loop.filter((l) => l.kind === "step").length, "step numbers are drawn").toBeGreaterThan(0);
       await fitMap(page);
-      const fitted = await everyTextAtLeast11(page, "loop at the fitted view");
+      const fitted = await everyTextAtLeast12(page, "loop at the fitted view");
       expect(fitted.filter((l) => l.kind === "step").length, "step numbers are drawn at the fitted view too").toBeGreaterThan(0);
       const wing = (await layoutOf(page)).wings[0] as { x: number; y: number; w: number; h: number };
       await storeAction(page, "setCamera", { x: wing.x + wing.w / 2, y: wing.y + wing.h / 2, zoom: 1.6 });
-      const near = await everyTextAtLeast11(page, "loop zoomed in");
+      const near = await everyTextAtLeast12(page, "loop zoomed in");
       expect(near.filter((l) => l.kind === "count").length, "import counts are drawn when zoomed in").toBeGreaterThan(0);
       await compareAction(page, "compareWithSample");
       await page.waitForFunction(() => /^Comparison ready/.test(document.querySelector('[role="status"]')?.textContent ?? ""));
       await expandAllWings(page);
       await fitMap(page);
-      const compared = await everyTextAtLeast11(page, "comparison at the fitted view");
+      const compared = await everyTextAtLeast12(page, "comparison at the fitted view");
       const glyphs = compared.filter((l) => l.kind === "glyph").map((l) => l.text);
       expect(glyphs, "the + of the added door is drawn").toContain("+");
       expect(glyphs, "the ? of a sealed doorway is drawn").toContain("?");

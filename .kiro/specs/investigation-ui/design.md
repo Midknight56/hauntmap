@@ -89,7 +89,7 @@ sequenceDiagram
 | --- | --- | --- |
 | `src/components/App.tsx`, `ErrorBoundary.tsx`, `main.tsx` | screen switch (`landing` / `investigation`), error boundary, providers, the entry that `index.html` loads | 6a |
 | `src/components/Landing.tsx` | heading, sentence, the two sample buttons | 6a |
-| `src/components/Toolbar.tsx`, `StatusRegion.tsx` | the toolbar written once in task 6a with every control of 10.1 (grouped as `View`, `Find`, `Help`, `Snapshots` with `Restart demo` last after the theme pass of 2026-11-17) (each control calls a store action or renders a registry slot; later tasks add no control), `Motion` toggle, the one `role="status"` | 6a |
+| `src/components/Toolbar.tsx`, `StatusRegion.tsx` | the toolbar written once in task 6a with every control of 10.1 (grouped as `View`, `Snapshots`, `Help`, `Find`, `Zoom` with `Restart demo` last after the design pass of 2026-11-17; a phone shows the brand and `More`, which holds every group but `Find`) (each control calls a store action or renders a registry slot; later tasks add no control), `Motion` toggle, the one `role="status"` | 6a |
 | `src/components/MapView.tsx`, `Minimap.tsx`, `Breadcrumb.tsx` | map wrapper (`role="application"`), scene mount, banner, overlay anchors, the keyboard, wheel and drag handling of 4.5 and 11.2, the `Focus` status text, minimap, breadcrumb | 6b |
 | `src/components/Search.tsx` | combobox search | 7 |
 | `src/components/Legend.tsx`, `Tooltip.tsx` | legend panel and footer, tooltip anchored to screen rectangles | 8 |
@@ -615,3 +615,13 @@ Each property is stated so the deterministic tests check it on the fixtures and 
 - The Playwright video-capture script of the storyboard (H8, `tests/e2e/capture/`).
 - The H1 spike, an ELK layout engine, `pnpm perf:record`, `tests/e2e/performance.spec.ts` and every `docs/performance.md` row (left for the owner).
 - ZIP intake; touch gestures (pinch zoom, two-finger pan); a `Next witness` control; rename inference; sound; viewports narrower than 640 CSS px; WebGPU; any accessibility conformance claim; any telemetry.
+
+## Design pass of 2026-11-17 (the owner's UI design)
+
+The look and the layout of every screen follow the owner's design (the handoff README kept outside the repository). What changed in this spec:
+
+- **Palette and type.** candlelit-manor takes the design tokens (src/styles/theme.ts). The design's wall colour is the token `wallLine` (2.37:1 on the page colour: borders, hatch and dividers that carry no fact the text does not repeat); `wall` and `passage` are the design's `edge` (4.21:1), so a wall or a corridor that carries meaning stays at 3:1 or more. Fonts are Almendra SC (display), Spectral 400 and 600 (UI) and Spline Sans Mono (names, paths, counts), loaded with `@font-face` from `src/styles/fonts`.
+- **Layout.** A 248 px side bar, a 64 px top bar, the map with the zoom stack and the minimap, a dock under it (loops or comparison on the left, the legend on the right) and a 440 px right panel; the Tab order follows it (requirement 10.1). Up to 720 px wide the page is one column: the top bar with More, the search row, the map, the steps card, the loops card and the legend row; a selected room, door or wing opens the inspector as a sheet under the map.
+- **First screen.** After Explore the manor the steps, the loops list, the legend and the search are open, the wings of the loop are open, and the loop is drawn (ecto borders, a glowing corridor, a ghost) without a route filter, a selection or a step done (StyleState.loops). The annex opens as before.
+- **Motion.** The ghost walks at 60 px per second on screen with a 400 ms pause at each door; the glow breathes between 60 and 100 percent over 2.4 s; the traveling light runs the selected door in 900 ms of every 2.5 s. Reduced motion: the ghost stands at its first door, the glow and the light stop, fades are instant.
+- **Text.** No text under 12 CSS px (map labels included), contrast 4.5:1 or better.

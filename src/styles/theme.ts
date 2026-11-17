@@ -28,6 +28,11 @@ export const TOKEN_NAMES = [
   "plateInk",
   "passage",
   "ghost",
+  "edge",
+  "onFill",
+  "selectedFill",
+  "mapGlow",
+  "wallLine",
 ] as const;
 
 export type TokenName = (typeof TOKEN_NAMES)[number];
@@ -43,35 +48,42 @@ export interface Theme {
 }
 
 export const THEMES: Record<ThemeName, Theme> = {
-  // Soot black and peat brown, bone white ink, candle amber doors, a cold spectral green for the loop corridor.
+  // The owner's design (.design-ref README, "Design tokens"): oxblood dark, brass candle, bone ink, an ecto green loop.
+  // `wall` is the design's `edge` (4.21:1 on the page colour, so a wall that carries meaning can be seen); the design's own
+  // wall colour is `wallLine`, used for the borders of rooms and wings and for dividers, which draw nothing the text does not also say.
   "candlelit-manor": {
     name: "candlelit-manor",
     title: "Candlelit manor",
     colors: {
-      floor: "#130e0a",
-      wing: "#261c15",
-      wingInk: "#ecdfc6",
-      room: "#3d2d21",
-      roomInk: "#f6eedd",
-      roomSubdued: "#1d1612",
-      roomSubduedInk: "#cdbfa2",
-      door: "#f4a83a",
-      corridor: "#4fe0b5",
-      sealed: "#c9b79a",
-      light: "#aeeaff",
-      panel: "#19130f",
-      ink: "#f3ead8",
-      inkMuted: "#c4b595",
-      focus: "#ffe27a",
-      changed: "#f0b429",
-      removed: "#c2b59c",
-      added: "#8fdc5a",
-      wall: "#8f6e4c",
-      joint: "#2a1e16",
-      plate: "#3c2b1c",
-      plateInk: "#f6e7c2",
-      passage: "#8c7355",
-      ghost: "#e9fff4",
+      floor: "#170d10",
+      wing: "#1e1115",
+      wingInk: "#ede3d0",
+      room: "#2a181e",
+      roomInk: "#ede3d0",
+      roomSubdued: "#2a181e",
+      roomSubduedInk: "#ede3d0",
+      door: "#8c6f74",
+      corridor: "#7df2c6",
+      sealed: "#bba9a6",
+      light: "#ffd98f",
+      panel: "#22141a",
+      ink: "#ede3d0",
+      inkMuted: "#bba9a6",
+      focus: "#f2b24c",
+      changed: "#f2b24c",
+      removed: "#ede3d0",
+      added: "#a6e06a",
+      wall: "#8c6f74",
+      joint: "#120a0d",
+      plate: "#22141a",
+      plateInk: "#ede3d0",
+      passage: "#8c6f74",
+      ghost: "#f2fff8",
+      edge: "#8c6f74",
+      onFill: "#3a232a",
+      selectedFill: "#3b2616",
+      mapGlow: "#2c171d",
+      wallLine: "#6b464c",
     },
   },
   // Deep blue black, moon silver ink, lantern gold doors, a violet loop corridor.
@@ -103,6 +115,11 @@ export const THEMES: Record<ThemeName, Theme> = {
       plateInk: "#e8eef8",
       passage: "#6c7fa4",
       ghost: "#f2f6ff",
+      edge: "#8497bd",
+      onFill: "#24304a",
+      selectedFill: "#2d3350",
+      mapGlow: "#17203a",
+      wallLine: "#4a5c82",
     },
   },
   // Moss and slate, parchment ink, ember orange doors, a pale cyan loop corridor.
@@ -134,9 +151,17 @@ export const THEMES: Record<ThemeName, Theme> = {
       plateInk: "#f5efd9",
       passage: "#6f8576",
       ghost: "#f0fbf8",
+      edge: "#8fa595",
+      onFill: "#2c3b31",
+      selectedFill: "#3a3a28",
+      mapGlow: "#1c2a20",
+      wallLine: "#55695c",
     },
   },
 };
+
+/** The background of the map area, as the design README states it. `app.css` writes it with `var(--map-glow)`, which is `#2C171D` in the default palette. */
+export const MAP_BACKGROUND = "radial-gradient(900px 620px at 44% 40%, #2C171D, transparent 72%)";
 
 export const DEFAULT_THEME: ThemeName = "candlelit-manor";
 

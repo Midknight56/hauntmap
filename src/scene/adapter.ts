@@ -1,11 +1,12 @@
 import { Application, Container, Graphics, type Texture } from "pixi.js";
 import { createAnimator } from "./animation";
 import { applyComparison, closingKey, shouldClose, type ComparisonDebug, type ComparisonStyle } from "./compare";
-import { drawComparisonMarks } from "./compare/states";
+import { collapsedWingMarks, type CollapsedMark } from "./compare/collapsed";
+import { drawCollapsedMarks, drawComparisonMarks } from "./compare/states";
 import { closeCorridor } from "./compare/transition";
 import { drawCorridors, drawRoute, type RouteHandle } from "./corridors";
 import { drawDoors } from "./doors";
-import { createElementTextures, DISPLAY_FONT } from "./elements";
+import { createElementTextures, DISPLAY_FONT, FONT } from "./elements";
 import { buildHitTargets, hitTest } from "./hitTest";
 import { relatedRelations } from "./emphasis";
 import { clearMeasureCache, drawRooms, drawWings, haloRect, type DrawContext, type SceneLabel } from "./rooms";
@@ -33,11 +34,14 @@ const CLICK_SLOP_PX = 5;
 
 type Listener = (arg?: never) => void;
 
-/** Wait for the committed Cinzel file, for at most two seconds; the plates then measure and draw with the real face. */
+/** Wait for the committed Almendra SC and Spline Sans Mono files, for at most two seconds; the plaques and names then measure and draw with the real faces. */
 async function ensureDisplayFont(): Promise<void> {
   if (typeof document === "undefined" || document.fonts === undefined) return;
   try {
-    await Promise.race([document.fonts.load(`700 12px ${DISPLAY_FONT}`), new Promise<void>((resolve) => setTimeout(resolve, 2000))]);
+    await Promise.race([
+      Promise.all([document.fonts.load(`400 17px ${DISPLAY_FONT}`), document.fonts.load(`500 13px ${FONT}`)]),
+      new Promise<void>((resolve) => setTimeout(resolve, 2000)),
+    ]);
   } catch {
     // The fallback serif is used; nothing else depends on the face.
   }
@@ -63,6 +67,8 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
       preference: "webgl",
       width: Math.max(1, container.clientWidth),
       height: Math.max(1, container.clientHeight),
+      // Transparent: the map area paints the radial gradient of the design behind the canvas (app.css).
+      backgroundAlpha: 0,
       background: TOKENS.floor,
       antialias: true,
       autoDensity: true,
@@ -119,6 +125,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
   let lastClosing = "";
   let comparisonStates: ComparisonDebug["states"] = {};
   let drawnLayout: LayoutResult | null = null;
+  let wingMarks: CollapsedMark[] = [];
 
   const gate = createTickerGate({ start: () => app.ticker.start(), stop: () => app.ticker.stop() });
 
@@ -157,12 +164,14 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
       routeFilter: styleState?.routeFilter ?? null,
       marks: view.marks,
     });
-    const ctx: DrawContext = { layers, textures, states, reduced, labels, zoom: displayed.zoom, related };
+    const ctx: DrawContext = { layers, textures, states, reduced, labels, zoom: displayed.zoom, related, compact: container.clientWidth < 520 };
     drawWings(ctx, drawn);
     drawCorridors(ctx, drawn);
     roomNodes = drawRooms(ctx, drawn);
     drawDoors(ctx, drawn);
     drawComparisonMarks(layers.selected, view, ctx);
+    wingMarks = collapsedWingMarks(drawn, comparison);
+    drawCollapsedMarks(layers.selected, wingMarks, ctx);
     route = drawRoute(ctx, drawn);
     particles = route?.particleCount ?? 0;
     relayoutLabels();
@@ -170,7 +179,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
       const rect = haloRect(drawn, states.haloRoom);
       if (rect !== null) {
         const halo = new Graphics();
-        halo.roundRect(rect.x - 6, rect.y - 6, rect.w + 12, rect.h + 12, 12).stroke({ width: 4, color: TOKENS.focus });
+        halo.roundRect(rect.x - 7, rect.y - 7, rect.w + 14, rect.h + 14, 8).stroke({ width: 2, color: TOKENS.focus, alpha: 0.7 });
         layers.overlay.addChild(halo);
       }
     }
@@ -181,7 +190,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     }
   }
 
-  /** Re-choose the words and the scale of every name and title for the camera zoom (item 5: never under 11 CSS pixels). */
+  /** Re-choose the words and the scale of every name and title for the camera zoom (never under 12 CSS pixels). */
   function relayoutLabels(): void {
     for (const label of labels) if ((label.active ?? label.visible)()) label.layout(displayed.zoom);
     route?.setZoom(displayed.zoom);
@@ -364,7 +373,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     debug(): SceneDebug {
       guard();
       if (!opts.debug) {
-        return { textureCount: 0, visibleRooms: 0, tickerRunning: false, activeTweens: 0, drawnDoors: 0, particleCount: 0, frames: 0, labels: [], ghost: null, glow: false, theme: "" };
+        return { textureCount: 0, visibleRooms: 0, tickerRunning: false, activeTweens: 0, drawnDoors: 0, particleCount: 0, frames: 0, labels: [], ghost: null, glow: false, glowAlpha: null, light: null, wingMarks: [], theme: "" };
       }
       const counters: SceneDebug & ComparisonDebug = {
         textureCount: textures.size,
@@ -379,6 +388,9 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
           .map((label) => ({ kind: label.kind, id: label.id, text: label.node.text, px: label.fontUnits * label.node.scale.y * displayed.zoom })),
         ghost: route?.ghost() ?? null,
         glow: route?.glow ?? false,
+        glowAlpha: route?.glowAlpha() ?? null,
+        light: route?.light() ?? null,
+        wingMarks: wingMarks.map((m) => ({ wing: m.wing, kind: m.kind })),
         theme: currentTheme(),
         states: { ...comparisonStates },
       };

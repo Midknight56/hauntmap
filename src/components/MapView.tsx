@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { ambientLoops } from "../features/investigation/ambientLoops";
 import type { InvestigationStore, ViewState } from "../features/investigation/store";
 import { fitBounds, zoomAround } from "../scene/camera";
 import { focusTargetOf } from "./focusTarget";
 import type { createScene as CreateScene } from "../scene/adapter";
 import type { HitTarget, SceneHandle } from "../scene/types";
-import { Breadcrumb } from "./Breadcrumb";
 import { fitView, FIT_PADDING, pan, PAN_STEP, PAN_STEP_SHIFT, zoomBy, ZOOM_STEP } from "./cameraControls";
 import { DEVHOOK_ENABLED, devState } from "./devHook";
+import { firstFitBounds } from "./firstFit";
 import { Minimap } from "./Minimap";
 import { Tooltip } from "./Tooltip";
 import { useReducedMotion } from "./useReducedMotion";
@@ -62,7 +63,7 @@ function selectHit(store: InvestigationStore, hit: HitTarget): void {
 function firstFit(state: ViewState, viewport: { width: number; height: number }) {
   const layout = state.layout;
   if (layout === null) return null;
-  return fitBounds(layout.bounds, viewport, FIT_PADDING);
+  return fitBounds(firstFitBounds(layout, viewport.width), viewport, FIT_PADDING);
 }
 
 export function MapView({ store, createScene, forceFailure, comparison }: Props) {
@@ -162,13 +163,17 @@ export function MapView({ store, createScene, forceFailure, comparison }: Props)
     if (scene !== null && state.layout !== null) scene.setLayout(state.layout, "animate");
   }, [scene, state.layout]);
 
+  // Every loop of the investigation is drawn from the start, apart from a comparison, which has its own marks.
+  const comparing = comparisonValue !== undefined && comparisonValue !== null;
+  const loops = useMemo(() => (comparing ? [] : ambientLoops(state.investigation, state.preset)), [comparing, state.investigation, state.preset]);
+
   useEffect(() => {
     scene?.setStyleState(
       comparison === undefined
-        ? { selection: state.selection, routeFilter: state.routeFilter }
-        : { selection: state.selection, routeFilter: state.routeFilter, comparison: comparisonValue ?? null },
+        ? { selection: state.selection, routeFilter: state.routeFilter, loops }
+        : { selection: state.selection, routeFilter: state.routeFilter, loops, comparison: comparisonValue ?? null },
     );
-  }, [scene, state.selection, state.routeFilter, state.layout, comparison, comparisonValue]);
+  }, [scene, state.selection, state.routeFilter, state.layout, comparison, comparisonValue, loops]);
 
   useEffect(() => {
     scene?.setReducedMotion(reduced);
@@ -356,7 +361,6 @@ export function MapView({ store, createScene, forceFailure, comparison }: Props)
         <span id={helpId} className="visually-hidden">
           {MAP_HELP}
         </span>
-        <Breadcrumb store={store} />
         <Minimap store={store} />
       </div>
       <Tooltip store={store} scene={scene} wrapper={wrapperRef} />

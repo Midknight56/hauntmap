@@ -5,16 +5,17 @@ import { MIN_LABEL_PX, TARGET_LABEL_PX, fitLines, labelScale, stemOfId, wingTitl
 const measure = (s: string): number => s.length * 6;
 
 describe("label scale (item 5)", () => {
-  it("keeps the drawn label at least 11 px tall at every zoom the map allows", () => {
+  it("keeps the drawn label at least 12 px tall at every zoom the map allows", () => {
+    expect(MIN_LABEL_PX).toBe(12);
     for (const zoom of [0.25, 0.4, 0.61, 0.8, 1, 1.5, 4]) {
-      const px = 11 * labelScale(zoom, 11) * zoom;
+      const px = 12 * labelScale(zoom, 12) * zoom;
       expect(px, `zoom ${zoom}`).toBeGreaterThanOrEqual(MIN_LABEL_PX);
     }
   });
 
   it("leaves the label at its own size once the map is zoomed in far enough", () => {
-    expect(labelScale(2, 11)).toBe(1);
-    expect(labelScale(0.5, 11)).toBeCloseTo(TARGET_LABEL_PX / (11 * 0.5), 9);
+    expect(labelScale(2, 12)).toBe(1);
+    expect(labelScale(0.5, 12)).toBeCloseTo(TARGET_LABEL_PX / (12 * 0.5), 9);
   });
 });
 

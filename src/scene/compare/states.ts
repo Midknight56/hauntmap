@@ -1,6 +1,8 @@
 import { Graphics, Text, type Container } from "pixi.js";
+import { dashedPolyline } from "../doors";
 import { FONT } from "../elements";
-import type { Rect } from "../layout/types";
+import type { CollapsedMark } from "./collapsed";
+import type { Point, Rect } from "../layout/types";
 import { TOKENS } from "../styles";
 import { pinText, type SceneLabel } from "../rooms";
 import type { ComparisonView } from "./view";
@@ -62,9 +64,13 @@ export function drawComparisonMarks(layer: Container, view: ComparisonView, pin:
     if (c === undefined) continue;
     const own = view.states.rooms.get(room.id) === c;
     if (c === "comparison-changed") {
-      const cx = room.x + room.w / 2;
-      g.circle(cx, room.y, 6).fill(TOKENS.changed).stroke({ width: 1.5, color: TOKENS.floor });
-      g.rect(cx - 3, room.y + 5, 6, 3).fill(TOKENS.changed);
+      // The candle lamp of the design: 14 px, with a glow, on the top right corner of the room.
+      const r = Math.min(12, Math.max(7, 7 / pin.zoom));
+      const cx = room.x + room.w - r * 0.4;
+      const cy = room.y + r * 0.4;
+      g.circle(cx, cy, r * 2).fill({ color: TOKENS.changed, alpha: 0.14 });
+      g.circle(cx, cy, r * 1.5).fill({ color: TOKENS.changed, alpha: 0.24 });
+      g.circle(cx, cy, r).fill(TOKENS.changed).stroke({ width: 1.5, color: TOKENS.floor });
       used = true;
     } else if (c === "comparison-added" && !own) {
       layer.addChild(mark(room.id, plus(room.x + room.w - 10, room.y + 10), 13));
@@ -99,4 +105,44 @@ export function drawComparisonMarks(layer: Container, view: ComparisonView, pin:
   }
   if (used) layer.addChild(g);
   else g.destroy();
+}
+
+/** The points of an arched doorway: up the left jamb, over the arch, down the right jamb. */
+function archPoints(m: CollapsedMark): Point[] {
+  const r = m.w / 2;
+  const pts: Point[] = [{ x: m.x, y: m.y + m.h }, { x: m.x, y: m.y + r }];
+  for (let i = 1; i < 12; i++) {
+    const a = Math.PI + (Math.PI * i) / 12;
+    pts.push({ x: m.x + r + Math.cos(a) * r, y: m.y + r + Math.sin(a) * r });
+  }
+  pts.push({ x: m.x + m.w, y: m.y + r }, { x: m.x + m.w, y: m.y + m.h });
+  return pts;
+}
+
+/**
+ * The change on a collapsed wing (item 9 of the design pass): a dashed doorway in bone for a removed relation and a
+ * doorway in moss, with a `+`, for an added one, on the wall of the wing whose rooms are not drawn.
+ */
+export function drawCollapsedMarks(layer: Container, marks: readonly CollapsedMark[], pin: { labels: SceneLabel[]; zoom: number }): void {
+  if (marks.length === 0) return;
+  const g = new Graphics();
+  for (const m of marks) {
+    const pts = archPoints(m);
+    const cx = m.x + m.w / 2;
+    const cy = m.y + m.h / 2;
+    if (m.kind === "removed") {
+      g.circle(cx, cy, 26).fill({ color: TOKENS.removed, alpha: 0.1 });
+      g.poly(pts).fill({ color: TOKENS.floor, alpha: 0.85 });
+      dashedPolyline(g, pts, 6, 4);
+      g.stroke({ width: 3, color: TOKENS.removed });
+    } else {
+      g.circle(cx, cy, 28).fill({ color: TOKENS.added, alpha: 0.14 });
+      g.poly(pts).fill({ color: TOKENS.added, alpha: 0.3 });
+      g.poly(pts, false).stroke({ width: 3.5, color: TOKENS.added, join: "round", cap: "round" });
+    }
+  }
+  layer.addChild(g);
+  for (const m of marks) {
+    if (m.kind === "added") layer.addChild(pinText(pin, "glyph", m.relationId, plus(m.x + m.w + 12, m.y - 6, 20), 20));
+  }
 }

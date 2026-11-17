@@ -3,10 +3,10 @@ import type { InvestigationStore } from "../features/investigation/store";
 import { useViewState } from "./useStore";
 import { getViewportSize } from "./viewport";
 
-export const MINIMAP_W = 160;
-export const MINIMAP_H = 100;
+export const MINIMAP_W = 180;
+export const MINIMAP_H = 110;
 
-/** A 160 x 100 overview of the wing regions with the viewport rectangle. Decorative: every move it offers is also in search and the Evidence view. */
+/** A 180 x 110 overview of the wing regions with the viewport rectangle. Decorative: every move it offers is also in search and the Evidence view. */
 export function Minimap({ store }: { store: InvestigationStore }) {
   const { layout, camera } = useViewState(store);
   if (layout === null || layout.bounds.w <= 0 || layout.bounds.h <= 0) return null;

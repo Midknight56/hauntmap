@@ -4,18 +4,18 @@ import type { TextureRenderer } from "./textures";
 
 // The texture of one element kind in one state. Each is drawn once and reused (see textures.ts), and drawn in
 // code: stone floors, walls and lit arches come from rectangles, lines and a fixed pattern, never from an image.
+// Wings and corridors are drawn as shapes of the scene (rooms.ts, corridors.ts), not as textures.
 // Labels that depend on the module (names, counts) are separate Text objects, not part of a texture.
 
-export const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif";
-/** The display face of the wing title plates (Cinzel, SIL Open Font License, committed in src/styles/fonts). */
-export const DISPLAY_FONT = "'Cinzel', 'Palatino Linotype', Georgia, serif";
+export const FONT = "'Spline Sans Mono', ui-monospace, Consolas, monospace";
+/** The display face of the wing title plaques (Almendra SC, SIL Open Font License, committed in src/styles/fonts). */
+export const DISPLAY_FONT = "'Almendra SC', Georgia, serif";
 
 export const ROOM_W = 96;
 export const ROOM_H = 64;
-const WING_BASE = 48;
 const DOOR_BASE = 16;
-const BADGE_W = 72;
-const BADGE_H = 20;
+const BADGE_W = 84;
+const BADGE_H = 24;
 
 function stateOf(state: string): State {
   return state in STATE_STYLES ? (state as State) : "default";
@@ -30,6 +30,8 @@ function outlineColor(state: State, base: string): string {
       return TOKENS.corridor;
     case "trace":
       return TOKENS.light;
+    case "comparison-added":
+      return TOKENS.added;
     default:
       return base;
   }
@@ -46,12 +48,6 @@ export function shade(hex: string, amount: number): string {
       .padStart(2, "0");
   };
   return `#${channel(1)}${channel(3)}${channel(5)}`;
-}
-
-/** A fixed pseudo-random number in [0, 1) for a stone, so that every texture draws the same floor. */
-function noise(row: number, col: number): number {
-  const n = Math.sin(row * 127.1 + col * 311.7) * 43758.5453;
-  return n - Math.floor(n);
 }
 
 /** A dashed rectangle outline (the removed-in-the-newer-snapshot ghost). */
@@ -72,78 +68,38 @@ function dashedRect(g: Graphics, x: number, y: number, w: number, h: number, wid
   g.stroke({ width, color });
 }
 
-/** Flagstones in running bond across a rectangle: rows 16 units high, stones 24 wide, every other row shifted by half a stone. */
-function flagstones(g: Graphics, x: number, y: number, w: number, h: number, base: string, spread: number): void {
-  const rowH = 16;
-  const stoneW = 24;
-  const rows = Math.ceil(h / rowH);
-  for (let row = 0; row < rows; row++) {
-    const top = y + row * rowH;
-    const height = Math.min(rowH, y + h - top);
-    const shift = row % 2 === 0 ? 0 : -stoneW / 2;
-    for (let col = 0; col * stoneW + shift < w; col++) {
-      const left = Math.max(x, x + col * stoneW + shift);
-      const right = Math.min(x + w, x + (col + 1) * stoneW + shift);
-      if (right - left < 1) continue;
-      g.rect(left, top, right - left, height).fill(shade(base, (noise(row, col) - 0.5) * spread));
-    }
-  }
-  // Joints between the stones.
-  for (let row = 1; row < rows; row++) g.moveTo(x, y + row * rowH).lineTo(x + w, y + row * rowH);
-  for (let row = 0; row < rows; row++) {
-    const top = y + row * rowH;
-    const shift = row % 2 === 0 ? 0 : -stoneW / 2;
-    for (let col = 1; col * stoneW + shift < w; col++) {
-      const at = x + col * stoneW + shift;
-      if (at > x && at < x + w) g.moveTo(at, top).lineTo(at, Math.min(top + rowH, y + h));
-    }
-  }
-  g.stroke({ width: 1, color: TOKENS.joint, alpha: 0.7 });
+/** The border of a room: 1.5 units in the wall colour of the design; the states of `STATE_STYLES` widen it or change its colour. */
+const ROOM_BORDER = 1.5;
+
+function fillOf(state: State): string {
+  return state === "selected" || state === "focusHalo" ? TOKENS.selectedFill : STATE_STYLES[state].fill;
 }
 
-/** A chamber seen from above: a stone floor, a shadow along the inside of the wall, and the wall line (the state's outline). */
-function chamber(width: number, height: number, fill: string, state: State, baseOutline: string): Graphics {
+/**
+ * A room seen from above, as the design draws it: a flat fill with a thin wall border (candle and a lit fill when
+ * selected, ecto on a loop, moss when added). The glow around a lit room is drawn by the scene (rooms.ts), outside the
+ * 96 by 64 frame of the texture.
+ */
+function chamber(width: number, height: number, state: State, baseOutline: string, fill: string = fillOf(state)): Graphics {
   const style = STATE_STYLES[state];
   const g = new Graphics();
-  const half = style.outlineWidth / 2;
-  const inner = { x: half + 1, y: half + 1, w: width - style.outlineWidth - 2, h: height - style.outlineWidth - 2 };
+  const line = Math.max(ROOM_BORDER, style.outlineWidth);
+  const half = line / 2;
+  const w = width - line;
+  const h = height - line;
   if (state === "comparison-removed") {
-    // A ghost: the floor is faint and the wall is a dashed line.
-    g.roundRect(half, half, width - style.outlineWidth, height - style.outlineWidth, 4).fill({ color: fill, alpha: 0.35 });
-    dashedRect(g, half, half, width - style.outlineWidth, height - style.outlineWidth, style.outlineWidth, TOKENS.ink);
+    // A ghost: no floor, and a dashed outline.
+    dashedRect(g, half, half, w, h, line, TOKENS.removed);
     return g;
   }
-  g.roundRect(half, half, width - style.outlineWidth, height - style.outlineWidth, 4).fill(fill);
-  flagstones(g, inner.x, inner.y, inner.w, inner.h, fill, state === "subdued" ? 0.1 : 0.22);
-  // The shadow the wall throws on the floor.
-  g.roundRect(half + 1, half + 1, width - style.outlineWidth - 2, height - style.outlineWidth - 2, 3).stroke({ width: 3, color: TOKENS.floor, alpha: 0.45 });
-  g.roundRect(half, half, width - style.outlineWidth, height - style.outlineWidth, 4).stroke({ width: style.outlineWidth, color: outlineColor(state, baseOutline) });
+  g.roundRect(half, half, w, h, 3).fill(fill);
+  g.roundRect(half, half, w, h, 3).stroke({ width: line, color: outlineColor(state, baseOutline) });
   // A subdued room also has a dotted inner rail, so that it differs from a lit room by shape when its words are not drawn.
-  if (state === "subdued") dashedRect(g, inner.x + 3, inner.y + 3, inner.w - 6, inner.h - 6, 2, TOKENS.roomSubduedInk, 1, 4);
+  if (state === "subdued") dashedRect(g, line + 3, line + 3, width - 2 * line - 6, height - 2 * line - 6, 1.5, TOKENS.edge, 1, 4);
   return g;
 }
 
-/** A hall: a wall of two lines around a floor, with a post at every corner. The nine slices keep the corners. */
-function hall(width: number, height: number, state: State): Graphics {
-  const style = STATE_STYLES[state];
-  const g = new Graphics();
-  const half = style.outlineWidth / 2;
-  g.roundRect(half, half, width - style.outlineWidth, height - style.outlineWidth, 6).fill(TOKENS.wing);
-  g.roundRect(half + 2, half + 2, width - style.outlineWidth - 4, height - style.outlineWidth - 4, 4).stroke({ width: 3, color: TOKENS.wall, alpha: 0.55 });
-  g.roundRect(half + 6, half + 6, width - style.outlineWidth - 12, height - style.outlineWidth - 12, 2).stroke({ width: 1, color: TOKENS.joint, alpha: 0.9 });
-  for (const [x, y] of [
-    [3, 3],
-    [width - 9, 3],
-    [3, height - 9],
-    [width - 9, height - 9],
-  ] as const) {
-    g.rect(x, y, 6, 6).fill(TOKENS.wall).stroke({ width: 1, color: TOKENS.floor });
-  }
-  g.roundRect(half, half, width - style.outlineWidth, height - style.outlineWidth, 6).stroke({ width: style.outlineWidth, color: outlineColor(state, TOKENS.wall) });
-  return g;
-}
-
-/** A small lit arch: the opening of a door in a wall. Its light spills as a faint disc behind it. */
+/** A small lit arch: the opening of a door in a wall. */
 function arch(fill: string, state: State, baseOutline: string, mark: string | null): Graphics {
   const style = STATE_STYLES[state];
   const g = new Graphics();
@@ -155,10 +111,10 @@ function arch(fill: string, state: State, baseOutline: string, mark: string | nu
     // A ghost: a faint arch inside a dashed box.
     draw();
     g.fill({ color: fill, alpha: 0.3 });
-    dashedRect(g, width / 2, width / 2, DOOR_BASE - width, DOOR_BASE - width, width, TOKENS.ink);
+    dashedRect(g, width / 2, width / 2, DOOR_BASE - width, DOOR_BASE - width, width, TOKENS.removed);
     return g;
   }
-  g.circle(8, 8, 8).fill({ color: fill, alpha: state === "default" ? 0.16 : 0.1 });
+  g.circle(8, 8, 8).fill({ color: fill, alpha: state === "default" ? 0.12 : 0.1 });
   draw();
   g.fill(fill);
   g.moveTo(5, 15).lineTo(5, 8).arc(8, 8, 3, Math.PI, 0).lineTo(11, 15).closePath();
@@ -172,21 +128,16 @@ function arch(fill: string, state: State, baseOutline: string, mark: string | nu
 /** The display object to render into the texture of `(kind, state)`, and its pixel frame. */
 function draw(kind: string, stateName: string): { node: Container; frame: Rectangle } {
   const state = stateOf(stateName);
-  const style = STATE_STYLES[state];
   const node = new Container();
   switch (kind) {
     case "room": {
-      node.addChild(chamber(ROOM_W, ROOM_H, style.fill, state, TOKENS.wall));
-      // The `+` of an added room is a text of the scene (rooms.ts), so that it keeps 11 CSS pixels at every zoom.
+      node.addChild(chamber(ROOM_W, ROOM_H, state, TOKENS.wallLine));
+      // The `+` of an added room is a text of the scene (rooms.ts), so that it keeps 12 CSS pixels at every zoom.
       return { node, frame: new Rectangle(0, 0, ROOM_W, ROOM_H) };
     }
     case "grouped": {
-      node.addChild(chamber(ROOM_W, ROOM_H, TOKENS.wing, state, TOKENS.wingInk));
+      node.addChild(chamber(ROOM_W, ROOM_H, state, TOKENS.wallLine, TOKENS.wing));
       return { node, frame: new Rectangle(0, 0, ROOM_W, ROOM_H) };
-    }
-    case "wing": {
-      node.addChild(hall(WING_BASE, WING_BASE, state));
-      return { node, frame: new Rectangle(0, 0, WING_BASE, WING_BASE) };
     }
     case "door": {
       const fill = state === "witness" ? TOKENS.corridor : state === "trace" ? TOKENS.light : TOKENS.door;
@@ -195,13 +146,13 @@ function draw(kind: string, stateName: string): { node: Container; frame: Rectan
     }
     case "sealed": {
       node.addChild(arch(TOKENS.panel, state, TOKENS.sealed, TOKENS.sealed));
-      // The `?` is a text of the scene (doors.ts), so that it keeps 11 CSS pixels at every zoom.
+      // The `?` is a text of the scene (doors.ts), so that it keeps 12 CSS pixels at every zoom.
       return { node, frame: new Rectangle(0, 0, DOOR_BASE, DOOR_BASE) };
     }
     default: {
       // corridor: the pill behind an import count.
       const g = new Graphics();
-      g.roundRect(0.5, 0.5, BADGE_W - 1, BADGE_H - 1, 10).fill(TOKENS.panel).stroke({ width: 1, color: TOKENS.passage });
+      g.roundRect(0.5, 0.5, BADGE_W - 1, BADGE_H - 1, BADGE_H / 2 - 0.5).fill(TOKENS.floor).stroke({ width: 1, color: TOKENS.wallLine });
       node.addChild(g);
       return { node, frame: new Rectangle(0, 0, BADGE_W, BADGE_H) };
     }

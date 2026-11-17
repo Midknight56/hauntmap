@@ -20,6 +20,16 @@ export interface StyleState {
   selection: Selection;
   routeFilter: RouteFilter | null;
   comparison?: unknown;
+  /**
+   * The witness of every dependency loop of the investigation under the active preset. The scene shows them from the
+   * start (ecto borders, a glowing corridor, a ghost) without a route filter and without a selection.
+   */
+  loops?: readonly AmbientLoop[];
+}
+
+export interface AmbientLoop {
+  modules: readonly string[];
+  relationIds: readonly string[];
 }
 
 export type HitKind = "door" | "sealed" | "grouped" | "room" | "wing";
@@ -52,6 +62,12 @@ export interface SceneDebug {
   ghost: { leg: number; x: number; y: number } | null;
   /** True while the glow of a looping corridor is drawn. */
   glow: boolean;
+  /** The opacity of that glow now: it breathes between 0.6 and 1, and stays at 1 under reduced motion; null without a loop. */
+  glowAlpha: number | null;
+  /** The traveling light on the selected door (scene units); null while it rests, and when no door is selected. */
+  light: { x: number; y: number } | null;
+  /** The doorways drawn on collapsed wings for a removed or an added relation of a comparison (item 9 of the design pass). */
+  wingMarks: { wing: string; kind: "removed" | "added" }[];
   /** The name of the active palette. */
   theme: string;
 }

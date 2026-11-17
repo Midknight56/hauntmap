@@ -29,8 +29,9 @@ test.describe("map scene", () => {
     const state = await snapshot(page);
     const inside = relations.filter((r) => r.resolution === "local" && wingOfId(r.from) === "src/orders" && wingOfId(r.to ?? "") === "src/orders");
     expect(inside).toHaveLength(11);
-    expect(state.layout?.doors).toHaveLength(inside.length);
-    expect(state.layout?.rooms).toHaveLength(manor.wings["src/orders"] ?? -1);
+    // The first screen opens the three wings of the loop; the doors and rooms of src/orders are the ones counted here.
+    expect(state.layout?.doors.filter((d) => wingOfId(d.from) === "src/orders" && wingOfId(d.to) === "src/orders")).toHaveLength(inside.length);
+    expect(state.layout?.rooms.filter((r) => r.wing === "src/orders")).toHaveLength(manor.wings["src/orders"] ?? -1);
     await shot(page, "docs/acceptance/img/orders-wing.png");
   });
 
@@ -41,7 +42,7 @@ test.describe("map scene", () => {
     await storeAction(page, "expandWing", "src/shared");
     await settled(page);
     const state = await snapshot(page);
-    const expanded = new Set(["src/orders", "src/catalog", "src/shared"]);
+    const expanded = new Set(["src/orders", "src/notifications", "src/payments", "src/catalog", "src/shared"]);
     const boundary = relations.filter((r) => r.resolution !== "local" && expanded.has(wingOfId(r.from)));
     expect(state.layout?.sealed.map((s) => s.from).sort()).toEqual(boundary.map((r) => r.from).sort());
     expect(boundary.map((r) => `${r.from} ${r.specifier} ${r.resolution}`)).toEqual(
@@ -64,8 +65,10 @@ test.describe("map scene", () => {
 
   test("3.4 the overview has one corridor per ordered wing pair with the count of drawn relations", async ({ page }) => {
     await openManor(page);
-    await storeAction(page, "collapseWing", "src/orders");
-    await settled(page);
+    for (const wing of ["src/orders", "src/notifications", "src/payments"]) {
+      await storeAction(page, "collapseWing", wing);
+      await settled(page);
+    }
     const state = await snapshot(page);
     const counts = new Map<string, number>();
     for (const r of relations) {
@@ -124,8 +127,9 @@ test.describe("map scene", () => {
   test("9.2 a click on the center of each door of src/orders selects that relation", async ({ page }) => {
     await openManor(page);
     const { layout } = await snapshot(page);
-    expect(layout?.doors.length).toBe(11);
-    for (const door of layout?.doors ?? []) {
+    const orders = (layout?.doors ?? []).filter((d) => wingOfId(d.from) === "src/orders" && wingOfId(d.to) === "src/orders");
+    expect(orders.length).toBe(11);
+    for (const door of orders) {
       await clickDoor(page, door.relationId);
       await expect(inspectorHeading(page)).toHaveText(`${door.from} imports ${door.to}`);
     }

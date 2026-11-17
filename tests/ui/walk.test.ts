@@ -2,8 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { ghostAt, pointOnPolyline, polylineLength, witnessLegs } from "../../src/scene/walk";
-import { LIGHT_STEP_MS } from "../../src/scene/corridors";
+import { GHOST_PAUSE_MS, GHOST_SPEED_PX_S, LIGHT_PERIOD_MS, LIGHT_RUN_MS, ghostAtSpeed, lightProgress, pointOnPolyline, polylineLength, witnessLegs } from "../../src/scene/walk";
 import type { LayoutResult, Point, Rect } from "../../src/scene/layout/types";
 import { layoutOf, requestFor } from "./layoutRequests";
 import { manorInvestigation } from "./manorFixture";
@@ -55,28 +54,54 @@ describe("the ghost on the manor loop", () => {
     });
   });
 
-  it("walks one leg per traveling-light step, in step order, and loops", async () => {
+  it("walks at a steady 60 px per second on screen, pauses 400 ms at each door, follows step order and loops", async () => {
     const { layout, route } = await manorLoop();
     const legs = witnessLegs(layout, route);
-    expect(LIGHT_STEP_MS).toBe(1200);
-    const at = (ms: number) => ghostAt(legs, ms, LIGHT_STEP_MS);
+    expect(GHOST_SPEED_PX_S).toBe(60);
+    expect(GHOST_PAUSE_MS).toBe(400);
+    const at = (ms: number) => ghostAtSpeed(legs, ms, 60, 400);
+    // The ghost stands at the first door for the first pause, then walks.
     expect(at(0).leg).toBe(0);
     expect(at(0).at).toEqual(legs[0]?.points[0]);
-    expect(at(600).leg).toBe(0);
-    expect(at(600).at).toEqual(pointOnPolyline(legs[0]?.points as Point[], (legs[0]?.length as number) / 2));
-    expect(at(1200).leg).toBe(1);
-    expect(at(1200).at).toEqual(legs[1]?.points[0]);
-    expect(at(2400).leg).toBe(2);
-    expect(at(3600).leg).toBe(0);
-    expect(at(3600).at).toEqual(at(0).at);
+    expect(at(399).at).toEqual(legs[0]?.points[0]);
+    const half = (legs[0]?.length as number) / 2;
+    expect(at(400 + (half / 60) * 1000).at.x).toBeCloseTo(pointOnPolyline(legs[0]?.points as Point[], half).x, 6);
+    expect(at(400 + (half / 60) * 1000).at.y).toBeCloseTo(pointOnPolyline(legs[0]?.points as Point[], half).y, 6);
+    // The walk of leg 0 takes length / 60 s; then the ghost pauses 400 ms at the door of leg 1, which is where leg 1 starts.
+    const walk0 = ((legs[0]?.length as number) / 60) * 1000;
+    expect(at(400 + walk0 + 1).leg).toBe(1);
+    expect(at(400 + walk0 + 200).at).toEqual(legs[1]?.points[0]);
+    // A whole round brings the ghost back to the first door.
+    const round = legs.reduce((sum, leg) => sum + 400 + (leg.length / 60) * 1000, 0);
+    expect(at(round).at).toEqual(at(0).at);
+    expect(at(round).leg).toBe(0);
     const visited: number[] = [];
-    for (let ms = 0; ms < 8000; ms += 100) {
+    for (let ms = 0; ms < round * 2 + 500; ms += 50) {
       const leg = at(ms).leg;
       if (visited[visited.length - 1] !== leg) visited.push(leg);
     }
     expect(visited).toEqual([0, 1, 2, 0, 1, 2, 0]);
   });
 
+  it("makes the speed a screen speed: the same time walks fewer scene units when the map is zoomed in", () => {
+    const leg = { points: [{ x: 0, y: 0 }, { x: 600, y: 0 }], length: 600 };
+    expect(ghostAtSpeed([leg], 400 + 1000, 60 / 0.5, 400).at.x).toBeCloseTo(120, 6);
+    expect(ghostAtSpeed([leg], 400 + 1000, 60 / 2, 400).at.x).toBeCloseTo(30, 6);
+  });
+
+  it("runs the traveling light along the selected path in 900 ms, ease in and out, every 2.5 s", () => {
+    expect(LIGHT_RUN_MS).toBe(900);
+    expect(LIGHT_PERIOD_MS).toBe(2500);
+    expect(lightProgress(0)).toBe(0);
+    expect(lightProgress(450)).toBeCloseTo(0.5, 9);
+    expect(lightProgress(900)).toBe(1);
+    expect(lightProgress(225)).toBeLessThan(0.25);
+    expect(lightProgress(675)).toBeGreaterThan(0.75);
+    expect(lightProgress(901)).toBeNull();
+    expect(lightProgress(2499)).toBeNull();
+    expect(lightProgress(2500)).toBe(0);
+    expect(lightProgress(2500 + 450)).toBeCloseTo(0.5, 9);
+  });
   it("walks the loop even while two of its wings are closed: from wing to wing, through the one open door", async () => {
     const { route } = await manorLoop();
     const layout = await layoutOf(requestFor(await manorInvestigation(), ["src/orders"]));

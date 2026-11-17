@@ -1,6 +1,6 @@
 # Third-party notices
 
-Packages of `packages/hauntmap-mcp` (the MCP server and the `hauntmap` command line tool). The licence of each row was read from the `license` field of the installed `package.json` on 2026-11-17 (`pnpm --filter hauntmap-mcp ls --depth Infinity --json`, then each package's own `package.json`). The root application's own dependencies are in `package.json` and `pnpm-lock.yaml`; the display font Cinzel is under the SIL Open Font License 1.1 (`src/styles/fonts/Cinzel-OFL.txt`).
+Packages of `packages/hauntmap-mcp` (the MCP server and the `hauntmap` command line tool). The licence of each row was read from the `license` field of the installed `package.json` on 2026-11-17 (`pnpm --filter hauntmap-mcp ls --depth Infinity --json`, then each package's own `package.json`). The root application's own dependencies are in `package.json` and `pnpm-lock.yaml`; the three typefaces of the design are listed under "Fonts" below.
 
 Direct dependencies: `@modelcontextprotocol/sdk` (the MCP TypeScript SDK), `esbuild` (the bundler), `typescript` and `@types/node` (build time only). `dist/index.js` and `dist/cli.js` bundle the SDK and its runtime dependencies, so the runtime table below ships inside them.
 
@@ -112,3 +112,15 @@ Direct dependencies: `@modelcontextprotocol/sdk` (the MCP TypeScript SDK), `esbu
 | `undici-types` | 7.24.6 | MIT |
 
 25 optional `@esbuild/<platform>` packages of version 0.28.2 are listed by pnpm but are not installed on this Windows PC (only `@esbuild/win32-x64` is), so their licence field was not read here; this file makes no claim about them.
+
+## Fonts
+
+The application loads these typefaces with @font-face from the files in src/styles/fonts/ and requests no font from a remote server. Each is under the SIL Open Font License, Version 1.1, and each licence text is committed beside its font file.
+
+| Typeface | Use | Files | Licence text |
+| --- | --- | --- | --- |
+| Almendra SC | display face: brand, panel headings, wing plaques, the Dependency loops button | AlmendraSC-Regular.ttf | SIL Open Font License 1.1, AlmendraSC-OFL.txt |
+| Spectral (400 and 600) | interface and body text | Spectral-Regular.ttf, Spectral-SemiBold.ttf | SIL Open Font License 1.1, Spectral-OFL.txt |
+| Spline Sans Mono | room names, paths, counts, the source excerpt | SplineSansMono-VariableFont_wght.ttf | SIL Open Font License 1.1, SplineSansMono-OFL.txt |
+
+Cinzel, the display face of the earlier theme, was removed together with its files when nothing used it any more.

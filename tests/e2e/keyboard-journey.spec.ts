@@ -112,20 +112,29 @@ test.describe("keyboard-only journey and structure (release build)", () => {
     }
   });
 
-  test("11.6 at 640 x 360 the inspector stacks under the map and the page scrolls vertically only", async ({ page }) => {
+  test("11.6 at 640 x 360 (the phone layout) the page scrolls vertically only, a selected room opens the evidence sheet under the map, and the controls behind More work", async ({ page }) => {
     await page.setViewportSize({ width: 640, height: 360 });
     await openManor(page);
     expect(await scrollsSideways(page)).toBe(false);
+    // Nothing is selected: the evidence panel is not on the screen. A selected room opens it under the map.
+    await expect(page.getByRole("complementary", { name: "Inspector" })).toBeHidden();
+    await page.getByRole("button", { name: "Dependency loops" }).click();
+    await page.getByRole("list", { name: "Loops" }).getByRole("button").first().click();
     const boxes = await page.evaluate(() => {
       const map = document.querySelector(".map-wrapper")?.getBoundingClientRect();
       const inspector = document.querySelector('[aria-label="Inspector"]')?.getBoundingClientRect();
       return { mapBottom: map?.bottom ?? 0, mapLeft: map?.left ?? 0, inspectorTop: inspector?.top ?? 0, inspectorLeft: inspector?.left ?? 0 };
     });
     expect(boxes.inspectorTop).toBeGreaterThanOrEqual(boxes.mapBottom - 1);
-    expect(boxes.inspectorLeft).toBe(boxes.mapLeft);
-    // The inspector can be reached by scrolling the page, and the Evidence view works at this size.
-    await page.getByRole("complementary", { name: "Inspector" }).scrollIntoViewIfNeeded();
+    expect(boxes.inspectorLeft).toBeLessThanOrEqual(boxes.mapLeft);
     await expect(page.getByRole("complementary", { name: "Inspector" }).getByRole("heading", { level: 2 })).toBeInViewport();
+    expect(await scrollsSideways(page)).toBe(false);
+    // View, Snapshots, Help, Restart demo and the zoom buttons are behind More.
+    await expect(page.getByRole("tab", { name: "Evidence" })).toHaveCount(0);
+    const more = page.getByRole("button", { name: "More" });
+    await expect(more).toHaveAttribute("aria-expanded", "false");
+    await more.click();
+    await expect(more).toHaveAttribute("aria-expanded", "true");
     await page.getByRole("tab", { name: "Evidence" }).click();
     await expect(page.getByRole("heading", { name: "Evidence (static-value)" })).toBeVisible();
     expect(await scrollsSideways(page)).toBe(false);

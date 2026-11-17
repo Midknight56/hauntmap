@@ -29,22 +29,25 @@ export function LoopsPanel({ store }: { store: InvestigationStore }): ReactEleme
   const heading = useRef<HTMLHeadingElement>(null);
   const panel = state.panel;
   const open = panel.kind === "loops";
-  // The panel takes focus when it opens, so that the next Tab reaches the first component.
+  // The panel takes focus when a button asks for it (`Dependency loops`), so that the next Tab reaches the first
+  // component. A panel that is open from the start (the first screen) never asks.
   useEffect(() => {
-    if (open) heading.current?.focus();
-  }, [open]);
+    if (open && state.panelFocus > 0) heading.current?.focus();
+  }, [open, state.panelFocus]);
   if (panel.kind !== "loops") return null;
   const sentence = presetSentence(state.preset);
   const components = panel.report?.components ?? [];
   return (
-    <section className="result-panel" aria-labelledby={headingId}>
-      <h2 id={headingId} ref={heading} tabIndex={-1}>{`Dependency loops (${state.preset})`}</h2>
+    <section className="result-panel loops-panel" aria-labelledby={headingId}>
+      <div className="panel-head">
+        <h2 id={headingId} ref={heading} tabIndex={-1}>{`Dependency loops (${state.preset})`}</h2>
+        {panel.report === null ? null : <p className="panel-count">{countWords(components.length)}</p>}
+      </div>
       {panel.error !== null ? <p>{panel.error}</p> : null}
       {sentence === null ? null : <p>{sentence}</p>}
       {panel.report === null ? null : (
         <>
-          <p>{countWords(components.length)}</p>
-          <ul aria-label="Loops">
+          <ul aria-label="Loops" className="loop-list">
             {components.map((component, index) => (
               <li key={component.members.join("\u0000")}>
                 <button type="button" aria-current={panel.chosen === index ? "true" : undefined} onClick={() => store.actions.chooseLoop(index)}>

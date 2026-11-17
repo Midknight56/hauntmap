@@ -25,20 +25,21 @@ test.describe("hosted controls (dev build)", () => {
   test("10.1 the toolbar lists its controls in order, and a slot renders only what is registered", async ({ page }) => {
     await openFixture(page, "triad");
     await expect(page.getByRole("button", { name: "Restart demo" })).toBeVisible();
+    // The Tab order of the design: the side bar (View, Snapshots, Help), the top bar (Find), the zoom buttons, then Restart demo.
     expect(await toolbarNames(page)).toEqual([
       "Map",
       "Evidence",
+      "Compare revisions",
+      "Open live snapshot",
+      "Legend",
+      "Motion",
+      "Search modules",
+      "Relation preset",
+      "Dependency loops",
       "Fit to view",
       "Zoom in",
       "Zoom out",
       "Clear selection",
-      "Search modules",
-      "Relation preset",
-      "Dependency loops",
-      "Legend",
-      "Motion",
-      "Compare revisions",
-      "Open live snapshot",
       "Restart demo",
     ]);
     await page.evaluate(() => {
@@ -49,7 +50,8 @@ test.describe("hosted controls (dev build)", () => {
       hook.registry.registerControl("compare", stub("Compare revisions"));
     });
     const names = await toolbarNames(page);
-    expect(names.slice(-4)).toEqual(["Export investigation", "Compare revisions", "Open live snapshot", "Restart demo"]);
+    expect(names.slice(2, 5)).toEqual(["Export investigation", "Compare revisions", "Open live snapshot"]);
+    expect(names.slice(-1)).toEqual(["Restart demo"]);
     await tabTo(page, "Compare revisions");
   });
 
