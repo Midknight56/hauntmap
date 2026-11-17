@@ -4,3 +4,4 @@ Copy this file to `docs/kiro-log.md` in the HauntMap repository (only if that fi
 
 | Date | Surface / model | Task (spec, task number) | Files or commit | Verify command and result | Credits | What changed because of a failure |
 | --- | --- | --- | --- | --- | --- | --- |
+| 2026-11-16 | Kiro CLI 3.3.0 / auto | analysis-core, spec review (prompt B) | `.kiro/specs/analysis-core/requirements.md`, `design.md`, `tasks.md` | No command run: no code exists yet, and the shell tool was not available in this session. Fixture numbers were calculated by hand. |  | none |
