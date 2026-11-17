@@ -95,7 +95,7 @@
     },
     {
       "id": "src/notifications/receipt.ts",
-      "sourceHash": "62a5ae340523749df7f978a98c3dd828384f5532c2d90d9e91dffb8a305d1975",
+      "sourceHash": "391a41af97da929444e11187638458ba1f2c5a079cd73c38c3cb5da2975ced3e",
       "language": "ts",
       "parseStatus": "ok"
     },
@@ -596,24 +596,12 @@
     },
     {
       "from": "src/notifications/receipt.ts",
-      "specifier": "../orders/checkout",
+      "specifier": "../shared/money",
       "syntaxKind": "import",
       "dependencyKind": "value",
       "line": 3,
       "column": 1,
-      "occurrenceId": "[\"src/notifications/receipt.ts\",3,1,\"../orders/checkout\"]",
-      "relationId": "[\"src/notifications/receipt.ts\",[\"local\",\"src/orders/checkout.ts\"],\"import\",\"value\"]",
-      "to": "src/orders/checkout.ts",
-      "resolution": "local"
-    },
-    {
-      "from": "src/notifications/receipt.ts",
-      "specifier": "../shared/money",
-      "syntaxKind": "import",
-      "dependencyKind": "value",
-      "line": 4,
-      "column": 1,
-      "occurrenceId": "[\"src/notifications/receipt.ts\",4,1,\"../shared/money\"]",
+      "occurrenceId": "[\"src/notifications/receipt.ts\",3,1,\"../shared/money\"]",
       "relationId": "[\"src/notifications/receipt.ts\",[\"local\",\"src/shared/money.ts\"],\"import\",\"value\"]",
       "to": "src/shared/money.ts",
       "resolution": "local"
