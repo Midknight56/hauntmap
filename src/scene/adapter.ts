@@ -5,9 +5,11 @@ import { drawComparisonMarks } from "./compare/states";
 import { closeCorridor } from "./compare/transition";
 import { drawCorridors, drawRoute, type RouteHandle } from "./corridors";
 import { drawDoors } from "./doors";
-import { createElementTextures } from "./elements";
+import { createElementTextures, DISPLAY_FONT } from "./elements";
 import { buildHitTargets, hitTest } from "./hitTest";
-import { drawRooms, drawWings, haloRect, type DrawContext } from "./rooms";
+import { relatedRelations } from "./emphasis";
+import { clearMeasureCache, drawRooms, drawWings, haloRect, type DrawContext, type SceneLabel } from "./rooms";
+import { currentTheme, onThemeChange } from "../styles/theme";
 import { deriveStates } from "./stateMap";
 import { TOKENS } from "./styles";
 import { fitBounds, clampZoom, toScene, toScreen, type Viewport } from "./camera";
@@ -31,6 +33,17 @@ const CLICK_SLOP_PX = 5;
 
 type Listener = (arg?: never) => void;
 
+/** Wait for the committed Cinzel file, for at most two seconds; the plates then measure and draw with the real face. */
+async function ensureDisplayFont(): Promise<void> {
+  if (typeof document === "undefined" || document.fonts === undefined) return;
+  try {
+    await Promise.race([document.fonts.load(`700 12px ${DISPLAY_FONT}`), new Promise<void>((resolve) => setTimeout(resolve, 2000))]);
+  } catch {
+    // The fallback serif is used; nothing else depends on the face.
+  }
+  clearMeasureCache();
+}
+
 /**
  * Create the PixiJS scene inside `opts.container`. It prefers WebGL; a failure (no WebGL, an
  * initialization error or `forceFailure`) is a value, never a throw, so the caller can show the
@@ -41,6 +54,8 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     return { ok: false, reason: "forced", message: "The renderer was switched off for this session." };
   }
 
+  // The display face of the wing plates is a committed font file; draw nothing before it is ready (or has failed to load).
+  await ensureDisplayFont();
   const app = new Application();
   const container = opts.container;
   try {
@@ -94,6 +109,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
   let roomNodes = new Map<string, Container>();
   let route: RouteHandle | null = null;
   let particles = 0;
+  let labels: SceneLabel[] = [];
   let displayed: Camera = { x: 0, y: 0, zoom: 1 };
   let target: Camera = displayed;
   let cameraToken = 0;
@@ -126,6 +142,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     roomNodes = new Map();
     route = null;
     particles = 0;
+    labels = [];
     drawnLayout = null;
     if (layout === null) return;
     const view = applyComparison(layout, deriveStates(layout, styleState ?? { selection: { kind: "none" }, routeFilter: null }), comparison);
@@ -135,7 +152,12 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     comparisonStates = view.debug;
     // Hidden comparison elements are neither drawn nor hit-tested.
     targets = buildHitTargets(drawn);
-    const ctx: DrawContext = { layers, textures, states, reduced };
+    const related = relatedRelations(drawn, {
+      selection: styleState?.selection ?? { kind: "none" },
+      routeFilter: styleState?.routeFilter ?? null,
+      marks: view.marks,
+    });
+    const ctx: DrawContext = { layers, textures, states, reduced, labels, zoom: displayed.zoom, related };
     drawWings(ctx, drawn);
     drawCorridors(ctx, drawn);
     roomNodes = drawRooms(ctx, drawn);
@@ -143,6 +165,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     drawComparisonMarks(layers.selected, view);
     route = drawRoute(ctx, drawn);
     particles = route?.particleCount ?? 0;
+    relayoutLabels();
     if (states.haloRoom !== null) {
       const rect = haloRect(drawn, states.haloRoom);
       if (rect !== null) {
@@ -158,12 +181,19 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     }
   }
 
+  /** Re-choose the words and the scale of every name and title for the camera zoom (item 5: never under 11 CSS pixels). */
+  function relayoutLabels(): void {
+    for (const label of labels) if (label.visible()) label.layout(displayed.zoom);
+    route?.setZoom(displayed.zoom);
+  }
+
   function applyCamera(camera: Camera): void {
     displayed = camera;
     const vp = viewport();
     world.scale.set(camera.zoom);
     world.position.set(vp.width / 2 - camera.x * camera.zoom, vp.height / 2 - camera.y * camera.zoom);
     applyCulling();
+    relayoutLabels();
   }
 
   function moveCamera(camera: Camera, transition: "animate" | "jump"): void {
@@ -232,6 +262,14 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
   };
   canvas.addEventListener("pointerdown", onDown);
   canvas.addEventListener("pointerup", onUp);
+
+  // A palette change redraws every texture and layer with the new colors.
+  const stopTheme = onThemeChange(() => {
+    if (destroyed) return;
+    app.renderer.background.color = TOKENS.floor;
+    textures.rebuild();
+    redraw(false);
+  });
 
   const stopWatching = watchContext(canvas, {
     onLost() {
@@ -326,7 +364,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     debug(): SceneDebug {
       guard();
       if (!opts.debug) {
-        return { textureCount: 0, visibleRooms: 0, tickerRunning: false, activeTweens: 0, drawnDoors: 0, particleCount: 0, frames: 0 };
+        return { textureCount: 0, visibleRooms: 0, tickerRunning: false, activeTweens: 0, drawnDoors: 0, particleCount: 0, frames: 0, labels: [], ghost: null, glow: false, theme: "" };
       }
       const counters: SceneDebug & ComparisonDebug = {
         textureCount: textures.size,
@@ -336,6 +374,12 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
         drawnDoors: (drawnLayout ?? layout)?.doors.length ?? 0,
         particleCount: particles,
         frames,
+        labels: labels
+          .filter((label) => label.visible())
+          .map((label) => ({ kind: label.kind, id: label.id, text: label.node.text, px: label.fontUnits * label.node.scale.y * displayed.zoom })),
+        ghost: route?.ghost() ?? null,
+        glow: route?.glow ?? false,
+        theme: currentTheme(),
         states: { ...comparisonStates },
       };
       return counters;
@@ -344,6 +388,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
       if (destroyed) return;
       destroyed = true;
       stopWatching();
+      stopTheme();
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointerup", onUp);
       document.removeEventListener("visibilitychange", onVisibility);

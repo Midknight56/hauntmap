@@ -28,8 +28,8 @@ interface LayoutProbe {
 
 const BADGE_W = 72;
 const BADGE_H = 20;
-/** The wing name is drawn in the top strip of an expanded wing, and fills a collapsed wing. */
-const WING_NAME_STRIP = 28;
+/** The wing title plate is drawn in the top strip of an expanded wing (40 units, with its margin), and fills a collapsed wing. */
+const WING_NAME_STRIP = 40;
 
 function overlaps(a: Rect, b: Rect): boolean {
   return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;

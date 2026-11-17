@@ -151,7 +151,7 @@ test.describe("comparison panel, keyboard and failure journeys", () => {
     await expect(panel.getByText("Newer: manor/after \u00b7 40 modules \u00b7 72 relations", { exact: true })).toBeVisible();
   });
 
-  test("6.2 the loops panel reads 1 loops for the earlier snapshot and 0 loops for the newer one; 6.6 End comparison", async ({ page }) => {
+  test("6.2 the loops panel reads 1 loop for the earlier snapshot and 0 loops for the newer one; 6.6 End comparison", async ({ page }) => {
     await openManor(page);
     await page.getByRole("button", { name: "Compare revisions" }).click();
     await page.getByRole("button", { name: "Revised manor sample" }).click();
@@ -161,13 +161,13 @@ test.describe("comparison panel, keyboard and failure journeys", () => {
     await expect(loops.getByText("0 loops", { exact: true })).toBeVisible();
     await page.getByRole("radio", { name: "Earlier (manor/before)" }).check();
     await waitForStatus(page, "Showing the earlier snapshot (manor/before).");
-    await expect(loops.getByText("1 loops", { exact: true })).toBeVisible();
+    await expect(loops.getByText("1 loop", { exact: true })).toBeVisible();
     await page.getByRole("radio", { name: "Newer (manor/after)" }).check();
     await waitForStatus(page, "Showing the newer snapshot (manor/after).");
     await expect(loops.getByText("0 loops", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "End comparison" }).click();
     await waitForStatus(page, "Comparison ended. Showing manor/before.");
-    await expect(loops.getByText("1 loops", { exact: true })).toBeVisible();
+    await expect(loops.getByText("1 loop", { exact: true })).toBeVisible();
     expect((await compareView(page)).status).toBe("idle");
     await expect(page.getByRole("button", { name: "Compare revisions" })).toBeFocused();
   });
@@ -321,7 +321,7 @@ test.describe("comparison scene journeys", () => {
   test("5.3 @scene the three legend entries are listed only while the comparison is active", async ({ page }) => {
     await openManor(page);
     const legend = page.getByRole("list", { name: "Legend entries" });
-    const entries = ["Changed source \u2014 amber lamp", "Removed in the newer snapshot \u2014 ghost outline", "Added in the newer snapshot \u2014 green doorway"];
+    const entries = ["Changed source: amber lamp", "Removed in the newer snapshot: ghost outline", "Added in the newer snapshot: green doorway"];
     if ((await legend.count()) === 0) await page.getByRole("button", { name: "Legend" }).click();
     for (const e of entries) await expect(legend.getByText(e, { exact: true })).toHaveCount(0);
     await compareAction(page, "compareWithSample");

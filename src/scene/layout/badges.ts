@@ -7,7 +7,7 @@ import type { CorridorBox, DoorBox, GroupedRoomBox, Point, Rect, RoomBox, Sealed
 export const BADGE_W = 72;
 export const BADGE_H = 20;
 /** The wing name fills the top strip of an expanded wing and the whole box of a collapsed one. */
-const NAME_STRIP = 28;
+const NAME_STRIP = 40;
 const MARGIN = 2;
 const STEPS = 49;
 const SHIFTS = [0, -(BADGE_H + 4), BADGE_H + 4, -2 * (BADGE_H + 4), 2 * (BADGE_H + 4)];
@@ -29,10 +29,24 @@ function hits(a: Rect, b: Rect): boolean {
   return a.x < b.x + b.w + MARGIN && b.x - MARGIN < a.x + a.w && a.y < b.y + b.h + MARGIN && b.y - MARGIN < a.y + a.h;
 }
 
+/** The point at fraction `t` of the length of a polyline. */
 function pointAt(path: readonly Point[], t: number): Point {
   const first = path[0] as Point;
-  const last = path[path.length - 1] as Point;
-  return { x: first.x + (last.x - first.x) * t, y: first.y + (last.y - first.y) * t };
+  let total = 0;
+  for (let i = 1; i < path.length; i++) total += Math.hypot((path[i] as Point).x - (path[i - 1] as Point).x, (path[i] as Point).y - (path[i - 1] as Point).y);
+  if (total === 0) return first;
+  let walk = total * t;
+  for (let i = 1; i < path.length; i++) {
+    const a = path[i - 1] as Point;
+    const b = path[i] as Point;
+    const length = Math.hypot(b.x - a.x, b.y - a.y);
+    if (walk <= length || i === path.length - 1) {
+      const f = length === 0 ? 0 : Math.min(1, walk / length);
+      return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
+    }
+    walk -= length;
+  }
+  return first;
 }
 
 /** One position (the center of the pill) for each corridor, in the order given. */

@@ -12,6 +12,11 @@ export function presetSentence(preset: Preset): string | null {
   return preset === "type-inclusive" ? TYPE_INCLUSIVE_SENTENCE : preset === "dynamic-inclusive" ? DYNAMIC_INCLUSIVE_SENTENCE : null;
 }
 
+/** `1 loop`, `0 loops`, `2 loops`: the plural is for zero and for two or more. */
+export function countWords(count: number): string {
+  return `${count} ${count === 1 ? "loop" : "loops"}`;
+}
+
 /** The label of one component button (7.1). */
 export function componentLabel(members: readonly string[]): string {
   return members.length === 1 ? `Self-import: ${members[0]}` : `${members.length} modules: ${members.join(", ")}`;
@@ -38,7 +43,7 @@ export function LoopsPanel({ store }: { store: InvestigationStore }): ReactEleme
       {sentence === null ? null : <p>{sentence}</p>}
       {panel.report === null ? null : (
         <>
-          <p>{`${components.length} loops`}</p>
+          <p>{countWords(components.length)}</p>
           <ul aria-label="Loops">
             {components.map((component, index) => (
               <li key={component.members.join("\u0000")}>

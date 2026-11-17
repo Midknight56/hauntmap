@@ -1,24 +1,89 @@
-/* Design tokens. tests/ui/styles.test.ts compares these hex values with TOKENS in src/scene/styles.ts. */
+/* Design tokens, written from src/styles/theme.ts by themeCss(); tests/ui/theme.test.ts and tests/ui/styles.test.ts compare them. */
+
 :root {
-  --floor: #141019;
-  --wing: #241d30;
-  --wing-ink: #d8cfe6;
-  --room: #3a3150;
-  --room-ink: #f3ecff;
-  --room-subdued: #211c2c;
-  --room-subdued-ink: #d8cfe6;
-  --door: #e9d8a6;
-  --corridor: #8f6bff;
-  --sealed: #b8b0c4;
-  --light: #7df9ff;
-  --panel: #1b1622;
-  --ink: #f1ecf7;
-  --ink-muted: #b9b0c7;
-  --focus: #f5b700;
-  /* Comparison states (snapshot-comparison, gate G3). */
+  --floor: #130e0a;
+  --wing: #261c15;
+  --wing-ink: #ecdfc6;
+  --room: #3d2d21;
+  --room-ink: #f6eedd;
+  --room-subdued: #1d1612;
+  --room-subdued-ink: #cdbfa2;
+  --door: #f4a83a;
+  --corridor: #4fe0b5;
+  --sealed: #c9b79a;
+  --light: #aeeaff;
+  --panel: #19130f;
+  --ink: #f3ead8;
+  --ink-muted: #c4b595;
+  --focus: #ffe27a;
   --changed: #f0b429;
-  --removed: #9a93a8;
+  --removed: #c2b59c;
+  --added: #8fdc5a;
+  --wall: #8f6e4c;
+  --joint: #2a1e16;
+  --plate: #3c2b1c;
+  --plate-ink: #f6e7c2;
+  --passage: #8c7355;
+  --ghost: #e9fff4;
+}
+
+[data-theme="moonlit-crypt"] {
+  --floor: #080c16;
+  --wing: #131b2e;
+  --wing-ink: #dbe3f2;
+  --room: #243250;
+  --room-ink: #eef3fb;
+  --room-subdued: #111827;
+  --room-subdued-ink: #b9c6dd;
+  --door: #f0c04a;
+  --corridor: #b48cff;
+  --sealed: #aebbd3;
+  --light: #7fe3f5;
+  --panel: #0f1524;
+  --ink: #e8eef8;
+  --ink-muted: #aab8d0;
+  --focus: #ffd75e;
+  --changed: #f0b429;
+  --removed: #a9b4c8;
   --added: #5ad48a;
+  --wall: #7388ad;
+  --joint: #1a2438;
+  --plate: #1d2a46;
+  --plate-ink: #e8eef8;
+  --passage: #6c7fa4;
+  --ghost: #f2f6ff;
+}
+
+[data-theme="graveyard-fog"] {
+  --floor: #0c150e;
+  --wing: #1f2b23;
+  --wing-ink: #ece4cc;
+  --room: #35453b;
+  --room-ink: #f5efd9;
+  --room-subdued: #19221c;
+  --room-subdued-ink: #c9c3a8;
+  --door: #ff8a3d;
+  --corridor: #8fe8ee;
+  --sealed: #c2c0a4;
+  --light: #ffe9a8;
+  --panel: #131d16;
+  --ink: #f2ecd6;
+  --ink-muted: #bdb797;
+  --focus: #ffd166;
+  --changed: #f0b429;
+  --removed: #b3b8a0;
+  --added: #7ed957;
+  --wall: #7e9484;
+  --joint: #26332a;
+  --plate: #2c3b31;
+  --plate-ink: #f5efd9;
+  --passage: #6f8576;
+  --ghost: #f0fbf8;
+}
+
+:root {
+  --font-display: "Cinzel", "Palatino Linotype", Georgia, serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 :focus-visible {

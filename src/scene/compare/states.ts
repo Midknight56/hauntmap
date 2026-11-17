@@ -22,8 +22,8 @@ function dashedOutline(g: Graphics, r: Rect, color: string): void {
   g.stroke({ width: 2, color });
 }
 
-function plus(x: number, y: number): Text {
-  const text = new Text({ text: "+", style: { fontFamily: FONT, fontSize: 13, fill: TOKENS.added, fontWeight: "700", stroke: { color: TOKENS.floor, width: 3 } } });
+function plus(x: number, y: number, size = 13): Text {
+  const text = new Text({ text: "+", style: { fontFamily: FONT, fontSize: size, fill: TOKENS.added, fontWeight: "700", stroke: { color: TOKENS.floor, width: 3 } } });
   text.anchor.set(0.5);
   text.position.set(x, y);
   return text;
@@ -34,6 +34,24 @@ function plus(x: number, y: number): Text {
  * door or sealed doorway, and, where a fleet state kept its own texture, the `+` of an added room and the dashed
  * ghost outline of a removed element.
  */
+/** A wide ring around a removed (dashed ghost) or added (solid) door, so that the two changes are the first things the eye finds. */
+function ring(g: Graphics, rect: Rect, color: string, dashed: boolean): void {
+  const cx = rect.x + rect.w / 2;
+  const cy = rect.y + rect.h / 2;
+  g.circle(cx, cy, 28).fill({ color, alpha: 0.14 });
+  if (!dashed) {
+    g.circle(cx, cy, 24).stroke({ width: 3, color });
+    return;
+  }
+  const dashes = 14;
+  for (let i = 0; i < dashes; i++) {
+    const a0 = (i / dashes) * Math.PI * 2;
+    const a1 = a0 + (Math.PI * 2) / dashes / 1.7;
+    g.moveTo(cx + Math.cos(a0) * 24, cy + Math.sin(a0) * 24).arc(cx, cy, 24, a0, a1);
+  }
+  g.stroke({ width: 3, color });
+}
+
 export function drawComparisonMarks(layer: Container, view: ComparisonView): void {
   const g = new Graphics();
   let used = false;
@@ -55,17 +73,25 @@ export function drawComparisonMarks(layer: Container, view: ComparisonView): voi
   }
   for (const door of view.drawn.doors) {
     const c = view.marks.doors.get(door.relationId);
-    if (c === "comparison-added") layer.addChild(plus(door.x + door.w + 6, door.y - 4));
-    else if (c === "comparison-removed" && view.states.doors.get(door.relationId)?.state !== c) {
-      dashedOutline(g, { x: door.x - 3, y: door.y - 3, w: door.w + 6, h: door.h + 6 }, TOKENS.removed);
+    if (c === "comparison-added") {
+      ring(g, door, TOKENS.added, false);
+      layer.addChild(plus(door.x + door.w + 10, door.y - 8, 20));
+      used = true;
+    } else if (c === "comparison-removed") {
+      ring(g, door, TOKENS.removed, true);
+      if (view.states.doors.get(door.relationId)?.state !== c) dashedOutline(g, { x: door.x - 3, y: door.y - 3, w: door.w + 6, h: door.h + 6 }, TOKENS.removed);
       used = true;
     }
   }
   for (const s of view.drawn.sealed) {
     const c = view.marks.sealed.get(s.relationId);
-    if (c === "comparison-added") layer.addChild(plus(s.x + s.w + 6, s.y - 4));
-    else if (c === "comparison-removed" && view.states.sealed.get(s.relationId) !== c) {
-      dashedOutline(g, { x: s.x - 3, y: s.y - 3, w: s.w + 6, h: s.h + 6 }, TOKENS.removed);
+    if (c === "comparison-added") {
+      ring(g, s, TOKENS.added, false);
+      layer.addChild(plus(s.x + s.w + 10, s.y - 8, 20));
+      used = true;
+    } else if (c === "comparison-removed") {
+      ring(g, s, TOKENS.removed, true);
+      if (view.states.sealed.get(s.relationId) !== c) dashedOutline(g, { x: s.x - 3, y: s.y - 3, w: s.w + 6, h: s.h + 6 }, TOKENS.removed);
       used = true;
     }
   }

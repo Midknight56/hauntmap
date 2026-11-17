@@ -444,7 +444,7 @@ describe("P4 hit targets (9.1, 9.2)", () => {
 });
 describe("P8 tooltip wording (5.2)", () => {
   it("the first line is one of the seven legend concepts and the second names the target", () => {
-    const concepts = new Set(LEGEND_ENTRIES.map((e) => `${e.concept} \u2014 ${e.costume}`));
+    const concepts = new Set(LEGEND_ENTRIES.map((e) => `${e.concept}: ${e.costume}`));
     fc.assert(
       fc.property(investigationArb, (inv) => {
         const rect = { x: 0, y: 0, w: 1, h: 1 };

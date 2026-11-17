@@ -30,6 +30,14 @@ export interface HitTarget {
   rect: Rect;
 }
 
+/** One drawn name or title as the camera shows it: `px` is its font size on screen in CSS pixels. */
+export interface DebugLabel {
+  kind: "wing" | "wing-note" | "room" | "note";
+  id: string;
+  text: string;
+  px: number;
+}
+
 export interface SceneDebug {
   textureCount: number;
   visibleRooms: number;
@@ -38,6 +46,14 @@ export interface SceneDebug {
   drawnDoors: number;
   particleCount: number;
   frames: number;
+  /** Every wing title, room name and note that is drawn and not culled. */
+  labels: DebugLabel[];
+  /** The ghost of a dependency loop (scene units, and the leg of the loop it is on); null when no loop is shown. */
+  ghost: { leg: number; x: number; y: number } | null;
+  /** True while the glow of a looping corridor is drawn. */
+  glow: boolean;
+  /** The name of the active palette. */
+  theme: string;
 }
 
 export interface SceneHandle {

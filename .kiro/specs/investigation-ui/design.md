@@ -89,7 +89,7 @@ sequenceDiagram
 | --- | --- | --- |
 | `src/components/App.tsx`, `ErrorBoundary.tsx`, `main.tsx` | screen switch (`landing` / `investigation`), error boundary, providers, the entry that `index.html` loads | 6a |
 | `src/components/Landing.tsx` | heading, sentence, the two sample buttons | 6a |
-| `src/components/Toolbar.tsx`, `StatusRegion.tsx` | the toolbar written once in task 6a with every control of 10.1 (each control calls a store action or renders a registry slot; later tasks add no control), `Motion` toggle, the one `role="status"` | 6a |
+| `src/components/Toolbar.tsx`, `StatusRegion.tsx` | the toolbar written once in task 6a with every control of 10.1 (grouped as `View`, `Find`, `Help`, `Snapshots` with `Restart demo` last after the theme pass of 2026-11-17) (each control calls a store action or renders a registry slot; later tasks add no control), `Motion` toggle, the one `role="status"` | 6a |
 | `src/components/MapView.tsx`, `Minimap.tsx`, `Breadcrumb.tsx` | map wrapper (`role="application"`), scene mount, banner, overlay anchors, the keyboard, wheel and drag handling of 4.5 and 11.2, the `Focus` status text, minimap, breadcrumb | 6b |
 | `src/components/Search.tsx` | combobox search | 7 |
 | `src/components/Legend.tsx`, `Tooltip.tsx` | legend panel and footer, tooltip anchored to screen rectangles | 8 |
@@ -354,7 +354,7 @@ export const STATE_STYLES: Record<State, { fill: string; outlineWidth: number; g
 
 ```ts
 type Slot = "export" | "compare" | "live-snapshot";
-interface LegendEntry { concept: string; costume: string }        // rendered as `${concept} — ${costume}`
+interface LegendEntry { concept: string; costume: string }        // rendered as `${concept}: ${costume}`
 type CompareArgs = { before: Investigation; after: Investigation | { sample: "manor/after" }; layoutKey: string | null };
 interface Registry {
   registerControl(slot: Slot, component: React.ComponentType<{ store: InvestigationStore }>): void;

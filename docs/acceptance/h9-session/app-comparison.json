@@ -1,0 +1,37 @@
+{
+  "comparison": {
+    "result": {
+      "schemaVersion": 1,
+      "preset": "static-value",
+      "before": {
+        "label": "manor/before",
+        "moduleCount": 40,
+        "relationCount": 72
+      },
+      "after": {
+        "label": "live:samples/manor",
+        "moduleCount": 40,
+        "relationCount": 71
+      },
+      "addedModules": [],
+      "removedModules": [],
+      "changedModules": [
+        "src/notifications/receipt.ts"
+      ],
+      "addedRelations": [],
+      "removedRelations": [
+        {
+          "relationId": "[\"src/notifications/receipt.ts\",[\"local\",\"src/orders/checkout.ts\"],\"import\",\"value\"]",
+          "from": "src/notifications/receipt.ts",
+          "to": "src/orders/checkout.ts",
+          "specifier": "../orders/checkout",
+          "syntaxKind": "import",
+          "dependencyKind": "value",
+          "resolution": "local"
+        }
+      ],
+      "cyclicComponentsBefore": 1,
+      "cyclicComponentsAfter": 0
+    }
+  }
+}

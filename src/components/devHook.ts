@@ -3,6 +3,7 @@ import type { Investigation } from "../contracts/types";
 import type { Registry } from "../features/investigation/registry";
 import type { InvestigationStore } from "../features/investigation/store";
 import type { SceneHandle } from "../scene/types";
+import { setTheme, type ThemeName } from "../styles/theme";
 
 // The development hook `window.__hauntmap`. It exists only in the development server and in the build
 // made with `--mode devhook` (`VITE_HAUNTMAP_DEVHOOK=1`); the release build contains none of it.
@@ -42,6 +43,8 @@ export interface DevHook {
   failAnalysis(kind: "cycles" | "trace" | null): void;
   crashNextRender(): void;
   scene(): SceneHandle | null;
+  /** Switch the palette (`candlelit-manor`, `moonlit-crypt` or `graveyard-fog`); the scene and the page follow at once. */
+  setTheme(name: ThemeName): void;
 }
 
 declare global {
@@ -76,6 +79,9 @@ export function installDevHook(store: InvestigationStore, registry: Registry): v
       devState.crashNext = true;
     },
     scene: () => devState.scene,
+    setTheme(name) {
+      setTheme(name);
+    },
   };
   window.__hauntmap = hook;
 }

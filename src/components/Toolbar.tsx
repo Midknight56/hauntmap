@@ -53,73 +53,101 @@ export function Toolbar({ store, registry, search }: Props) {
     tabs.current[view]?.focus();
   };
 
+  const viewLabel = useId();
+  const findLabel = useId();
+  const helpLabel = useId();
+  const snapshotsLabel = useId();
+  const hasSlot = SLOTS.some((slot) => registry.getControl(slot) !== null);
+
   return (
     <div className="toolbar" role="group" aria-label="Toolbar">
-      <button type="button" onClick={() => store.actions.restart()}>
+      <div className="toolbar-group" role="group" aria-labelledby={viewLabel}>
+        <span id={viewLabel} className="toolbar-group-label">
+          View
+        </span>
+        <div role="tablist" aria-label="View" className="toolbar-tabs">
+          {VIEWS.map((view) => (
+            <button
+              key={view}
+              ref={(el) => {
+                tabs.current[view] = el;
+              }}
+              type="button"
+              role="tab"
+              id={`tab-${view}`}
+              aria-selected={state.activeView === view}
+              aria-controls="view-panel"
+              tabIndex={state.activeView === view ? 0 : -1}
+              onClick={() => store.actions.setView(view)}
+              onKeyDown={onTabKey}
+            >
+              {view === "map" ? "Map" : "Evidence"}
+            </button>
+          ))}
+        </div>
+        <button type="button" onClick={() => fitView(store)}>
+          Fit to view
+        </button>
+        <button type="button" onClick={() => zoomBy(store, ZOOM_STEP)}>
+          Zoom in
+        </button>
+        <button type="button" onClick={() => zoomBy(store, 1 / ZOOM_STEP)}>
+          Zoom out
+        </button>
+        <button type="button" onClick={() => store.actions.clearSelection()}>
+          Clear selection
+        </button>
+      </div>
+      <div className="toolbar-group" role="group" aria-labelledby={findLabel}>
+        <span id={findLabel} className="toolbar-group-label">
+          Find
+        </span>
+        <span className="toolbar-search" data-mount="search">
+          {search}
+        </span>
+        <span className="toolbar-field">
+          <label htmlFor={presetId}>Relation preset</label>
+          <select id={presetId} aria-label="Relation preset" value={state.preset} onChange={(e) => store.actions.setPreset(e.target.value as Preset)}>
+            {PRESETS.map((preset) => (
+              <option key={preset} value={preset}>
+                {preset}
+              </option>
+            ))}
+          </select>
+        </span>
+        <button type="button" className="primary toolbar-main" onClick={() => store.actions.openLoops()}>
+          Dependency loops
+        </button>
+      </div>
+      <div className="toolbar-group" role="group" aria-labelledby={helpLabel}>
+        <span id={helpLabel} className="toolbar-group-label">
+          Help
+        </span>
+        <button type="button" aria-expanded={state.legendOpen} onClick={() => store.actions.setLegendOpen(!state.legendOpen)}>
+          Legend
+        </button>
+        {state.steps !== null ? (
+          <button type="button" id="show-steps" onClick={() => store.actions.openSteps()}>
+            Show steps
+          </button>
+        ) : null}
+        <button type="button" aria-label="Motion" aria-pressed={reduced} onClick={() => store.actions.setMotion(reduced ? "system" : "reduce")}>
+          Motion: {reduced ? "Reduce" : "System"}
+        </button>
+      </div>
+      {hasSlot ? (
+        <div className="toolbar-group" role="group" aria-labelledby={snapshotsLabel}>
+          <span id={snapshotsLabel} className="toolbar-group-label">
+            Snapshots
+          </span>
+          {SLOTS.map((slot) => (
+            <SlotControl key={slot} store={store} registry={registry} slot={slot} />
+          ))}
+        </div>
+      ) : null}
+      <button type="button" className="toolbar-restart" onClick={() => store.actions.restart()}>
         Restart demo
       </button>
-      <span className="toolbar-search" data-mount="search">
-        {search}
-      </span>
-      <span className="toolbar-field">
-        <label htmlFor={presetId}>Relation preset</label>
-        <select id={presetId} aria-label="Relation preset" value={state.preset} onChange={(e) => store.actions.setPreset(e.target.value as Preset)}>
-          {PRESETS.map((preset) => (
-            <option key={preset} value={preset}>
-              {preset}
-            </option>
-          ))}
-        </select>
-      </span>
-      <button type="button" onClick={() => store.actions.openLoops()}>
-        Dependency loops
-      </button>
-      <button type="button" aria-expanded={state.legendOpen} onClick={() => store.actions.setLegendOpen(!state.legendOpen)}>
-        Legend
-      </button>
-      <button type="button" aria-label="Motion" aria-pressed={reduced} onClick={() => store.actions.setMotion(reduced ? "system" : "reduce")}>
-        Motion: {reduced ? "Reduce" : "System"}
-      </button>
-      <button type="button" onClick={() => zoomBy(store, ZOOM_STEP)}>
-        Zoom in
-      </button>
-      <button type="button" onClick={() => zoomBy(store, 1 / ZOOM_STEP)}>
-        Zoom out
-      </button>
-      <button type="button" onClick={() => fitView(store)}>
-        Fit to view
-      </button>
-      <button type="button" onClick={() => store.actions.clearSelection()}>
-        Clear selection
-      </button>
-      <div role="tablist" aria-label="View" className="toolbar-tabs">
-        {VIEWS.map((view) => (
-          <button
-            key={view}
-            ref={(el) => {
-              tabs.current[view] = el;
-            }}
-            type="button"
-            role="tab"
-            id={`tab-${view}`}
-            aria-selected={state.activeView === view}
-            aria-controls="view-panel"
-            tabIndex={state.activeView === view ? 0 : -1}
-            onClick={() => store.actions.setView(view)}
-            onKeyDown={onTabKey}
-          >
-            {view === "map" ? "Map" : "Evidence"}
-          </button>
-        ))}
-      </div>
-      {state.steps !== null ? (
-        <button type="button" id="show-steps" onClick={() => store.actions.openSteps()}>
-          Show steps
-        </button>
-      ) : null}
-      {SLOTS.map((slot) => (
-        <SlotControl key={slot} store={store} registry={registry} slot={slot} />
-      ))}
     </div>
   );
 }

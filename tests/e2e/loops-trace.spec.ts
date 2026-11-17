@@ -38,7 +38,7 @@ test.describe("dependency loops and who-imports", () => {
     await openManor(page);
     await openLoops(page);
     await expect(page.getByRole("heading", { name: "Dependency loops (static-value)" })).toBeFocused();
-    await expect(loops(page).getByText("1 loops", { exact: true })).toBeVisible();
+    await expect(loops(page).getByText("1 loop", { exact: true })).toBeVisible();
     const members = manor.cycles["static-value"]?.[0]?.members ?? [];
     expect(`3 modules: ${members.join(", ")}`).toBe(LOOP);
     expect(await loops(page).getByRole("list", { name: "Loops" }).getByRole("button").allTextContents()).toEqual([LOOP]);

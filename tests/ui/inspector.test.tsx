@@ -212,7 +212,7 @@ describe("tooltipLines (5.2, 2.5)", () => {
   const rect = { x: 0, y: 0, w: 1, h: 1 };
   it("describes a room with its language and parse status", () => {
     const inv = fixture("triad");
-    expect(tooltipLines({ kind: "room", id: "src/b.ts", rect }, inv, analysisApi)).toEqual(["Module \u2014 room", "src/b.ts \u00B7 TypeScript \u00B7 parsed"]);
+    expect(tooltipLines({ kind: "room", id: "src/b.ts", rect }, inv, analysisApi)).toEqual(["Module: room", "src/b.ts \u00B7 TypeScript \u00B7 parsed"]);
     inv.modules[0]!.parseStatus = "partial";
     inv.modules[1]!.parseStatus = "failed";
     expect(tooltipLines({ kind: "room", id: "src/a.ts", rect }, inv, analysisApi)[1]).toBe("src/a.ts \u00B7 TypeScript \u00B7 partially parsed");
@@ -223,7 +223,7 @@ describe("tooltipLines (5.2, 2.5)", () => {
     const inv = fixture("triad");
     const id = relationIdFor("src/a.ts", "src/b.ts", "import", "value");
     expect(tooltipLines({ kind: "door", id, rect }, inv, analysisApi)).toEqual([
-      "Import or re-export \u2014 door and arrow",
+      "Import or re-export: door and arrow",
       "src/a.ts imports src/b.ts \u00B7 import \u00B7 value \u00B7 line 1",
     ]);
   });
@@ -231,7 +231,7 @@ describe("tooltipLines (5.2, 2.5)", () => {
   it("describes a sealed doorway with its resolution and reason, and keeps markup characters as text", () => {
     const inv = fixture("escaped");
     expect(tooltipLines({ kind: "sealed", id: inv.imports[0]!.relationId, rect }, inv, analysisApi)).toEqual([
-      "Unresolved or external import \u2014 sealed doorway with ?",
+      "Unresolved or external import: sealed doorway with ?",
       'src/a&b.ts \u2192 "./<img src=x onerror=alert(1)>" \u00B7 unresolved \u00B7 absent-file',
     ]);
     const boundary = fixture("boundary");
@@ -240,13 +240,13 @@ describe("tooltipLines (5.2, 2.5)", () => {
   });
 
   it("describes a wing with its module count", () => {
-    expect(tooltipLines({ kind: "wing", id: "src/orders", rect }, fixture("two-wings"), analysisApi)).toEqual(["Folder \u2014 wing", "src/orders \u00B7 3 modules"]);
+    expect(tooltipLines({ kind: "wing", id: "src/orders", rect }, fixture("two-wings"), analysisApi)).toEqual(["Folder: wing", "src/orders \u00B7 3 modules"]);
   });
 
   it("calls a room outside the route filter `Not in this traversal`", () => {
     const inv = fixture("triad");
     const filter = { kind: "focus" as const, modules: ["src/b.ts"], relationIds: [], label: "Focus: src/b.ts" };
-    expect(tooltipLines({ kind: "room", id: "src/d.ts", rect }, inv, analysisApi, filter)[0]).toBe("Not in this traversal \u2014 subdued room");
-    expect(tooltipLines({ kind: "room", id: "src/b.ts", rect }, inv, analysisApi, filter)[0]).toBe("Module \u2014 room");
+    expect(tooltipLines({ kind: "room", id: "src/d.ts", rect }, inv, analysisApi, filter)[0]).toBe("Not in this traversal: subdued room");
+    expect(tooltipLines({ kind: "room", id: "src/b.ts", rect }, inv, analysisApi, filter)[0]).toBe("Module: room");
   });
 });

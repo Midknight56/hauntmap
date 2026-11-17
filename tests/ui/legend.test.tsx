@@ -8,18 +8,18 @@ import { newStore } from "./storeHarness";
 afterEach(cleanup);
 
 const WORDING = [
-  "Module \u2014 room",
-  "Folder \u2014 wing",
-  "Import or re-export \u2014 door and arrow",
-  "Dependency cycle \u2014 looping corridor",
-  "Unresolved or external import \u2014 sealed doorway with ?",
-  "Not in this traversal \u2014 subdued room",
-  "Dependency path \u2014 traveling light",
+  "Module: room",
+  "Folder: wing",
+  "Import or re-export: door and arrow",
+  "Dependency cycle: looping corridor",
+  "Unresolved or external import: sealed doorway with ?",
+  "Not in this traversal: subdued room",
+  "Dependency path: traveling light",
 ];
 
 describe("legend (5.1, 5.5, 5.6)", () => {
   it("lists the seven entries in the order and wording of the requirement", () => {
-    expect(LEGEND_ENTRIES.map((e) => `${e.concept} \u2014 ${e.costume}`)).toEqual(WORDING);
+    expect(LEGEND_ENTRIES.map((e) => `${e.concept}: ${e.costume}`)).toEqual(WORDING);
     const { store } = newStore();
     render(<Legend store={store} registry={createRegistry()} />);
     const list = screen.getByRole("list", { name: "Legend entries" });
@@ -39,11 +39,11 @@ describe("legend (5.1, 5.5, 5.6)", () => {
     let active = false;
     registry.registerLegendEntries(() => (active ? [{ concept: "Changed source", costume: "amber lamp" }] : []));
     const view = render(<Legend store={store} registry={registry} />);
-    expect(screen.queryByText("Changed source \u2014 amber lamp")).toBeNull();
+    expect(screen.queryByText("Changed source: amber lamp")).toBeNull();
     active = true;
     view.rerender(<Legend store={store} registry={registry} />);
     const items = within(screen.getByRole("list", { name: "Legend entries" })).getAllByRole("listitem");
-    expect(items.map((li) => li.textContent)).toEqual([...WORDING, "Changed source \u2014 amber lamp"]);
+    expect(items.map((li) => li.textContent)).toEqual([...WORDING, "Changed source: amber lamp"]);
   });
 
   it("renders nothing while it is closed, and the toolbar toggle opens it and carries aria-expanded", () => {

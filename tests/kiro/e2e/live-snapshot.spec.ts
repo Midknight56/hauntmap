@@ -179,6 +179,26 @@ test.describe("Open live snapshot", () => {
     expect((await sceneDebug(page)).activeTweens).toBe(0);
   });
 
+  test("8.6 with the manor's loop chosen in the loops panel, Open live snapshot keeps the camera and every room where it was", async ({ page }) => {
+    await page.route("**/demo/live.json*", routeValid);
+    await openManor(page);
+    await page.getByRole("button", { name: "Dependency loops" }).click();
+    await page.getByRole("list", { name: "Loops" }).getByRole("button").first().click();
+    await settled(page);
+    expect((await snapshot(page)).routeFilter).not.toBeNull();
+    const modules = await drawnRoomIds(page);
+    expect(modules.length).toBeGreaterThan(0);
+    await activeTweensIsZero(page);
+    const first = await fromMapCenter(page, await roomRects(page, modules));
+    const cameraBefore = (await snapshot(page)).camera;
+    await openLive(page);
+    await expect(status(page)).toHaveText(LOADED);
+    await settled(page);
+    await activeTweensIsZero(page);
+    expect((await snapshot(page)).camera).toEqual(cameraBefore);
+    expect(await fromMapCenter(page, await roomRects(page, modules))).toEqual(first);
+  });
+
   test("8.9 the Evidence view's inspector shows the no-source note for an occurrence of the newer snapshot", async ({ page }) => {
     await page.route("**/demo/live.json*", routeValid);
     await openManor(page);

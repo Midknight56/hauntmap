@@ -297,6 +297,18 @@ describe("closing and ending (7.5, 6.6)", () => {
     expect(cs.getState().status).toBe("active");
   });
 
+  it("Escape on the Compare revisions button closes the open popover too, keeps focus on the button and keeps the comparison", async () => {
+    const { cs } = await openFixturePair("cycle-closes");
+    const control = button("Compare revisions");
+    control.focus();
+    expect(control.getAttribute("aria-expanded")).toBe("true");
+    act(() => fireEvent.keyDown(control, { key: "Escape" }));
+    expect(screen.queryByRole("region", { name: "Compare revisions" })).toBeNull();
+    expect(button("Compare revisions").getAttribute("aria-expanded")).toBe("false");
+    expect(document.activeElement).toBe(button("Compare revisions"));
+    expect(cs.getState().status).toBe("active");
+  });
+
   it("End comparison ends it, writes the status and moves focus to Compare revisions", async () => {
     const { h, cs } = await openFixturePair("cycle-closes");
     act(() => fireEvent.click(button("End comparison")));

@@ -9,7 +9,7 @@ export type Slot = "export" | "compare" | "live-snapshot";
 
 export type { CompareArgs };
 
-/** Rendered as `${concept} — ${costume}`. */
+/** Rendered as `${concept}: ${costume}`. */
 export interface LegendEntry {
   concept: string;
   costume: string;

@@ -26,20 +26,20 @@ test.describe("hosted controls (dev build)", () => {
     await openFixture(page, "triad");
     await expect(page.getByRole("button", { name: "Restart demo" })).toBeVisible();
     expect(await toolbarNames(page)).toEqual([
-      "Restart demo",
+      "Map",
+      "Evidence",
+      "Fit to view",
+      "Zoom in",
+      "Zoom out",
+      "Clear selection",
       "Search modules",
       "Relation preset",
       "Dependency loops",
       "Legend",
       "Motion",
-      "Zoom in",
-      "Zoom out",
-      "Fit to view",
-      "Clear selection",
-      "Map",
-      "Evidence",
       "Compare revisions",
       "Open live snapshot",
+      "Restart demo",
     ]);
     await page.evaluate(() => {
       const hook = (window as unknown as { __hauntmap: StubHook }).__hauntmap;
@@ -49,7 +49,7 @@ test.describe("hosted controls (dev build)", () => {
       hook.registry.registerControl("compare", stub("Compare revisions"));
     });
     const names = await toolbarNames(page);
-    expect(names.slice(-3)).toEqual(["Export investigation", "Compare revisions", "Open live snapshot"]);
+    expect(names.slice(-4)).toEqual(["Export investigation", "Compare revisions", "Open live snapshot", "Restart demo"]);
     await tabTo(page, "Compare revisions");
   });
 

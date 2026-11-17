@@ -77,6 +77,8 @@ export interface CorridorBox {
   toWing: string;
   count: number;
   path: Point[];
+  /** The passage drawn for this corridor: an orthogonal route around the other wings from the edge of one wing to the edge of the other. Absent in a layout made without routing, where `path` is drawn. */
+  route?: Point[];
   /** The center of the import-count label; absent in a layout made elsewhere, where the middle of the path is used. */
   badge?: Point;
 }

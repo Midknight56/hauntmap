@@ -24,6 +24,10 @@ export interface HookSceneDebug {
   drawnDoors: number;
   particleCount: number;
   frames: number;
+  labels: { kind: "wing" | "wing-note" | "room" | "note"; id: string; text: string; px: number }[];
+  ghost: { leg: number; x: number; y: number } | null;
+  glow: boolean;
+  theme: string;
 }
 
 export interface HookScene {
@@ -46,6 +50,7 @@ export interface HauntmapHook {
   failAnalysis(kind: "cycles" | "trace" | null): void;
   crashNextRender(): void;
   scene(): HookScene | null;
+  setTheme(name: "candlelit-manor" | "moonlit-crypt" | "graveyard-fog"): void;
 }
 
 type HookWindow = Window & { __hauntmap?: HauntmapHook };

@@ -19,7 +19,7 @@ For the writers of `snapshot-comparison` (`src/features/compare`, `src/scene/com
 
 ## Slots
 
-The toolbar renders the slots after the `Map` and `Evidence` tabs, in this DOM and Tab order. A slot with nothing registered renders nothing: there is no `Export is not available in this build.` text.
+The toolbar renders the slots in their own `Snapshots` group, after the `View`, `Find` and `Help` groups and before `Restart demo`, in this DOM and Tab order. A slot with nothing registered renders nothing: there is no `Export is not available in this build.` text.
 
 | Slot | Registered control must have the accessible name | Owner |
 | --- | --- | --- |

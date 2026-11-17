@@ -68,7 +68,17 @@ test("H9 app: open the manor, select its loop, activate Open live snapshot, the 
 
   const rooms = await drawnRoomIds(page);
   expect(rooms.length).toBeGreaterThan(0);
-  const first = await fromMapCenter(page, rooms);
+  // Choosing a loop from the DOM centers the camera on its first door with a 240 ms transition (investigation-ui 4.2).
+  // The baseline is read only once that transition is over: two reads 300 ms apart agree and no tween is running.
+  let first = await fromMapCenter(page, rooms);
+  for (let reads = 0; reads < 20; reads++) {
+    await page.waitForFunction(() => (window as unknown as { __hauntmap: { scene(): { debug(): { activeTweens: number } } } }).__hauntmap.scene().debug().activeTweens === 0);
+    await page.waitForTimeout(300);
+    const again = await fromMapCenter(page, rooms);
+    const steady = JSON.stringify(again) === JSON.stringify(first);
+    first = again;
+    if (steady) break;
+  }
   for (const [id, rect] of Object.entries(first)) expect(rect, `${id} is drawn before`).not.toBeNull();
   await page.screenshot({ path: join(OUT, "app-before.png") });
 

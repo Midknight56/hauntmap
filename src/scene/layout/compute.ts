@@ -1,5 +1,6 @@
 import { placeBadges } from "./badges";
 import { placeDoors } from "./doorsPlacement";
+import { routeCorridors, routeDoors } from "./routes";
 import type {
   CorridorBox,
   GroupedRoomBox,
@@ -34,7 +35,10 @@ const ROOM_W = 96;
 const ROOM_H = 64;
 const GAP = 16;
 const PAD_X = 24;
-const PAD_TOP = 32;
+/** Room of an expanded wing above its first row: the title plate (6 to 36 units from the wing's top edge) and a gap, so a title is never under a room. */
+export const PAD_TOP = 56;
+/** The plate and the strip around it, from the top edge of the wing; nothing but the title is drawn here. */
+export const PLATE_BAND = 40;
 const PAD_BOTTOM = 24;
 const BOUNDS_PAD = 32;
 const WING_NODESEP = 48;
@@ -253,15 +257,20 @@ export function computeLayout(
     }
   }
 
-  const { doors, sealed } = placeDoors({ rooms: roomRects, relations, boundaries });
+  const placedDoors = placeDoors({ rooms: roomRects, relations, boundaries });
+  const sealed = placedDoors.sealed;
+  const doors = routeDoors(placedDoors.doors, { rooms, grouped, wings, plate: PLATE_BAND });
 
   const wingRects = new Map(wings.map((w) => [w.wing, w]));
-  const lines: CorridorBox[] = pairs.map((pair) => {
-    const a = wingRects.get(pair.from) as WingBox;
-    const b = wingRects.get(pair.to) as WingBox;
-    return { fromWing: pair.from, toWing: pair.to, count: pair.count, path: [clamp(centerOf(b), a), clamp(centerOf(a), b)] };
-  });
-  const badges = placeBadges(lines, { rooms, grouped, doors, sealed, wings });
+  const lines: CorridorBox[] = routeCorridors(
+    pairs.map((pair) => {
+      const a = wingRects.get(pair.from) as WingBox;
+      const b = wingRects.get(pair.to) as WingBox;
+      return { fromWing: pair.from, toWing: pair.to, count: pair.count, path: [clamp(centerOf(b), a), clamp(centerOf(a), b)] };
+    }),
+    wings,
+  );
+  const badges = placeBadges(lines.map((l) => ({ path: l.route ?? l.path })), { rooms, grouped, doors, sealed, wings });
   const corridors: CorridorBox[] = lines.map((line, i) => ({ ...line, badge: badges[i] as Point }));
 
   let bounds: Rect = { x: 0, y: 0, w: 0, h: 0 };

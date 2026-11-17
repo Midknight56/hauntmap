@@ -14,7 +14,7 @@ export const LEGEND_ENTRIES: LegendEntry[] = [
 export const LEGEND_FOOTER = "Rooms show files and doors show imports found in the source. The map does not show runtime behaviour, test coverage or risk.";
 
 export function legendText(entry: LegendEntry): string {
-  return `${entry.concept} \u2014 ${entry.costume}`;
+  return `${entry.concept}: ${entry.costume}`;
 }
 
 const BY_CONCEPT = new Map(LEGEND_ENTRIES.map((e) => [e.concept, legendText(e)]));

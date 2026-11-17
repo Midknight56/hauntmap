@@ -4,13 +4,13 @@ import { expected, openManor, inStaticValue, roomPoint, settled, snapshot, store
 const manor = expected();
 
 const WORDING = [
-  "Module \u2014 room",
-  "Folder \u2014 wing",
-  "Import or re-export \u2014 door and arrow",
-  "Dependency cycle \u2014 looping corridor",
-  "Unresolved or external import \u2014 sealed doorway with ?",
-  "Not in this traversal \u2014 subdued room",
-  "Dependency path \u2014 traveling light",
+  "Module: room",
+  "Folder: wing",
+  "Import or re-export: door and arrow",
+  "Dependency cycle: looping corridor",
+  "Unresolved or external import: sealed doorway with ?",
+  "Not in this traversal: subdued room",
+  "Dependency path: traveling light",
 ];
 const FOOTER = "Rooms show files and doors show imports found in the source. The map does not show runtime behaviour, test coverage or risk.";
 
@@ -80,7 +80,7 @@ test.describe("legend and tooltips", () => {
     const room = await roomPoint(page, "src/orders/checkout.ts");
     await page.mouse.move(room!.x, room!.y);
     await expect(tooltip(page)).toBeVisible();
-    expect(await lines(page)).toEqual(["Module \u2014 room", "src/orders/checkout.ts \u00B7 TypeScript \u00B7 parsed"]);
+    expect(await lines(page)).toEqual(["Module: room", "src/orders/checkout.ts \u00B7 TypeScript \u00B7 parsed"]);
     await page.keyboard.press("Escape");
     await expect(tooltip(page)).toHaveCount(0);
 
@@ -91,14 +91,14 @@ test.describe("legend and tooltips", () => {
     await expect(tooltip(page)).toBeVisible();
     const record = manor.imports.find((r) => r.from === door.from && r.to === door.to && inStaticValue(r))!;
     expect(await lines(page)).toEqual([
-      "Import or re-export \u2014 door and arrow",
+      "Import or re-export: door and arrow",
       `${door.from} imports ${door.to} \u00B7 ${record.syntaxKind} \u00B7 ${record.dependencyKind} \u00B7 line ${record.line}`,
     ]);
 
     const wing = await wingPoint(page, "src/orders");
     await page.mouse.move(wing.x, wing.y);
     await expect(tooltip(page)).toBeVisible();
-    expect(await lines(page)).toEqual(["Folder \u2014 wing", `src/orders \u00B7 ${manor.wings["src/orders"]} modules`]);
+    expect(await lines(page)).toEqual(["Folder: wing", `src/orders \u00B7 ${manor.wings["src/orders"]} modules`]);
     await page.mouse.move(2, 400);
     await expect(tooltip(page)).toHaveCount(0);
   });
@@ -112,7 +112,7 @@ test.describe("legend and tooltips", () => {
     await page.mouse.move(at.x + 1, at.y + 1);
     await page.mouse.move(at.x, at.y);
     await expect(tooltip(page)).toBeVisible();
-    expect(await lines(page)).toEqual(["Unresolved or external import \u2014 sealed doorway with ?", 'src/catalog/search.ts \u2192 "./synonyms" \u00B7 unresolved \u00B7 absent-file']);
+    expect(await lines(page)).toEqual(["Unresolved or external import: sealed doorway with ?", 'src/catalog/search.ts \u2192 "./synonyms" \u00B7 unresolved \u00B7 absent-file']);
   });
 
   test("5.2 a focused inspector item shows the tooltip of its element and blur hides it", async ({ page }) => {
@@ -121,7 +121,7 @@ test.describe("legend and tooltips", () => {
     const item = page.getByRole("button", { name: /^src\/orders\/checkout\.ts \u00B7 ok$/ });
     await item.focus();
     await expect(tooltip(page)).toBeVisible();
-    expect(await lines(page)).toEqual(["Module \u2014 room", "src/orders/checkout.ts \u00B7 TypeScript \u00B7 parsed"]);
+    expect(await lines(page)).toEqual(["Module: room", "src/orders/checkout.ts \u00B7 TypeScript \u00B7 parsed"]);
     await page.keyboard.press("Escape");
     await expect(tooltip(page)).toHaveCount(0);
     await item.focus();
@@ -149,10 +149,10 @@ test.describe("legend and tooltips", () => {
     expect(out).not.toBeNull();
     await page.mouse.move(out!.x, out!.y);
     await expect(tooltip(page)).toBeVisible();
-    expect((await lines(page))[0]).toBe("Not in this traversal \u2014 subdued room");
+    expect((await lines(page))[0]).toBe("Not in this traversal: subdued room");
     const inn = await onScreen("src/orders/checkout.ts");
     await page.mouse.move(inn!.x, inn!.y);
-    await expect.poll(async () => (await lines(page))[0]).toBe("Module \u2014 room");
+    await expect.poll(async () => (await lines(page))[0]).toBe("Module: room");
   });
   test("5.4 the preset sits beside the headings and a change asks for one new layout", async ({ page }) => {
     await openManor(page);

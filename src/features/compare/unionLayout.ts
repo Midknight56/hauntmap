@@ -1,5 +1,6 @@
 import type { ImportRecord, Investigation, Preset } from "../../contracts/types";
-import { roomLabel } from "../../scene/layout/compute";
+import { PAD_TOP, PLATE_BAND, roomLabel } from "../../scene/layout/compute";
+import { routeCorridors, routeDoors } from "../../scene/layout/routes";
 import type {
   CorridorBox,
   DoorBox,
@@ -60,7 +61,6 @@ const ROOM_W = 96;
 const ROOM_H = 64;
 const GAP = 16;
 const PAD_X = 24;
-const PAD_TOP = 32;
 const PAD_BOTTOM = 24;
 const BOUNDS_PAD = 32;
 const WING_CAP = 80;
@@ -353,11 +353,14 @@ export function extendLayout(
 
   // 4. Doors and sealed doorways over the union.
   const drawn = new Set(rooms.map((r) => r.id));
-  const { doors, sealed } = place(
+  const placed = place(
     rooms,
     union.drawn.filter((r) => drawn.has(r.from) && drawn.has(r.to)).map((r) => ({ relationId: r.relationId, from: r.from, to: r.to })),
     union.boundaries.filter((b) => drawn.has(b.from)).map((b) => ({ relationId: b.relationId, from: b.from })),
   );
+  // The same routed passages as the fleet layout (item 6b of the theme pass): arrows go around rooms.
+  const doors = routeDoors(placed.doors, { rooms, grouped, wings, plate: PLATE_BAND });
+  const sealed = placed.sealed;
 
   // 5. One corridor per ordered wing pair, counting distinct union relation IDs.
   const wingOfModule = new Map(union.modules.map((m) => [m.id, m.wing] as const));
@@ -372,20 +375,23 @@ export function extendLayout(
     else known.count += 1;
   }
   const byName = new Map(wings.map((w) => [w.wing, w] as const));
-  const lines: CorridorBox[] = [...pairs.values()]
-    .sort((x, y) => compareText(x.from, y.from) || compareText(x.to, y.to))
-    .map((pair) => {
-      const a = byName.get(pair.from) as WingBox;
-      const b = byName.get(pair.to) as WingBox;
-      return { fromWing: pair.from, toWing: pair.to, count: pair.count, path: [clamp(centerOf(b), a), clamp(centerOf(a), b)] };
-    });
+  const lines: CorridorBox[] = routeCorridors(
+    [...pairs.values()]
+      .sort((x, y) => compareText(x.from, y.from) || compareText(x.to, y.to))
+      .map((pair) => {
+        const a = byName.get(pair.from) as WingBox;
+        const b = byName.get(pair.to) as WingBox;
+        return { fromWing: pair.from, toWing: pair.to, count: pair.count, path: [clamp(centerOf(b), a), clamp(centerOf(a), b)] };
+      }),
+    wings,
+  );
   // A corridor whose path is unchanged keeps its count label where the fleet put it. A new or moved path gets no
   // `badge`, so the scene draws the label at the middle of the path: placing labels again would cost time that grows
   // with corridors times obstacles, and would move labels of corridors that did not change.
   const oldCorridors = new Map(current.corridors.map((c) => [JSON.stringify([c.fromWing, c.toWing]), c] as const));
   const corridors: CorridorBox[] = lines.map((line) => {
     const was = oldCorridors.get(JSON.stringify([line.fromWing, line.toWing]));
-    return was?.badge !== undefined && JSON.stringify(was.path) === JSON.stringify(line.path) ? { ...line, badge: was.badge } : line;
+    return was?.badge !== undefined && JSON.stringify(was.path) === JSON.stringify(line.path) && JSON.stringify(was.route) === JSON.stringify(line.route) ? { ...line, badge: was.badge } : line;
   });
 
   // 6. Bounds, key, stats.

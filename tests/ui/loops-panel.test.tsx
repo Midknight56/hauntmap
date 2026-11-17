@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LoopsPanel } from "../../src/components/LoopsPanel";
+import { LoopsPanel, countWords } from "../../src/components/LoopsPanel";
 import { analysisApi } from "../../src/features/investigation/analysisApi";
 import { createPrefsStore } from "../../src/features/investigation/prefs";
 import { createInvestigationStore } from "../../src/features/investigation/store";
@@ -25,6 +25,19 @@ describe("loops panel (7.1 to 7.3, 7.8)", () => {
     expect(screen.getByText("2 loops")).toBeTruthy();
     const list = screen.getByRole("list", { name: "Loops" });
     expect(within(list).getAllByRole("button").map((b) => b.textContent)).toEqual(["2 modules: src/x.ts, src/y.ts", "Self-import: src/z.ts"]);
+  });
+
+  it("says `1 loop`, `0 loops` and `2 loops`: the plural is for 0 or 2 and more", () => {
+    for (const [name, words] of [["triad", "0 loops"], ["boundary", "0 loops"]] as const) {
+      const store = setup(name);
+      act(() => store.actions.openLoops());
+      const { unmount } = render(<LoopsPanel store={store} />);
+      expect(screen.getByText(words)).toBeTruthy();
+      unmount();
+    }
+    expect(countWords(1)).toBe("1 loop");
+    expect(countWords(0)).toBe("0 loops");
+    expect(countWords(2)).toBe("2 loops");
   });
 
   it("moves focus to its heading when it opens", () => {

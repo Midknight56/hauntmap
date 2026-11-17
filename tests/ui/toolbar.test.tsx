@@ -23,34 +23,63 @@ const names = (container: HTMLElement): string[] =>
   [...container.querySelectorAll<HTMLElement>("button, select, input, [role=tab]")].map((el) => el.getAttribute("aria-label") ?? el.textContent ?? "");
 
 describe("toolbar (10.1, 11.4)", () => {
-  it("lists the controls in the Tab order of the spec, with no empty slots", () => {
+  it("lists the controls in the Tab order of the spec (View, Find, Help, slots, Restart demo), with no empty slots", () => {
     const { store, registry } = setup();
     const { container } = render(<Toolbar store={store} registry={registry} />);
     expect(names(container)).toEqual([
-      "Restart demo",
+      "Map",
+      "Evidence",
+      "Fit to view",
+      "Zoom in",
+      "Zoom out",
+      "Clear selection",
       "Relation preset",
       "Dependency loops",
       "Legend",
-      "Motion",
-      "Zoom in",
-      "Zoom out",
-      "Fit to view",
-      "Clear selection",
-      "Map",
-      "Evidence",
       "Show steps",
+      "Motion",
+      "Restart demo",
     ]);
   });
 
-  it("renders registered slot controls after the tablist, in the order export, compare, live-snapshot", () => {
+  it("puts the controls in labelled groups: View, Find and Help, then the slot controls, then Restart demo alone", () => {
+    const { store, registry } = setup();
+    registry.registerControl("compare", () => createElement("button", { type: "button" }, "Compare revisions"));
+    render(<Toolbar store={store} registry={registry} search={<input aria-label="Search modules" />} />);
+    const groups = screen.getAllByRole("group").filter((g) => g.getAttribute("aria-label") !== "Toolbar");
+    const inGroup = (label: string): string[] => {
+      const group = groups.find((g) => (g.getAttribute("aria-label") ?? g.getAttribute("aria-labelledby") ?? "") !== "" && screen.getByRole("group", { name: label }) === g) as HTMLElement;
+      return names(group);
+    };
+    expect(inGroup("View")).toEqual(["Map", "Evidence", "Fit to view", "Zoom in", "Zoom out", "Clear selection"]);
+    expect(inGroup("Find")).toEqual(["Search modules", "Relation preset", "Dependency loops"]);
+    expect(inGroup("Help")).toEqual(["Legend", "Show steps", "Motion"]);
+    expect(inGroup("Snapshots")).toEqual(["Compare revisions"]);
+    const all = [...document.querySelectorAll<HTMLElement>(".toolbar button, .toolbar select, .toolbar input")].map((el) => el.getAttribute("aria-label") ?? el.textContent ?? "");
+    expect(all[all.length - 1]).toBe("Restart demo");
+    const restart = screen.getByRole("button", { name: "Restart demo" });
+    expect(restart.closest('[role="group"]')?.getAttribute("aria-label")).toBe("Toolbar");
+  });
+
+  it("makes Dependency loops the main action", () => {
+    const { store, registry } = setup();
+    render(<Toolbar store={store} registry={registry} />);
+    const loops = screen.getByRole("button", { name: "Dependency loops" });
+    expect(loops.classList.contains("primary")).toBe(true);
+    expect(loops.classList.contains("toolbar-main")).toBe(true);
+    for (const other of ["Legend", "Zoom in", "Fit to view", "Restart demo"]) {
+      expect(screen.getByRole("button", { name: other }).classList.contains("primary")).toBe(false);
+    }
+  });
+
+  it("renders registered slot controls in the order export, compare, live-snapshot, just before Restart demo", () => {
     const { store, registry } = setup();
     registry.registerControl("live-snapshot", () => createElement("button", { type: "button" }, "Open live snapshot"));
     registry.registerControl("export", () => createElement("button", { type: "button" }, "Export investigation"));
     registry.registerControl("compare", () => createElement("button", { type: "button" }, "Compare revisions"));
     const { container } = render(<Toolbar store={store} registry={registry} />);
-    expect(names(container).slice(-3)).toEqual(["Export investigation", "Compare revisions", "Open live snapshot"]);
+    expect(names(container).slice(-4)).toEqual(["Export investigation", "Compare revisions", "Open live snapshot", "Restart demo"]);
   });
-
   it("gives every control a name, Legend aria-expanded and Motion aria-pressed", () => {
     const { store, registry } = setup();
     const { container } = render(<Toolbar store={store} registry={registry} />);

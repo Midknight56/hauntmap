@@ -20,7 +20,8 @@ function contrast(a: string, b: string): number {
 }
 
 const STATES = ["comparison-changed", "comparison-removed", "comparison-added"] as const;
-const TOKEN_HEX = { changed: "#f0b429", removed: "#9a93a8", added: "#5ad48a" } as const;
+// The Candlelit manor palette of src/styles/theme.ts (the theme pass of 2026-11-17 moved `removed` from #9a93a8 and `added` from #5ad48a; ratios are in the log row).
+const TOKEN_HEX = { changed: "#f0b429", removed: "#c2b59c", added: "#8fdc5a" } as const;
 
 describe("comparison states (5.4)", () => {
   it.each(STATES)("%s differs from default by more than color", (state) => {

@@ -67,7 +67,7 @@ Each task ends with `pnpm verify` green. A task writes its tests first, sees the
   - Verify: the `dynamic` fixture passes and `pnpm verify` passes.
   - _Requirements: 10.1, 10.2_
 
-- [ ] 11. Property tests from the spec
+- [x] 11. Property tests from the spec
   - In the Kiro IDE, open this spec and use the spec correctness feature to generate property tests from the acceptance criteria. If the installed version does not offer it, write the properties by hand from the acceptance criteria, and say so in the log.
   - Keep each generated property that checks something new in `tests/analysis.spec-properties.test.ts`. Remove none of the seven.
   - Write in the log which properties were added and any failure they found.

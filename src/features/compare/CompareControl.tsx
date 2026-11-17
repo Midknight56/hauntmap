@@ -44,7 +44,18 @@ export function CompareControl({ store }: { store: HostStore }): ReactElement | 
   const focusButton = (): void => buttonRef.current?.focus();
   return (
     <>
-      <button ref={buttonRef} type="button" aria-expanded={open} onClick={() => (open ? cs.actions.closePanel() : cs.actions.openPanel())}>
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-expanded={open}
+        onClick={() => (open ? cs.actions.closePanel() : cs.actions.openPanel())}
+        onKeyDown={(event) => {
+          // Escape closes the popover from its own button as well as from inside it; focus stays on the button.
+          if (event.key !== "Escape" || !open) return;
+          event.preventDefault();
+          cs.actions.closePanel();
+        }}
+      >
         Compare revisions
       </button>
       {open ? (
