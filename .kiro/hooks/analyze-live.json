@@ -1,0 +1,18 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "analyze-live",
+      "trigger": "Stop",
+      "action": { "type": "command", "command": "pnpm demo:live" },
+      "timeout": 120
+    },
+    {
+      "name": "analyze-live-on-save",
+      "trigger": "PostFileSave",
+      "matcher": "^samples/manor/.*\\.(js|jsx|ts|tsx|mjs|mts)$",
+      "action": { "type": "command", "command": "pnpm demo:live" },
+      "timeout": 120
+    }
+  ]
+}

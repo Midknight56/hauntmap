@@ -1,0 +1,11 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "verify-on-stop",
+      "trigger": "Stop",
+      "action": { "type": "command", "command": "pnpm verify" },
+      "timeout": 600
+    }
+  ]
+}

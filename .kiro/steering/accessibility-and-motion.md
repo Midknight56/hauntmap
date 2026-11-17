@@ -1,0 +1,34 @@
+---
+inclusion: always
+---
+# Accessibility and motion
+
+Rules for everything a judge or user sees: `src/components/**`, `src/scene/**`, `src/features/**`, `src/styles/**`, the exports, `tests/ui/**`, `tests/intake/**`, `tests/e2e/**` and `tests/compare/**`. They implement "Visual language tied to function", "Layout and rendering", matrix rows 11, 15, 17 and 18 of `plans/hauntmap-implementation-plan.md` (revision 3, 2026-11-03) and the `investigation-ui`, `intake` and `snapshot-comparison` requirements that refine them.
+
+## Equivalent evidence without the canvas
+- Every fact and action on the map exists as text and a control in the DOM: the Evidence view lists wings, modules, relations (`in preset` / `not in preset`) and diagnostics; the inspector, evidence trail, loops panel, who-imports panel and comparison panel select by button. The map wrapper is one Tab stop (`tabindex="0"`, `role="application"`, `aria-label="Haunted map"`, `aria-describedby` the help text `Arrow keys pan, plus and minus zoom, 0 fits the map, F focuses the selected room, I moves to the inspector, Escape clears the selection, Tab leaves the map.`); single-key shortcuts work only while it has focus; nothing inside the canvas is focusable.
+- When the renderer fails to start, loses its WebGL context for more than 5,000 ms or throws, show `The illustrated map could not start in this browser. The Evidence view has every room, door and corridor as lists.` with the buttons `Retry map` and `Open Evidence view`, open the Evidence view, keep the investigation, selection and panels, and move focus to `Retry map`. A retry never erases the current graph.
+- Exactly one `role="status"` region (`src/components/StatusRegion.tsx`), written only through `store.actions.setStatus`; no other `aria-live` or `role="status"` under `src/**`. A message replaces the previous one and stays until the next.
+
+## Keyboard, names and focus
+- Every `button`, `input` and `select` has a non-empty accessible name; every list is named; the inspector is `aria-label="Inspector"`; tabs use the tablist pattern; panels are `role="region"` with `aria-labelledby`; dialogs are `role="dialog"` with `aria-modal="true"`, trap Tab, close on Escape and return focus to the opener; `Compare revisions`, `Legend` and every other toggle carries `aria-expanded`.
+- Keep the toolbar Tab order of the `investigation-ui` spec and the panel orders of the `snapshot-comparison` spec exactly; changing either is a spec change, not a style choice.
+- Focus is always visible and unobscured: `:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px }`; never `outline: none`, `outline: 0` or `outline-style: none` in `src/**/*.css` (`tests/ui/styles.test.ts` fails on it). After a selecting action, focus stays where the spec says: scene clicks keep it on the map wrapper; DOM actions keep it on the activated control or move it to the inspector heading.
+- The whole cycle journey (open the manor, search `receipt`, follow the import door, reveal the loop, inspect an edge, compare, export) runs with keyboard input only in `tests/e2e/keyboard-journey.spec.ts`, and the comparison journey in `tests/compare/e2e/compare.spec.ts`. When either fails, fix the product, not the test.
+- No horizontal scroll at 1,024 × 640 or 1,280 × 720; the inspector stacks under the map at 640 × 360.
+
+## Color, shape and words
+- Color never carries meaning alone: every non-default state in `STATE_STYLES` differs from `default` by an outline, glyph, label or dash pattern (selected: 3-unit outline; subdued: `Not in this traversal`; witness and trace: step numbers; sealed: `?`; changed: lamp glyph; removed: dashed ghost outline; added: `+`). `tests/ui/styles.test.ts` and `tests/compare/styles.test.ts` enforce it.
+- Contrast from the tokens in `src/scene/styles.ts` and `src/styles/tokens.css`: at least 4.5:1 for `--ink` and `--ink-muted` on `--panel`, `--room-ink` on `--room` and `--room-subdued-ink` on `--room-subdued`; at least 3:1 for `--door`, `--corridor`, `--focus`, `--changed`, `--removed` and `--added` on their backgrounds. Change a token only with the recomputed ratios in the log row.
+- Name the real concept before the costume word, everywhere: legend entries and tooltips read `Dependency cycle — looping corridor`, `Unresolved or external import — sealed doorway with ?`, `Not in this traversal — subdued room`. Never call a subdued room dead code, a changed-hash lamp a behavior change, or a graph shape a risk, vulnerability, coverage or churn signal; `STATE_STYLES` has no key outside the plan's visual-language table.
+- Render every path, specifier, label and source excerpt as a text node; never `dangerouslySetInnerHTML`, never string-built markup. Exports escape every dynamic string (`escapeHtml`, `mdCode`, `mdFence`); the fixture `a&b.ts` importing `"./<img src=x onerror=alert(1)>"` must appear as literal text in the inspector and in every export.
+- Room area is uniform (96 × 64 units) so size implies no metric; labels clip at 18 characters with the full ID in the tooltip and the inspector; hit targets are at least 24 × 24 and `tests/ui/hit-test.test.ts` validates them independently of the drawn door shape.
+
+## Motion
+- Honor `prefers-reduced-motion: reduce` and the toolbar `Motion` toggle (`Reduce`, persisted as `motion` in `localStorage["hauntmap.prefs.v1"]`): create no tween (`scene.debug().activeTweens === 0`), draw the traveling light as static step markers, apply corridors, wing moves and comparison states instantly, complete the closing corridor in one frame, create no particles, and set `transition: none; animation: none` in the CSS reduced-motion block.
+- With motion allowed, animate only: the selection transition (at most 300 ms), a wing move (300 ms), the traveling light (1,200 ms per step, looping), at most 40 ambient particles, and the comparison closing corridor (600 ms, alpha only, no room position tween). No full-screen filter, displacement or blur; no continuous animation of rooms outside the route filter; no sound anywhere.
+- Pause the ticker when the document is hidden or the canvas is out of view and resume on return; cull offscreen objects with a 100 px margin.
+- Every tween completes and the active count returns to 0 (`tests/ui/animation.test.ts`, property P9); a stuck tween is a defect.
+
+## Claims
+- Write "keyboard accessible", "works with reduced motion", "screen-reader usable" or any performance figure only after the named test has passed on the submitted build and the reviewer agent has repeated the journey by hand with screenshots under `docs/acceptance/img/`; until then they are targets. The write-up quotes the test names and the gate report, never this file.

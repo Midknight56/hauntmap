@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "hauntmap": {
+      "command": "node",
+      "args": ["packages/hauntmap-mcp/dist/index.js"],
+      "env": {},
+      "disabled": false,
+      "autoApprove": ["cycles", "who_imports"]
+    }
+  }
+}
