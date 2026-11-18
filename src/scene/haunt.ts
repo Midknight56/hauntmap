@@ -27,12 +27,15 @@ export const HAUNT = {
   critterMax: 5,
   maxCritters: 5,
   maxPuffs: 6,
-  /** A rattle of this many screen pixels at most. */
-  shakePx: 3,
+  /** A rattle of this many screen pixels at most (side to side), 3 to 4 px at a door that no name stands near; never under `shakeMinPx`. */
+  shakePx: 4,
+  shakeMinPx: 2,
+  /** The rattle turns this many times a second. */
+  shakeHz: 13,
 } as const;
 
-/** The size of each silhouette on the screen, in CSS pixels (about 14 to 20 across). */
-export const CRITTER_PX: Record<CritterKind, { w: number; h: number }> = { bat: { w: 18, h: 11 }, cat: { w: 20, h: 12 } };
+/** The size of each silhouette on the screen, in CSS pixels, with its light rim: about 22 to 30 across (a bat) or long (a cat). */
+export const CRITTER_PX: Record<CritterKind, { w: number; h: number }> = { bat: { w: 28, h: 17 }, cat: { w: 28, h: 20 } };
 
 /** A small seedable generator (mulberry32): the same seed gives the same numbers in [0, 1). */
 export function mulberry32(seed: number): () => number {
@@ -158,6 +161,8 @@ export function createHaunt(opts: { seed: number; critterSlots: number; puffSlot
   let unit = 1;
   let labels: readonly Box[] = [];
   let amplitudePx = 0;
+  /** 0: the rattle goes both ways; -1 or 1: a name stands close on one side, so the rattle goes only to the other side (-1 left, 1 right). */
+  let side: -1 | 0 | 1 = 0;
   let nextId = 1;
   let dustIn = 0;
   const critters: Critter[] = [];
@@ -186,8 +191,8 @@ export function createHaunt(opts: { seed: number; critterSlots: number; puffSlot
       const dir: 1 | -1 = mix() < 0.5 ? -1 : 1;
       const critter: Critter =
         kind === "bat"
-          ? { id: nextId++, kind, age: 0, life: 1900 + mix() * 700, vx: dir * (25 + mix() * 45), vy: -(55 + mix() * 40), dir, phase: mix() * Math.PI * 2, hx: door?.x ?? 0, hy: door?.y ?? 0 }
-          : { id: nextId++, kind, age: 0, life: 1600 + mix() * 800, vx: dir * (70 + mix() * 40), vy: 0, dir, phase: mix() * Math.PI * 2, hx: door?.x ?? 0, hy: door?.y ?? 0 };
+          ? { id: nextId++, kind, age: 0, life: 1900 + mix() * 700, vx: dir * (40 + mix() * 30), vy: -(120 + mix() * 30), dir, phase: mix() * Math.PI * 2, hx: door?.x ?? 0, hy: door?.y ?? 0 }
+          : { id: nextId++, kind, age: 0, life: 1900 + mix() * 700, vx: dir * (130 + mix() * 40), vy: 0, dir, phase: mix() * Math.PI * 2, hx: door?.x ?? 0, hy: door?.y ?? 0 };
       critters.push(critter);
     }
   };
@@ -203,22 +208,24 @@ export function createHaunt(opts: { seed: number; critterSlots: number; puffSlot
   /** Pixel offsets from the center of the door. */
   const critterOffset = (c: Critter): { x: number; y: number } => {
     const s = c.age / 1000;
-    if (c.kind === "bat") return { x: c.vx * s + Math.sin(s * Math.PI * 2 * 1.1 + c.phase) * 10, y: -2 + c.vy * s + Math.sin(s * Math.PI * 2 * 2.3 + c.phase) * 3 };
-    return { x: c.vx * s, y: 7 - Math.abs(Math.sin(s * Math.PI * 2 * 5 + c.phase)) * 1.2 };
+    if (c.kind === "bat") return { x: c.vx * s + Math.sin(s * Math.PI * 2 * 1.1 + c.phase) * 16, y: -4 + c.vy * s + Math.sin(s * Math.PI * 2 * 2.3 + c.phase) * 6 };
+    return { x: c.vx * s, y: 12 - Math.abs(Math.sin(s * Math.PI * 2 * 5 + c.phase)) * 2.5 };
   };
 
   const critterAlpha = (c: Critter): number => {
     const t = c.age / c.life;
-    const from = c.kind === "bat" ? 0.55 : 0.6;
+    const from = 0.6;
     return t <= from ? 1 : Math.max(0, 1 - (t - from) / (1 - from));
   };
 
   const readShake = (): { x: number; y: number } => {
     if (phase !== "shake" || amplitudePx === 0) return { x: 0, y: 0 };
     const s = age / 1000;
-    const env = 0.7 + 0.3 * Math.sin(s * Math.PI * 2 * 3);
+    const env = 0.9 + 0.1 * Math.sin(s * Math.PI * 2 * 3);
     const a = amplitudePx * unit;
-    return { x: a * env * Math.sin(s * Math.PI * 2 * 13), y: a * 0.5 * Math.sin(s * Math.PI * 2 * 17 + 1) };
+    const wave = Math.sin(s * Math.PI * 2 * HAUNT.shakeHz);
+    const x = side === 0 ? a * env * wave : (side * a * env * (1 + wave)) / 2;
+    return { x, y: a * 0.4 * Math.sin(s * Math.PI * 2 * 17 + 1) };
   };
 
   return {
@@ -226,14 +233,29 @@ export function createHaunt(opts: { seed: number; critterSlots: number; puffSlot
       if (phase !== "none") return;
       door = next;
       shakeMs = HAUNT.shakeMinMs + mix() * (HAUNT.shakeMaxMs - HAUNT.shakeMinMs);
-      // The shake is as wide as it can be (3, 2 or 1 px) without the door reaching a name, a plate or a title; none when the door stands at one.
+      // The shake is as wide as it can be (4, 3 or 2 px, side to side) without the door reaching a name, a plate or a title. Where a name
+      // stands close on one side, the shake moves to the other side (it then only goes that way, up to 4, 3 or 2 px); it is never under 2 px,
+      // and none only where the door itself stands at a name.
       amplitudePx = 0;
-      for (const px of [HAUNT.shakePx, 2, 1]) {
-        const reach = px * unit;
-        const grown: Box = { x: next.x - next.w / 2 - reach, y: next.y - next.h / 2 - reach, w: next.w + 2 * reach, h: next.h + 2 * reach };
-        if (!covers(grown)) {
-          amplitudePx = px;
-          break;
+      side = 0;
+      const fits = (left: number, right: number, vertical: number): boolean =>
+        !covers({ x: next.x - next.w / 2 - left * unit, y: next.y - next.h / 2 - vertical * unit, w: next.w + (left + right) * unit, h: next.h + 2 * vertical * unit });
+      const widths = [HAUNT.shakePx, 3, HAUNT.shakeMinPx];
+      search: {
+        for (const px of widths) {
+          if (fits(px, px, px * 0.4)) {
+            amplitudePx = px;
+            break search;
+          }
+        }
+        for (const px of widths) {
+          for (const s of [1, -1] as const) {
+            if (fits(s === -1 ? px : 0, s === 1 ? px : 0, px * 0.4)) {
+              amplitudePx = px;
+              side = s;
+              break search;
+            }
+          }
         }
       }
       enterPhase("enter");
@@ -258,9 +280,9 @@ export function createHaunt(opts: { seed: number; critterSlots: number; puffSlot
       if (phase === "shake" && door !== null) {
         dustIn -= dt;
         if (dustIn <= 0 && puffs.length < puffSlots) {
-          puffs.push({ id: nextId++, age: 0, life: 450 + dust() * 250, ox: (dust() - 0.5) * 16, hx: door.x, hy: door.y });
-          dustIn = 90 + dust() * 120;
-        } else if (dustIn <= 0) dustIn = 90;
+          puffs.push({ id: nextId++, age: 0, life: 500 + dust() * 300, ox: (dust() - 0.5) * 28, hx: door.x, hy: door.y });
+          dustIn = 60 + dust() * 70;
+        } else if (dustIn <= 0) dustIn = 60;
       }
     },
 
@@ -334,12 +356,13 @@ export function createHaunt(opts: { seed: number; critterSlots: number; puffSlot
         }),
         puffs: puffs.map((p): PuffReading => {
           const t = p.age / p.life;
-          const rPx = 2 + 3 * t;
-          const x = p.hx + p.ox * unit;
-          const y = p.hy + (10 - (p.age / 1000) * 8) * unit;
+          const rPx = 3 + 2 * t;
+          const s = p.age / 1000;
+          const x = p.hx + (p.ox + Math.sign(p.ox || 1) * 18 * s) * unit;
+          const y = p.hy + (12 - 14 * s) * unit;
           const r = rPx * unit;
           const box: Box = { x: x - r, y: y - r, w: 2 * r, h: 2 * r };
-          return { id: p.id, x, y, r, alpha: 0.55 * (1 - t), box, visible: !covers(box) };
+          return { id: p.id, x, y, r, alpha: 0.7 * (1 - t), box, visible: !covers(box) };
         }),
       };
     },

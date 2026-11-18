@@ -172,7 +172,28 @@ test.describe("the haunt of a door", () => {
     expect((after[after.length - 1] as Frame).haunt?.ghostAlpha).toBe(1);
   });
 
-  test("4 a stranger can see a bat and a cat: 14 to 20 px, no new texture, particles inside the limit, nothing over a name", async ({ page }) => {
+  test("5 the door rattles plainly at a door that no name stands next to: 3 px or more; next to a name 2 px or more, off the name", async ({ page }) => {
+    test.setTimeout(300_000);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    let clearBest: number | null = null;
+    for (const zoom of [0.5, 1, 0.35, 0.75]) {
+      await openHaunted(page, 11, zoom);
+      const frames = await watchFirstHaunt(page, 90_000);
+      const shake = frames.filter((f) => f.haunt?.phase === "shake" && f.door !== null);
+      const rest = frames.filter((f) => f.haunt?.phase === "enter" && f.door !== null).pop();
+      expect(shake.length, `a shake at zoom ${zoom}`).toBeGreaterThan(8);
+      const door = (rest?.door as { rect: HookRect }).rect;
+      const around = { x: door.x - 6, y: door.y - 6, width: door.width + 12, height: door.height + 12 };
+      const near = (shake[0] as Frame).labels.some((l) => overlaps(around, l));
+      const best = Math.max(...shake.map((f) => Math.abs((f.door as { rect: HookRect }).rect.x - door.x)));
+      expect(best, `the door moves at least 2 px at zoom ${zoom}`).toBeGreaterThanOrEqual(2);
+      if (!near && clearBest === null) clearBest = best;
+    }
+    expect(clearBest, "one zoom puts the haunt at a door that no name stands next to").not.toBeNull();
+    expect(clearBest, "the frame and panel move 3 px or more there").toBeGreaterThanOrEqual(3);
+  });
+
+  test("4 a stranger can see a bat and a cat: 22 to 30 px, they travel 120 and 100 px, no new texture, particles inside the limit, nothing over a name", async ({ page }) => {
     test.setTimeout(150_000);
     await page.setViewportSize({ width: 1920, height: 1080 });
     await openHaunted(page, 11, 0.5);
@@ -181,9 +202,26 @@ test.describe("the haunt of a door", () => {
     const critters = frames.flatMap((f) => f.haunt?.critters ?? []);
     expect(critters.length).toBeGreaterThan(0);
     for (const c of critters) {
-      const big = Math.max(c.rect.width, c.rect.height);
-      expect(big, `${c.kind} is about 14 to 20 px across`).toBeGreaterThanOrEqual(14);
-      expect(big).toBeLessThanOrEqual(20.5);
+      expect(c.rect.width, `${c.kind} is about 22 to 30 px across`).toBeGreaterThanOrEqual(21.5);
+      expect(c.rect.width).toBeLessThanOrEqual(30.5);
+    }
+    // Far enough to be seen: a bat 120 px and a cat 100 px from the center of the door before it fades out.
+    const doorFrame = frames.find((f) => f.door !== null)?.door as { rect: HookRect };
+    const center = { x: doorFrame.rect.x + doorFrame.rect.width / 2, y: doorFrame.rect.y + doorFrame.rect.height / 2 };
+    const farthest = new Map<number, { kind: string; far: number }>();
+    for (const f of frames) {
+      for (const c of f.haunt?.critters ?? []) {
+        if (c.alpha < 0.5) continue;
+        const far = Math.hypot(c.rect.x + c.rect.width / 2 - center.x, c.rect.y + c.rect.height / 2 - center.y);
+        farthest.set(c.id, { kind: c.kind, far: Math.max(far, farthest.get(c.id)?.far ?? 0) });
+      }
+    }
+    expect(farthest.size).toBeGreaterThan(0);
+    for (const [id, c] of farthest) expect(c.far, `${c.kind} ${id} travels`).toBeGreaterThanOrEqual(c.kind === "bat" ? 120 : 100);
+    // The puffs of dust are 6 to 10 px across.
+    for (const p of frames.flatMap((f) => f.haunt?.puffs ?? [])) {
+      expect(p.rect.width).toBeGreaterThanOrEqual(5.5);
+      expect(p.rect.width).toBeLessThanOrEqual(10.5);
     }
     // The silhouettes are drawn once into cached textures: the count never changes and stays at 24 or under.
     expect(before.textureCount).toBeLessThanOrEqual(24);

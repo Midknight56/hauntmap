@@ -149,9 +149,27 @@ describe("the phases of one haunt", () => {
       const m = Math.max(Math.abs(s.read.shake.x), Math.abs(s.read.shake.y));
       if (s.phase === "shake") widest = Math.max(widest, m);
       else expect(m, `${s.phase} at ${s.t}`).toBe(0);
-      expect(m).toBeLessThanOrEqual(3 + 1e-9);
+      expect(m).toBeLessThanOrEqual(4 + 1e-9);
     }
-    expect(widest, "a visible rattle").toBeGreaterThan(1.5);
+    expect(widest, "a plain rattle of 3 to 4 px side to side").toBeGreaterThanOrEqual(3);
+  });
+
+  it("rattles fast: at least 10 turns a second, and the first turn comes at once", () => {
+    const haunt = createHaunt({ seed: 5, critterSlots: 5, puffSlots: 6 });
+    haunt.start(DOOR);
+    let turns = 0;
+    let prev = 0;
+    let dir = 0;
+    let shakeMs = 0;
+    for (const s of run(haunt, 4, 5000)) {
+      if (s.phase !== "shake") continue;
+      shakeMs += 4;
+      const d = Math.sign(s.read.shake.x - prev);
+      if (d !== 0 && dir !== 0 && d !== dir) turns++;
+      if (d !== 0) dir = d;
+      prev = s.read.shake.x;
+    }
+    expect(turns / 2 / (shakeMs / 1000), "back and forth turns per second").toBeGreaterThanOrEqual(10);
   });
 
   it("scales the shake with the zoom: the same pixels on the screen", () => {
@@ -160,8 +178,34 @@ describe("the phases of one haunt", () => {
     haunt.start(DOOR);
     let widest = 0;
     for (const s of run(haunt, 8, 5000)) widest = Math.max(widest, Math.abs(s.read.shake.x), Math.abs(s.read.shake.y));
-    expect(widest).toBeGreaterThan(3);
-    expect(widest).toBeLessThanOrEqual(6 + 1e-9);
+    expect(widest).toBeGreaterThanOrEqual(6);
+    expect(widest).toBeLessThanOrEqual(8 + 1e-9);
+  });
+
+  it("puffs of dust are pale, 6 to 10 screen px across, several at a time, and they drift and fade", () => {
+    const haunt = createHaunt({ seed: 6, critterSlots: 5, puffSlots: 6 });
+    haunt.start(DOOR);
+    let most = 0;
+    const first = new Map<number, { x: number; y: number; alpha: number }>();
+    const last = new Map<number, { x: number; y: number; alpha: number; w: number }>();
+    for (const s of run(haunt, 16, 5000)) {
+      most = Math.max(most, s.read.puffs.length);
+      for (const p of s.read.puffs) {
+        expect(p.box.w, "diameter in screen px").toBeGreaterThanOrEqual(6 - 1e-9);
+        expect(p.box.w).toBeLessThanOrEqual(10 + 1e-9);
+        if (!first.has(p.id)) first.set(p.id, { x: p.x, y: p.y, alpha: p.alpha });
+        last.set(p.id, { x: p.x, y: p.y, alpha: p.alpha, w: p.box.w });
+      }
+    }
+    expect(most, "several puffs at once").toBeGreaterThanOrEqual(4);
+    let drifted = 0;
+    for (const [id, a] of first) {
+      const b = last.get(id) as { x: number; y: number; alpha: number; w: number };
+      expect(b.alpha, "fades").toBeLessThan(a.alpha);
+      expect(b.w, "grows to about 10").toBeGreaterThan(8);
+      if (Math.hypot(b.x - a.x, b.y - a.y) > 4) drifted++;
+    }
+    expect(drifted, "drifts").toBeGreaterThan(0);
   });
 
   it("puffs small dust at the foot of the door during the shake, at most 6 at a time", () => {
@@ -174,7 +218,7 @@ describe("the phases of one haunt", () => {
       if (s.phase === "shake") during += s.read.puffs.length;
       for (const p of s.read.puffs) {
         expect(p.y, "at the foot of the door").toBeGreaterThan(DOOR.y);
-        expect(Math.abs(p.x - DOOR.x)).toBeLessThanOrEqual(DOOR.w);
+        expect(Math.abs(p.x - DOOR.x)).toBeLessThanOrEqual(DOOR.w * 2);
       }
     }
     expect(during).toBeGreaterThan(0);
@@ -244,17 +288,40 @@ describe("the critters", () => {
     expect(cats).toBeGreaterThan(5);
   });
 
-  it("about 14 to 20 screen px across, at the zoom it is drawn", () => {
-    const { critters } = burst(2);
-    for (const c of critters) {
-      expect(Math.max(c.box.w, c.box.h)).toBeGreaterThanOrEqual(14);
-      expect(Math.max(c.box.w, c.box.h)).toBeLessThanOrEqual(20);
+  it("bats fly out and up at least 120 screen px and cats run at least 100 screen px before they fade", () => {
+    for (let seed = 1; seed <= 25; seed++) {
+      const { steps } = burst(seed);
+      const faded = new Set<number>();
+      let checked = 0;
+      for (const s of steps) {
+        for (const c of s.read.critters) {
+          if (c.alpha < 1 && !faded.has(c.id)) {
+            faded.add(c.id);
+            const home = steps.find((t) => t.read.critters.some((k) => k.id === c.id))?.read.critters.find((k) => k.id === c.id) as { x: number; y: number };
+            const away = Math.hypot(c.x - DOOR.x, c.y - DOOR.y);
+            expect(away, `${c.kind} ${c.id} of seed ${seed} leaves the door by`).toBeGreaterThanOrEqual(c.kind === "bat" ? 120 : 100);
+            if (c.kind === "bat") expect(DOOR.y - c.y, "and up").toBeGreaterThan(60);
+            expect(home).toBeDefined();
+            checked++;
+          }
+        }
+      }
+      expect(checked).toBeGreaterThan(0);
+    }
+  });
+
+  it("about 2.5 times the old size: 22 to 30 screen px wide for a bat and long for a cat, at the zoom it is drawn", () => {
+    for (let seed = 1; seed <= 25; seed++) {
+      for (const c of burst(seed).critters) {
+        expect(c.box.w, `${c.kind} of seed ${seed}`).toBeGreaterThanOrEqual(22);
+        expect(c.box.w).toBeLessThanOrEqual(30);
+      }
     }
     const haunt = createHaunt({ seed: 2, critterSlots: 5, puffSlots: 6 });
     haunt.setUnit(2);
     haunt.start(DOOR);
     const at = run(haunt, 16, 6000).find((s) => s.read.critters.length > 0);
-    for (const c of at?.read.critters ?? []) expect(Math.max(c.box.w, c.box.h)).toBeGreaterThanOrEqual(28);
+    for (const c of at?.read.critters ?? []) expect(c.box.w).toBeGreaterThanOrEqual(44);
   });
 
   it("never more than the slots it was given (the particle budget)", () => {
@@ -302,6 +369,46 @@ describe("the critters", () => {
     const shown = run(clear, 16, 6000).flatMap((s) => [...s.read.critters, ...s.read.puffs]);
     expect(shown.length).toBeGreaterThan(0);
     expect(shown.every((c) => c.visible)).toBe(true);
+  });
+
+  it("a label close on one side moves the shake to the other side, and it stays 2 px or more", () => {
+    const haunt = createHaunt({ seed: 5, critterSlots: 5, puffSlots: 6 });
+    haunt.setLabels([{ x: 110, y: 30, w: 40, h: 40 }]);
+    haunt.start(DOOR);
+    let left = 0;
+    for (const s of run(haunt, 4, 5000)) {
+      left = Math.min(left, s.read.shake.x);
+      expect(s.read.shake.x, `at ${s.t}`).toBeLessThanOrEqual(1e-9);
+    }
+    expect(-left, "a rattle of at least 2 px").toBeGreaterThanOrEqual(2);
+    const other = createHaunt({ seed: 5, critterSlots: 5, puffSlots: 6 });
+    other.setLabels([{ x: 50, y: 30, w: 40.5, h: 40 }]);
+    other.start(DOOR);
+    let right = 0;
+    for (const s of run(other, 4, 5000)) {
+      right = Math.max(right, s.read.shake.x);
+      expect(s.read.shake.x).toBeGreaterThanOrEqual(-1e-9);
+    }
+    expect(right).toBeGreaterThanOrEqual(2);
+  });
+
+  it("no visible critter or puff covers a label wherever the labels stand", () => {
+    const random = mulberry32(99);
+    let shown = 0;
+    for (let n = 0; n < 30; n++) {
+      const labels = Array.from({ length: 6 }, () => ({ x: DOOR.x - 200 + random() * 400, y: DOOR.y - 200 + random() * 300, w: 30 + random() * 50, h: 12 }));
+      const haunt = createHaunt({ seed: n + 1, critterSlots: 5, puffSlots: 6 });
+      haunt.setLabels(labels);
+      haunt.start(DOOR);
+      for (const s of run(haunt, 16, 6000)) {
+        for (const c of [...s.read.critters, ...s.read.puffs]) {
+          if (!c.visible) continue;
+          shown++;
+          for (const l of labels) expect(c.box.x < l.x + l.w && l.x < c.box.x + c.box.w && c.box.y < l.y + l.h && l.y < c.box.y + c.box.h).toBe(false);
+        }
+      }
+    }
+    expect(shown).toBeGreaterThan(0);
   });
 
   it("the shake keeps the door off every label: it shrinks when a label is close", () => {

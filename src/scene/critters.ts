@@ -7,12 +7,16 @@ import { TOKENS } from "./styles";
 
 export type CritterShape = "bat" | "cat";
 
-/** The size of each silhouette in its own drawing units: one unit is one CSS pixel on the screen at the size the haunt draws it (`CRITTER_PX`). */
+/** The frame of each silhouette is its size on the screen (`CRITTER_PX`, with the rim); the drawing below is made in a small design grid and scaled into it. */
 const CRITTER_UNITS = CRITTER_PX;
+
+/** The light rim around the dark body, in screen pixels (1.5 to 2). */
+const RIM_PX = 1.75;
+/** The scale of the design grid to the screen, and the margin of the rim inside the frame, for each shape. */
+const FIT = { bat: { k: 24 / 18, x: 2, y: 2 }, cat: { k: 1.28, x: 1.8, y: 2 } } as const;
 
 const BODY = "#0b0710";
 const EYE = "#f0dc86";
-const RIM = 1.3;
 
 /** The half of the bat from the top of its head to the tip of its tail, right side; the left side is its mirror. */
 const BAT_RIGHT: readonly (readonly [number, number])[] = [
@@ -41,9 +45,9 @@ function batPoints(): number[] {
 }
 
 /** Draw one pass of a shape: the wide light pass first (the rim), then the dark pass on top of it. */
-function twice(node: Container, shape: (g: Graphics, grow: number, color: string) => void): void {
+function twice(node: Container, k: number, shape: (g: Graphics, grow: number, color: string) => void): void {
   const rim = new Graphics();
-  shape(rim, RIM, TOKENS.light);
+  shape(rim, (2 * RIM_PX) / k, TOKENS.light);
   node.addChild(rim);
   const body = new Graphics();
   shape(body, 0, BODY);
@@ -53,7 +57,7 @@ function twice(node: Container, shape: (g: Graphics, grow: number, color: string
 /** The bat: head and ears, two wings with three points along the lower edge. */
 function bat(node: Container): void {
   const points = batPoints();
-  twice(node, (g, grow, color) => {
+  twice(node, FIT.bat.k, (g, grow, color) => {
     g.poly(points).fill(color);
     if (grow > 0) g.poly(points).stroke({ width: grow, color, join: "round" });
   });
@@ -61,8 +65,10 @@ function bat(node: Container): void {
 
 /** The cat, seen from the side and facing right: body, head with two pointed ears, a raised tail, four legs in a run, one pale eye. */
 function cat(node: Container): void {
-  twice(node, (g, grow, color) => {
-    g.ellipse(9.5, 7, 6.2 + grow / 2, 2.9 + grow / 2).fill(color);
+  twice(node, FIT.cat.k, (g, grow, color) => {
+    g.ellipse(9.5, 7.4, 6.2 + grow / 2, 2.7 + grow / 2).fill(color);
+    // The arched back: a hump over the middle of the body.
+    g.ellipse(8.4, 5.4, 4.3 + grow / 2, 3 + grow / 2).fill(color);
     g.circle(16, 5.2, 2.7 + grow / 2).fill(color);
     for (const ear of [
       [14.3, 3.6, 14.7, 0.8, 16.3, 2.7],
@@ -82,7 +88,7 @@ function cat(node: Container): void {
     }
   });
   const eye = new Graphics();
-  eye.circle(17.3, 4.9, 0.6).fill(EYE);
+  eye.circle(17.3, 4.9, 0.75).fill(EYE);
   node.addChild(eye);
 }
 
@@ -92,5 +98,7 @@ export function drawCritter(kind: string): { node: Container; w: number; h: numb
   const node = new Container();
   if (shape === "cat") cat(node);
   else bat(node);
+  node.scale.set(FIT[shape].k);
+  node.position.set(FIT[shape].x, FIT[shape].y);
   return { node, ...CRITTER_UNITS[shape] };
 }
