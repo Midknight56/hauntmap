@@ -165,17 +165,20 @@ export function glowAround(rect: Rect, color: string, strength = 1, radius = 4):
 }
 
 export function drawWings(ctx: DrawContext, layout: LayoutResult): void {
+  // Every hall is drawn into one shared Graphics, and every closed-hall gate into another: the renderer makes one draw call for each
+  // Graphics, and the software renderer of the headless browsers pays for each call (the frame rate test of design pass 4).
+  const hall = new Graphics();
+  const gates = new Graphics();
+  ctx.layers.floor.addChild(hall);
   for (const wing of layout.wings) {
     const state = ctx.states.wings.get(wing.wing) ?? "default";
     const selected = state === "selected";
     // The hall: a floor with a faint hatch, a wall of two lines (the double wall of the design) and, when selected, a candle wall.
-    const hall = new Graphics();
     hall.roundRect(wing.x + 1, wing.y + 1, wing.w - 2, wing.h - 2, 4).fill(TOKENS.wing);
     hatch(hall, wing.x + 7, wing.y + 7, wing.x + wing.w - 7, wing.y + wing.h - 7, 14);
     hall.roundRect(wing.x + 1, wing.y + 1, wing.w - 2, wing.h - 2, 4).stroke({ width: 2, color: TOKENS.wallLine });
     hall.roundRect(wing.x + 6, wing.y + 6, wing.w - 12, wing.h - 12, 2).stroke({ width: 1, color: TOKENS.wallLine, alpha: 0.85 });
     if (selected) hall.roundRect(wing.x + 1.5, wing.y + 1.5, wing.w - 3, wing.h - 3, 4).stroke({ width: STATE_STYLES.selected.outlineWidth, color: TOKENS.focus });
-    ctx.layers.floor.addChild(hall);
     ctx.fx?.decor?.wing(wing, ctx.layers);
 
     // The plaque on the top wall: above the rooms, in the top strip the layout keeps free, drawn over everything else.
@@ -214,12 +217,10 @@ export function drawWings(ctx: DrawContext, layout: LayoutResult): void {
 
     if (!wing.expanded) {
       // A closed hall: a small arched door under the plaque and the number of rooms behind it.
-      const gate = new Graphics();
       const cx = wing.x + wing.w / 2;
       const base = wing.y + wing.h - 14;
-      gate.moveTo(cx - 12, base).lineTo(cx - 12, base - 20).arc(cx, base - 20, 12, Math.PI, 0).lineTo(cx + 12, base);
-      gate.stroke({ width: 2, color: TOKENS.wallLine });
-      ctx.layers.floor.addChild(gate);
+      gates.moveTo(cx - 12, base).lineTo(cx - 12, base - 20).arc(cx, base - 20, 12, Math.PI, 0).lineTo(cx + 12, base);
+      gates.stroke({ width: 2, color: TOKENS.wallLine });
       const noteWords = `${wing.moduleCount} ${wing.moduleCount === 1 ? "module" : "modules"}`;
       const note = makeText(noteWords, FONT, NOTE_FONT, TOKENS.inkMuted, "500");
       note.anchor.set(0.5);
@@ -240,6 +241,7 @@ export function drawWings(ctx: DrawContext, layout: LayoutResult): void {
       });
     }
   }
+  ctx.layers.floor.addChild(gates);
 }
 
 /** The states that light a room: a glow of this colour and strength is drawn around it. */
@@ -281,15 +283,17 @@ function addLoopLight(ctx: DrawContext, room: { w: number; h: number; id: string
       if (f < 1) g.roundRect(0, 0, room.w, room.h, 3).fill({ color: TOKENS.floor, alpha: (1 - DIM_BRIGHTNESS) * (1 - f) });
       if (f <= 0) return;
       // The pool of candle light on the floor of the room, under the line of the name.
-      g.ellipse(room.w / 2, room.h * 0.82, room.w * 0.42, room.h * 0.15).fill({ color: TOKENS.light, alpha: 0.12 * f });
-      g.ellipse(room.w / 2, room.h * 0.82, room.w * 0.26, room.h * 0.09).fill({ color: TOKENS.light, alpha: 0.14 * f });
-      // The halo: three wider and fainter outlines around the walls, no blur.
+      g.ellipse(room.w / 2, room.h * 0.82, room.w * 0.42, room.h * 0.15).fill({ color: TOKENS.light, alpha: 0.2 * f });
+      g.ellipse(room.w / 2, room.h * 0.82, room.w * 0.26, room.h * 0.09).fill({ color: TOKENS.light, alpha: 0.24 * f });
+      // The warm candle halo: five wider and fainter outlines around the walls, no blur.
       for (const [grow, alpha] of [
-        [9, 0.07],
-        [5, 0.12],
-        [2, 0.2],
+        [16, 0.1],
+        [11, 0.16],
+        [7, 0.24],
+        [4, 0.4],
+        [2, 0.6],
       ] as const) {
-        g.roundRect(-grow, -grow, room.w + grow * 2, room.h + grow * 2, 3 + grow).stroke({ width: grow * 1.4, color: TOKENS.light, alpha: alpha * 1.4 * f });
+        g.roundRect(-grow, -grow, room.w + grow * 2, room.h + grow * 2, 3 + grow).stroke({ width: grow * 1.4, color: TOKENS.light, alpha: alpha * f });
       }
     },
   };

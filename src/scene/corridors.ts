@@ -5,6 +5,7 @@ import { pinText, type DrawContext } from "./rooms";
 import type { LayoutResult, Point } from "./layout/types";
 import { TOKENS } from "./styles";
 import { glowAlphaAt } from "./effects";
+import type { CostSink } from "./fx";
 import { createDoorKeeper, type DoorKeeper, type DoorReading } from "./doorKeeper";
 import { createLoopLights, type RoomLightReading } from "./loopLights";
 import { bobOffsetPx, createWalker, GHOST_PAUSE_MS, GHOST_SPEED_PX_S, lightProgress, pointOnPolyline, polylineLength, witnessLegs, type Leg } from "./walk";
@@ -28,16 +29,22 @@ export function drawCorridors(ctx: DrawContext, layout: LayoutResult): void {
       bright.add(JSON.stringify([wingOf.get(door.from), wingOf.get(door.to)]));
     }
   }
+  // All the lines are drawn into two shared Graphics (bright and faded) under the badges: one draw call each, not one per corridor.
+  const lines = new Graphics();
+  const linesFaded = new Graphics();
+  ctx.layers.corridors.addChild(lines, linesFaded);
+  let anyLine = false;
+  let anyFaded = false;
   for (const corridor of layout.corridors) {
     const path = corridor.route ?? corridor.path;
     if (path.length < 2) continue;
     const faded = ctx.related !== null && !bright.has(JSON.stringify([corridor.fromWing, corridor.toWing]));
-    const line = new Graphics();
+    const line = faded ? linesFaded : lines;
+    if (faded) anyFaded = true;
+    else anyLine = true;
     const first = path[0] as Point;
     line.moveTo(first.x, first.y);
     for (const p of path.slice(1)) line.lineTo(p.x, p.y);
-    line.stroke({ width: 2, color: TOKENS.passage, alpha: faded ? 0.25 : 0.8, join: "round", cap: "round" });
-    ctx.layers.corridors.addChild(line);
     const a = first;
     const b = path[path.length - 1] as Point;
     const mid = corridor.badge ?? pointOnPolyline(path, polylineLength(path) / 2) ?? { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
@@ -53,11 +60,13 @@ export function drawCorridors(ctx: DrawContext, layout: LayoutResult): void {
     if (faded) text.alpha = 0.5;
     ctx.layers.corridors.addChild(pinText(ctx, "count", `${corridor.fromWing}\u2192${corridor.toWing}`, text, 12, "hide", badge));
   }
+  if (anyLine) lines.stroke({ width: 2, color: TOKENS.passage, alpha: 0.8, join: "round", cap: "round" });
+  if (anyFaded) linesFaded.stroke({ width: 2, color: TOKENS.passage, alpha: 0.25, join: "round", cap: "round" });
 }
 
 export interface RouteHandle {
   /** Advance the traveling light, the ghost and the glow; a no-op under reduced motion. */
-  update(deltaMs: number): void;
+  update(deltaMs: number, cost?: CostSink): void;
   /** The camera zoom changed: keep the ghost and the light at the size of the design on screen. */
   setZoom(zoom: number): void;
   readonly particleCount: number;
@@ -147,7 +156,7 @@ function combine(parts: RouteHandle[]): RouteHandle | null {
   if (parts.length === 0) return null;
   if (parts.length === 1) return parts[0] as RouteHandle;
   return {
-    update: (deltaMs) => parts.forEach((p) => p.update(deltaMs)),
+    update: (deltaMs, cost) => parts.forEach((p) => p.update(deltaMs, cost)),
     setZoom: (zoom) => parts.forEach((p) => p.setZoom(zoom)),
     get particleCount() {
       return parts.reduce((sum, p) => sum + p.particleCount, 0);
@@ -295,17 +304,25 @@ function drawLoop(ctx: DrawContext, layout: LayoutResult, route: { modules: stri
   };
   breathe();
   return {
-    update(deltaMs) {
+    update(deltaMs, cost) {
+      const t0 = cost === undefined ? 0 : performance.now();
       clock += deltaMs;
       walker.advance(deltaMs, GHOST_SPEED_PX_S / zoomNow);
       place();
       placeDust();
       breathe();
+      const t1 = cost === undefined ? 0 : performance.now();
       lights.sync(walker.leg, walker.lap);
       lights.advance(deltaMs);
       applyLights();
+      const t2 = cost === undefined ? 0 : performance.now();
       keeper.update(deltaMs, walker.at);
       applyLeaves(ctx, keeper, keptIds);
+      if (cost !== undefined) {
+        cost("ghost", t1 - t0);
+        cost("loopLights", t2 - t1);
+        cost("doors", performance.now() - t2);
+      }
     },
     setZoom,
     particleCount,
@@ -370,12 +387,14 @@ function drawSelectedLight(ctx: DrawContext, layout: LayoutResult, claimed: Read
   else keeper.update(0, at);
   applyLeaves(ctx, keeper, keptIds);
   return {
-    update(deltaMs) {
+    update(deltaMs, cost) {
       if (ctx.reduced) return;
+      const t0 = cost === undefined ? 0 : performance.now();
       clock += deltaMs;
       place();
       keeper.update(deltaMs, at);
       applyLeaves(ctx, keeper, keptIds);
+      cost?.("doors", performance.now() - t0);
     },
     setZoom(zoom) {
       scale = 1 / Math.max(zoom, 0.0001);
@@ -457,11 +476,13 @@ function drawTrace(ctx: DrawContext, layout: LayoutResult, route: { kind: string
   keeper.update(0, at);
   applyLeaves(ctx, keeper, keptIds);
   return {
-    update(deltaMs) {
+    update(deltaMs, cost) {
+      const t0 = cost === undefined ? 0 : performance.now();
       clock += deltaMs;
       place();
       keeper.update(deltaMs, at);
       applyLeaves(ctx, keeper, keptIds);
+      cost?.("doors", performance.now() - t0);
     },
     setZoom: () => undefined,
     particleCount: 0,

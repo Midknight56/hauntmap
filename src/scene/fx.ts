@@ -40,8 +40,18 @@ export interface RoomLight {
 
 /** The leaf of a door that swings for the ghost or the traveling light (0 shut, 1 open). */
 export interface DoorLeaf {
+  /** The width of the drawn leaf in scene units. */
+  readonly widthUnits: number;
   setOpen(fraction: number): void;
+  /** Grow the leaf to `factor` times the 16 unit door (the doorway is drawn by the same step). */
+  setGrow(factor: number): void;
 }
+
+/** The effects whose update cost is measured in the dev build, in milliseconds per frame. */
+export const EFFECT_NAMES = ["fog", "bats", "spiders", "motes", "doors", "loopLights", "candles", "ghost"] as const;
+export type EffectName = (typeof EFFECT_NAMES)[number];
+/** Where an update adds the time it took; absent in the release build, so that nothing is timed there. */
+export type CostSink = (name: EffectName, ms: number) => void;
 
 export interface SceneFx {
   /** The window of each room that is lit (selected, on a route, added): by module ID. */
@@ -59,12 +69,16 @@ export interface SceneFx {
   loopRooms: Map<string, RoomLight>;
   /** The leaf of each door that swings, by relation ID. */
   leaves: Map<string, DoorLeaf>;
+  /** How many dark doorways are drawn behind the swinging leaves. */
+  doorways: number;
+  /** Called at every zoom: the doorways and leaves follow it in steps. */
+  setDoorZoom: ((zoom: number) => void) | null;
   /** The cobwebs, candles, cracks, fog, bats and spiders. */
   decor: Decor | null;
 }
 
 export function newFx(): SceneFx {
-  return { glows: new Map(), doorSprites: new Map(), lamps: [], added: [], removedOutlines: [], removedSolid: null, openDoor: null, loopRooms: new Map(), leaves: new Map(), decor: null };
+  return { glows: new Map(), doorSprites: new Map(), lamps: [], added: [], removedOutlines: [], removedSolid: null, openDoor: null, loopRooms: new Map(), leaves: new Map(), doorways: 0, setDoorZoom: null, decor: null };
 }
 
 /** A pure pseudo-random number in [0, 1) from two integers, so that the motes start in the same places on every run. */

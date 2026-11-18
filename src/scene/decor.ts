@@ -1,7 +1,7 @@
 import { Container, Graphics, Sprite, type Texture } from "pixi.js";
 import { batFlight, crackPath, fogAlphaCap, hash32, MAX_DECOR_MOVERS, spiderDrop, STILL_CLOCK_MS, webPaths, type Corner } from "./decorMath";
 import { candleAlpha } from "./effects";
-import { unit } from "./fx";
+import { unit, type CostSink, type EffectName } from "./fx";
 import { rectsOverlap, type Box } from "./labels";
 import type { LayerName } from "./layers";
 import type { Point, Rect, RoomBox, WingBox } from "./layout/types";
@@ -40,7 +40,7 @@ export interface Decor {
   /** Put the shared drawings of the cobwebs and cracks into their layers: called once, after every room. */
   finish(layers: DecorLayers): void;
   /** Move what moves to the pose of `clockMs`. */
-  update(clockMs: number): void;
+  update(clockMs: number, cost?: CostSink): void;
   setZoom(zoom: number): void;
   /** After the names are laid out: hide every detail whose box covers one of `labels` (scene units). */
   settle(labels: readonly Box[]): void;
@@ -79,6 +79,7 @@ interface Mover {
   place: (clockMs: number) => void;
 }
 
+const COST_NAME: Record<Mover["kind"], EffectName> = { fog: "fog", bat: "bats", spider: "spiders", candle: "candles" };
 const ZERO: Box = { x: 0, y: 0, w: 0, h: 0 };
 const MAX_CANDLES = 6;
 const MAX_SPIDERS = 3;
@@ -108,10 +109,11 @@ export function createDecor(opts: { reduced: boolean; zoom: number; bounds: Rect
   const movers: Mover[] = [];
 
   const group = (width: number, color: () => string, alpha: number): Group => ({ graphics: new Graphics(), width, color, alpha, members: [], shown: "" });
-  const floorWebs = group(0.8, () => TOKENS.ink, 0.34);
-  const floorCracks = group(0.9, () => TOKENS.wallLine, 0.46);
-  const roomWebs = group(0.8, () => TOKENS.ink, 0.34);
-  const roomCracks = group(0.9, () => TOKENS.wallLine, 0.5);
+  // Drawn once and cached by the renderer: a brighter, thicker thread costs nothing per frame (halloween pass 2: the first view showed them too faintly).
+  const floorWebs = group(1.3, () => TOKENS.ink, 0.62);
+  const floorCracks = group(1.2, () => TOKENS.wallLine, 0.66);
+  const roomWebs = group(1.1, () => TOKENS.ink, 0.6);
+  const roomCracks = group(1.1, () => TOKENS.wallLine, 0.7);
   const groups = [floorWebs, floorCracks, roomWebs, roomCracks];
 
   const covers = (box: Box): boolean => labelBoxes.some((l) => rectsOverlap(box, l));
@@ -136,7 +138,7 @@ export function createDecor(opts: { reduced: boolean; zoom: number; bounds: Rect
   };
 
   const addWeb = (into: Group, corner: Corner, r: number, at: Point): void => {
-    into.members.push({ kind: "web", paths: shift(webPaths(corner, r, 5), at.x, at.y), box: { x: at.x, y: at.y, w: r, h: r }, covered: false });
+    into.members.push({ kind: "web", paths: shift(webPaths(corner, r, 6), at.x, at.y), box: { x: at.x, y: at.y, w: r, h: r }, covered: false });
   };
 
   const addCrack = (into: Group, seed: number, at: Box): void => {
@@ -194,13 +196,13 @@ export function createDecor(opts: { reduced: boolean; zoom: number; bounds: Rect
       const key = hash32(wing.wing);
       const w = wing.w;
       const h = wing.h;
-      const r = Math.min(26, Math.max(14, w * 0.07));
+      const r = Math.min(46, Math.max(28, w * 0.14));
       const bottom = wing.y + h - 7 - r;
       if ((key >>> 2) % 100 < 80) addWeb(floorWebs, "bl", r, { x: wing.x + 7, y: bottom });
       if ((key >>> 6) % 100 < 65) addWeb(floorWebs, "br", r, { x: wing.x + w - 7 - r, y: bottom });
       // A candle on the top wall, right of the plaque; a wing without one gets a web in that corner.
       if (candles < MAX_CANDLES && key % 3 !== 0 && w >= 150) addCandle(layers.particles, wing.x + w - 30, wing.y + 30, (key >>> 3) % 97);
-      else if ((key >>> 9) % 100 < 70) addWeb(floorWebs, "tr", Math.min(22, r), { x: wing.x + w - 7 - Math.min(22, r), y: wing.y + 7 });
+      else if ((key >>> 9) % 100 < 70) addWeb(floorWebs, "tr", Math.min(34, r), { x: wing.x + w - 7 - Math.min(34, r), y: wing.y + 7 });
       if (w >= 120 && h >= 90) {
         addCrack(floorCracks, key % 1000, { x: wing.x + 24, y: wing.y + h - 40, w: Math.min(56, w * 0.3), h: 22 });
         addCrack(floorCracks, (key >>> 5) % 1000, { x: wing.x + w * 0.58, y: wing.y + 44, w: Math.min(60, w * 0.3), h: 22 });
@@ -210,9 +212,9 @@ export function createDecor(opts: { reduced: boolean; zoom: number; bounds: Rect
     room(room, state) {
       if (state !== "default" && state !== "witness" && state !== "subdued") return;
       const key = hash32(room.id);
-      const r = 13;
-      if (key % 100 < 28) addWeb(roomWebs, "br", r, { x: room.x + room.w - 1.5 - r, y: room.y + room.h - 1.5 - r });
-      else if ((key >>> 8) % 100 < 22) addWeb(roomWebs, "bl", r, { x: room.x + 1.5, y: room.y + room.h - 1.5 - r });
+      const r = 22;
+      if (key % 100 < 40) addWeb(roomWebs, "br", r, { x: room.x + room.w - 1.5 - r, y: room.y + room.h - 1.5 - r });
+      else if ((key >>> 8) % 100 < 35) addWeb(roomWebs, "bl", r, { x: room.x + 1.5, y: room.y + room.h - 1.5 - r });
       if ((key >>> 4) % 100 < 40) addCrack(roomCracks, (key >>> 11) % 1000, { x: room.x + 12 + (key % 18), y: room.y + 36, w: 40, h: 18 });
     },
 
@@ -347,13 +349,15 @@ export function createDecor(opts: { reduced: boolean; zoom: number; bounds: Rect
       for (const g of groups) redraw(g);
     },
 
-    update(t) {
+    update(t, cost) {
       clock = reduced ? STILL_CLOCK_MS : t;
       if (reduced) return;
       for (const m of movers) {
+        const began = cost === undefined ? 0 : performance.now();
         if (m.moving) m.place(clock);
         // What moves is checked again at every step against the names, so that it never crosses one.
         if (m.kind === "bat" || m.kind === "spider") hideIfCovering(m);
+        if (cost !== undefined) cost(COST_NAME[m.kind], performance.now() - began);
       }
     },
 

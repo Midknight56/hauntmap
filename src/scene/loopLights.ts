@@ -5,7 +5,7 @@ import { easeOut } from "./effects";
 // ghost's leg and lap only: it never touches the graph, the selection or the steps.
 
 /** A room that the ghost has not reached shows at this fraction of its full brightness. */
-export const DIM_BRIGHTNESS = 0.45;
+export const DIM_BRIGHTNESS = 0.4;
 /** A room lights up in about this long once the ghost reaches its door. */
 export const LIGHT_UP_MS = 200;
 
@@ -15,7 +15,7 @@ export interface RoomLightReading {
   lit: boolean;
   /** 0 dim, 1 full candle glow: the light coming up. */
   glow: number;
-  /** 0.45 when dim, 1 when lit. */
+  /** 0.4 when dim, 1 when lit. */
   brightness: number;
 }
 

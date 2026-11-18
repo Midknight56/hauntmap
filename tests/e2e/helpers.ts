@@ -61,6 +61,11 @@ export interface HookFx {
   loop: { lap: number; rooms: { id: string; lit: boolean; glow: number; brightness: number }[] } | null;
   /** Every drawn effect of the halloween pass with its box in client pixels; `visible` is false while it rests, is culled or would cover a name. */
   decor: { kind: "web" | "crack" | "candle" | "fog" | "bat" | "spider"; moving: boolean; visible: boolean; rect: { x: number; y: number; width: number; height: number } }[];
+  /** The milliseconds per frame that the update of each effect takes (a running mean over the last frames); dev build only. */
+  /** The width on the screen, in pixels, of each swinging door leaf, and the number of dark doorways drawn behind them. */
+  doorPx: number[];
+  doorways: number;
+  cost: Record<"fog" | "bats" | "spiders" | "motes" | "doors" | "loopLights" | "candles" | "ghost", number>;
 }
 
 export interface HookScene {

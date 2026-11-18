@@ -104,8 +104,16 @@ test.describe("inspector and evidence view", () => {
         if (!rect || !box) return null;
         return { dx: rect.x + rect.width / 2 - (box.left + box.width / 2), dy: rect.y + rect.height / 2 - (box.top + box.height / 2) };
       }, id);
-    await expect.poll(async () => Math.abs((await center("src/orders/checkout.ts"))?.dx ?? 9999), { timeout: 5000 }).toBeLessThan(4);
-    expect(Math.abs((await center("src/orders/checkout.ts"))?.dy ?? 9999)).toBeLessThan(4);
+    // The camera eases for about 300 ms: wait until both offsets have settled under the bound, not only dx.
+    await expect
+      .poll(
+        async () => {
+          const c = await center("src/orders/checkout.ts");
+          return c === null ? 9999 : Math.max(Math.abs(c.dx), Math.abs(c.dy));
+        },
+        { timeout: 5000 },
+      )
+      .toBeLessThan(4);
 
     // A scene click selects without taking focus away from the map wrapper.
     // Find a point of the room that hits the room itself, not one of its doors.

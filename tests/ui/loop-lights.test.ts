@@ -17,9 +17,9 @@ const litIds = (lights: ReturnType<typeof createLoopLights>): string[] =>
 describe("the lights of a loop", () => {
   it("dims every room to 45 percent before the ghost arrives", () => {
     const lights = createLoopLights(ids);
-    expect(DIM_BRIGHTNESS).toBe(0.45);
+    expect(DIM_BRIGHTNESS).toBe(0.4);
     expect(litIds(lights)).toEqual([]);
-    for (const id of ids) expect(brightnessOf(lights, id)).toBeCloseTo(0.45, 6);
+    for (const id of ids) expect(brightnessOf(lights, id)).toBeCloseTo(0.4, 6);
   });
 
   it("lights the rooms from the first up to the one the ghost has reached, and no other", () => {
@@ -35,7 +35,7 @@ describe("the lights of a loop", () => {
   it("brightens in 200 ms to full and keeps that", () => {
     const lights = createLoopLights(ids);
     lights.sync(0, 1);
-    expect(brightnessOf(lights, "a")).toBeCloseTo(0.45, 6);
+    expect(brightnessOf(lights, "a")).toBeCloseTo(0.4, 6);
     lights.advance(LIGHT_UP_MS / 2);
     const half = brightnessOf(lights, "a");
     expect(half).toBeGreaterThan(0.5);
@@ -44,7 +44,7 @@ describe("the lights of a loop", () => {
     expect(brightnessOf(lights, "a")).toBe(1);
     lights.advance(5000);
     expect(brightnessOf(lights, "a")).toBe(1);
-    expect(brightnessOf(lights, "b")).toBeCloseTo(0.45, 6);
+    expect(brightnessOf(lights, "b")).toBeCloseTo(0.4, 6);
   });
 
   it("dims every room again at the start of the next lap", () => {
@@ -54,8 +54,8 @@ describe("the lights of a loop", () => {
     expect(litIds(lights)).toEqual(["a", "b", "c"]);
     lights.sync(0, 2);
     expect(litIds(lights)).toEqual(["a"]);
-    expect(brightnessOf(lights, "b")).toBeCloseTo(0.45, 6);
-    expect(brightnessOf(lights, "c")).toBeCloseTo(0.45, 6);
+    expect(brightnessOf(lights, "b")).toBeCloseTo(0.4, 6);
+    expect(brightnessOf(lights, "c")).toBeCloseTo(0.4, 6);
     expect(lights.lap).toBe(2);
   });
 

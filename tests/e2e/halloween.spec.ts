@@ -200,13 +200,13 @@ test.describe("with motion allowed", () => {
       const lit = loop.rooms.filter((r) => r.lit).map((r) => r.id).sort();
       expect(lit, `lap ${loop.lap}, leg ${ghost.leg}, at ${s.t}`).toEqual(expected);
       for (const r of loop.rooms) {
-        if (!r.lit) expect(r.brightness, `${r.id} dim`).toBeCloseTo(0.45, 2);
+        if (!r.lit) expect(r.brightness, `${r.id} dim`).toBeCloseTo(0.4, 2);
         else {
           const key = `${loop.lap}|${r.id}`;
           if (!lightAt.has(key)) lightAt.set(key, s.t);
           // Lit rooms are on their way up to full in 200 ms and then stay there.
           if (s.t - (lightAt.get(key) as number) > 260) expect(r.brightness, `${r.id} lit`).toBeGreaterThan(0.99);
-          expect(r.brightness).toBeGreaterThan(0.449);
+          expect(r.brightness).toBeGreaterThan(0.399);
         }
       }
       const before = previous === null ? null : (previous.fx.loop as NonNullable<HookFx["loop"]>);
@@ -340,6 +340,27 @@ test.describe("with motion allowed", () => {
     for (const [name, ratio] of worst) expect(ratio, name).toBeGreaterThanOrEqual(4.5);
   });
 
+  test("5 the dev build reports the milliseconds per frame of each effect", async ({ page }) => {
+    test.setTimeout(60_000);
+    await openManor(page);
+    await expandAllWings(page);
+    await settled(page);
+    await storeAction(page, "chooseLoop", 0);
+    await settled(page);
+    await page.waitForTimeout(2500);
+    const { cost } = (await sceneDebug(page)).fx;
+    const names = ["fog", "bats", "spiders", "motes", "doors", "loopLights", "candles", "ghost"];
+    expect(Object.keys(cost ?? {}).sort()).toEqual([...names].sort());
+    for (const name of names) {
+      const ms = (cost as Record<string, number>)[name] as number;
+      expect(Number.isFinite(ms), `${name} is a number`).toBe(true);
+      expect(ms, `${name} is not negative`).toBeGreaterThanOrEqual(0);
+      expect(ms, `${name} costs under one frame`).toBeLessThan(16);
+    }
+    // What the loop shows is measured: the ghost, its doors, its room lights, the motes and the candles all run.
+    for (const name of ["doors", "loopLights", "ghost", "motes", "candles"]) expect((cost as Record<string, number>)[name], `${name} was measured`).toBeGreaterThan(0);
+  });
+
   test("3 the annex with three loops keeps the particle limit and draws the details", async ({ page }) => {
     test.setTimeout(60_000);
     await page.goto("/");
@@ -359,6 +380,149 @@ test.describe("with motion allowed", () => {
   });
 });
 
+/** Pixel readings of a screenshot: for each rect, the share of pixels that differ from the rect's median luminance by more than `delta`, and the mean luminance and red minus blue. */
+async function readRects(page: Page, rects: { x: number; y: number; width: number; height: number }[], delta: number): Promise<{ share: number; mean: number; warm: number; peak: number }[]> {
+  const png = await page.screenshot();
+  return page.evaluate(
+    async ([b64, list, d]) => {
+      const img = new Image();
+      img.src = `data:image/png;base64,${b64 as string}`;
+      await img.decode();
+      const c = document.createElement("canvas");
+      c.width = img.width;
+      c.height = img.height;
+      const g = c.getContext("2d") as CanvasRenderingContext2D;
+      g.drawImage(img, 0, 0);
+      const lin = (v: number): number => {
+        const s = v / 255;
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+      };
+      const out: { share: number; mean: number; warm: number; peak: number }[] = [];
+      for (const r of list as { x: number; y: number; width: number; height: number }[]) {
+        const x0 = Math.max(0, Math.floor(r.x));
+        const y0 = Math.max(0, Math.floor(r.y));
+        const w = Math.min(c.width, Math.ceil(r.x + r.width)) - x0;
+        const h = Math.min(c.height, Math.ceil(r.y + r.height)) - y0;
+        if (w < 2 || h < 2) {
+          out.push({ share: 0, mean: 0, warm: 0, peak: 0 });
+          continue;
+        }
+        const data = g.getImageData(x0, y0, w, h).data;
+        const L: number[] = [];
+        let sum = 0;
+        let warm = 0;
+        for (let i = 0; i < w * h; i++) {
+          const l = 0.2126 * lin(data[i * 4] as number) + 0.7152 * lin(data[i * 4 + 1] as number) + 0.0722 * lin(data[i * 4 + 2] as number);
+          L.push(l);
+          sum += l;
+          warm += (data[i * 4] as number) - (data[i * 4 + 2] as number);
+        }
+        const sorted = [...L].sort((a, b) => a - b);
+        const median = sorted[Math.floor(L.length / 2)] as number;
+        // The peak is how far the brightest 2 percent of the pixels stand above the median: a thread on the floor.
+        const peak = (sorted[Math.min(L.length - 1, Math.floor(L.length * 0.98))] as number) - median;
+        out.push({ share: L.filter((l) => Math.abs(l - median) > (d as number)).length / L.length, mean: sum / L.length, warm: warm / L.length, peak });
+      }
+      return out;
+    },
+    [png.toString("base64"), rects, delta] as const,
+  );
+}
+
+test.describe("the look at the first view, 1920 x 1080", () => {
+  test.use({ viewport: { width: 1920, height: 1080 } });
+
+  test("6 the doors of the loop are 10 to 14 px wide, the cobwebs are large and bright, the cracks show, lit rooms have a warm halo", async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await openManor(page);
+    await settled(page);
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+    await page.waitForTimeout(800);
+    const d = await sceneDebug(page);
+    expect(d.fx.doorPx.length, "the loop has doors that swing").toBeGreaterThanOrEqual(3);
+    for (const px of d.fx.doorPx) {
+      expect(px, "a swinging door is 10 to 14 px wide on the screen").toBeGreaterThanOrEqual(10);
+      expect(px).toBeLessThanOrEqual(14);
+    }
+    expect(d.fx.doorways, "each swinging door has a dark doorway behind it").toBe(d.fx.doorPx.length);
+
+    const visible = d.fx.decor.filter((e) => e.visible);
+    const webs = visible.filter((e) => e.kind === "web" && e.rect.width >= 12);
+    expect(webs.length, "cobwebs are seen").toBeGreaterThanOrEqual(4);
+    const wingWebs = webs.filter((e) => e.rect.width >= 30);
+    expect(wingWebs.length, "the cobwebs in the wing corners are 30 px or more").toBeGreaterThanOrEqual(3);
+    const webRead = await readRects(page, webs.map((e) => e.rect), 0.05);
+    const strongest = webRead.map((r) => r.peak).sort((a, b) => b - a);
+    console.log(`LOOK webs ${webs.length} peaks ${strongest.map((s) => s.toFixed(3)).join(" ")}`);
+    expect(strongest[2] as number, "the threads of a cobweb stand clearly above the floor").toBeGreaterThanOrEqual(0.05);
+
+    const cracks = visible.filter((e) => e.kind === "crack");
+    expect(cracks.length).toBeGreaterThanOrEqual(3);
+    const crackRead = await readRects(page, cracks.map((e) => e.rect), 0.025);
+    const crackPeaks = crackRead.map((r) => r.peak).sort((a, b) => b - a);
+    console.log(`LOOK cracks ${cracks.length} peaks ${crackPeaks.map((s) => s.toFixed(3)).join(" ")}`);
+    expect(crackPeaks[4] as number, "the cracks stand a little above the floor").toBeGreaterThanOrEqual(0.02);
+  });
+
+  test("6 a lit loop room has a warm halo around its walls; a dim one has none", async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await openManor(page);
+    await settled(page);
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+    // One room of the loop, seen while it is dim and again once the ghost has lit it: the bands beside its walls change. A reading counts
+    // only when the room was in the same state (and the same lap) before and after the screenshot, so that a slow machine cannot skew it.
+    const loopOf = async (): Promise<NonNullable<HookFx["loop"]>> => (await sceneDebug(page)).fx.loop as NonNullable<HookFx["loop"]>;
+    const roomOf = async (id: string): Promise<{ lap: number; lit: boolean; glow: number }> => {
+      const loop = await loopOf();
+      const room = loop.rooms.find((r) => r.id === id) as { lit: boolean; glow: number };
+      return { lap: loop.lap, lit: room.lit, glow: room.glow };
+    };
+    const rectOf = (id: string): Promise<{ x: number; y: number; width: number; height: number }> =>
+      page.evaluate((moduleId) => {
+        const r = (window as unknown as { __hauntmap: { scene(): { screenRectOf(t: { kind: string; id: string }): DOMRect } } }).__hauntmap.scene().screenRectOf({ kind: "room", id: moduleId });
+        return { x: r.x, y: r.y, width: r.width, height: r.height };
+      }, id);
+    type Read = { share: number; mean: number; warm: number; peak: number }[];
+    const stable = async (id: string, wantLit: boolean): Promise<Read | null> => {
+      const ok = (s: { lit: boolean; glow: number }): boolean => (wantLit ? s.glow > 0.99 : !s.lit);
+      const before = await roomOf(id);
+      if (!ok(before)) return null;
+      const rect = await rectOf(id);
+      const bands = [
+        { x: rect.x - 9, y: rect.y + 12, width: 6, height: rect.height - 24 },
+        { x: rect.x + rect.width + 3, y: rect.y + 12, width: 6, height: rect.height - 24 },
+        { x: rect.x + rect.width * 0.1, y: rect.y + rect.height * 0.62, width: rect.width * 0.8, height: rect.height * 0.3 },
+      ];
+      const read = await readRects(page, bands, 1);
+      const after = await roomOf(id);
+      return ok(after) && after.lap === before.lap ? read : null;
+    };
+    let dimRead: Read | null = null;
+    let litRead: Read | null = null;
+    for (let attempt = 0; attempt < 8 && litRead === null; attempt++) {
+      await expect.poll(async () => (await loopOf()).rooms.some((r) => !r.lit), { timeout: 30_000, intervals: [50] }).toBe(true);
+      const id = (await loopOf()).rooms.filter((r) => !r.lit).pop()?.id as string;
+      dimRead = await stable(id, false);
+      if (dimRead === null) continue;
+      await expect.poll(async () => (await roomOf(id)).glow, { timeout: 30_000, intervals: [30] }).toBeGreaterThan(0.99);
+      litRead = await stable(id, true);
+    }
+    expect(dimRead, "a dim reading was taken").not.toBeNull();
+    expect(litRead, "a lit reading was taken").not.toBeNull();
+    const a = litRead as Read;
+    const b = dimRead as Read;
+    const floorRatio = (a[2] as { mean: number }).mean / Math.max(1e-6, (b[2] as { mean: number }).mean);
+    console.log(`LOOK inside lit ${(a[2] as { mean: number }).mean.toFixed(4)} dim ${(b[2] as { mean: number }).mean.toFixed(4)} ratio ${floorRatio.toFixed(2)}`);
+    expect(floorRatio, "the floor of a lit room is clearly brighter than a dim one").toBeGreaterThanOrEqual(2.2);    const litMean = (a[0] as { mean: number }).mean + (a[1] as { mean: number }).mean;
+    const dimMean = (b[0] as { mean: number }).mean + (b[1] as { mean: number }).mean;
+    const litWarm = ((a[0] as { warm: number }).warm + (a[1] as { warm: number }).warm) / 2;
+    const dimWarm = ((b[0] as { warm: number }).warm + (b[1] as { warm: number }).warm) / 2;    console.log(`LOOK halo lit ${litMean.toFixed(4)} warm ${litWarm.toFixed(1)}; dim ${dimMean.toFixed(4)} warm ${dimWarm.toFixed(1)}`);
+    expect(litMean, "the ring around a lit room is brighter than around a dim one").toBeGreaterThan(dimMean * 1.6);
+    expect(litWarm, "and warmer").toBeGreaterThan(dimWarm + 28);
+  });
+});
 interface LabelSample {
   particles: number;
   decor: HookFx["decor"];

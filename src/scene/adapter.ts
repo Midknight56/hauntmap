@@ -2,7 +2,7 @@ import { Application, Container, Graphics, type Texture } from "pixi.js";
 import { createAnimator } from "./animation";
 import { candleAlpha, playCameraEase, playCompareEntry, playDoorOpen, playIntro, playRemoved, playSelection, restingRoomAlpha } from "./effects";
 import { createDecor } from "./decor";
-import { createMotes, MAX_MOTES, newFx, type Motes, type SceneFx } from "./fx";
+import { createMotes, EFFECT_NAMES, MAX_MOTES, newFx, type CostSink, type EffectName, type Motes, type SceneFx } from "./fx";
 import type { Box } from "./labels";
 import { MAX_PARTICLES } from "./corridors";
 import { applyComparison, closingKey, shouldClose, type ComparisonDebug, type ComparisonStyle } from "./compare";
@@ -49,7 +49,7 @@ function live(node: { alpha: number; destroyed: boolean }): { alpha: number } {
   };
 }
 
-const emptyFx = (): SceneDebug["fx"] => ({ clock: 0, camera: { x: 0, y: 0, zoom: 1 }, motes: [], lamps: [], roomAlphas: {}, layerAlpha: 1, addedScales: [], farewell: null, removed: [], door: null, doors: [], loop: null, decor: [] });
+const emptyFx = (): SceneDebug["fx"] => ({ clock: 0, camera: { x: 0, y: 0, zoom: 1 }, motes: [], lamps: [], roomAlphas: {}, layerAlpha: 1, addedScales: [], farewell: null, removed: [], door: null, doors: [], loop: null, decor: [], doorPx: [], doorways: 0, cost: { fog: 0, bats: 0, spiders: 0, motes: 0, doors: 0, loopLights: 0, candles: 0, ghost: 0 } });
 
 /** Wait for the committed Almendra SC and Spline Sans Mono files, for at most two seconds; the plaques and names then measure and draw with the real faces. */
 async function ensureDisplayFont(): Promise<void> {
@@ -155,6 +155,16 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
   let lastMarkKey = "";
   let introNext = false;
   let farewell: { corridor: number; ghost: number } | null = null;
+  /** True while the ticker callback runs. */
+  let inTick = false;
+
+  // Dev build only: the time each effect took in this frame, and its running mean (an exponential mean over about 60 frames).
+  const frameCost = Object.fromEntries(EFFECT_NAMES.map((n) => [n, 0])) as Record<EffectName, number>;
+  const meanCost = Object.fromEntries(EFFECT_NAMES.map((n) => [n, 0])) as Record<EffectName, number>;
+  const costSink: CostSink = (name, ms) => void (frameCost[name] += ms);
+  const foldCost = (): void => {
+    for (const name of EFFECT_NAMES) meanCost[name] += (frameCost[name] - meanCost[name]) / 60;
+  };
 
   const gate = createTickerGate({ start: () => app.ticker.start(), stop: () => app.ticker.stop() });
 
@@ -354,6 +364,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     route?.setZoom(displayed.zoom);
     motes?.setZoom(displayed.zoom);
     fx.decor?.setZoom(displayed.zoom);
+    fx.setDoorZoom?.(displayed.zoom);
     // A camera move lays the names out at every frame; the details follow them a few times a second, not at every frame.
     decorDirty = true;
   }
@@ -365,6 +376,9 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     world.position.set(vp.width / 2 - camera.x * camera.zoom, vp.height / 2 - camera.y * camera.zoom);
     applyCulling();
     relayoutLabels();
+    // A jump (or a resize) happens outside the ticker: check the details against the names now, so that no frame or reading in between
+    // shows a cobweb over a plaque that has just grown. Inside an animation the ticker checks them a few times a second.
+    if (!inTick) settleDecor();
   }
 
   function moveCamera(camera: Camera, transition: "animate" | "jump"): void {
@@ -392,18 +406,25 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
   }
 
   app.ticker.add(() => {
+    inTick = true;
     frames += 1;
     sceneClock += app.ticker.deltaMS;
     animator.tick(app.ticker.deltaMS);
     if (decorDirty && (sceneClock - decorSettledAt >= 60 || animator.activeTweens === 0)) settleDecor();
-    route?.update(app.ticker.deltaMS);
+    const sink = opts.debug ? costSink : undefined;
+    if (sink !== undefined) for (const name of EFFECT_NAMES) frameCost[name] = 0;
+    route?.update(app.ticker.deltaMS, sink);
     if (!reduced) {
       fxClock += app.ticker.deltaMS;
+      const began = sink === undefined ? 0 : performance.now();
       motes?.update(fxClock);
-      fx.decor?.update(fxClock);
+      sink?.("motes", performance.now() - began);
+      fx.decor?.update(fxClock, sink);
       // The candle flicker of the lamps, multiplied with their flicker-on.
       for (const lamp of fx.lamps) if (!lamp.node.destroyed) lamp.node.alpha = lamp.entrance * candleAlpha(fxClock, lamp.seed, false);
     }
+    if (sink !== undefined) foldCost();
+    inTick = false;
   });
 
   const onVisibility = (): void => gate.setDocumentHidden(document.visibilityState === "hidden");
@@ -611,6 +632,9 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
           door: fx.openDoor === null ? null : { swing: fx.openDoor.swing, draw: fx.openDoor.draw },
           doors: route?.doors() ?? [],
           loop: route?.loop() ?? null,
+          doorPx: [...fx.leaves.values()].map((l) => l.widthUnits * displayed.zoom),
+          doorways: fx.doorways,
+          cost: { ...meanCost },
           decor: (fx.decor?.readings() ?? []).map((r) => {
             const vp = viewport();
             const a = toScreen(displayed, vp, { x: r.box.x, y: r.box.y });
