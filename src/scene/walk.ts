@@ -5,6 +5,8 @@ import type { LayoutResult, Point, Rect } from "./layout/types";
 export interface Leg {
   points: Point[];
   length: number;
+  /** The index of the relation of the route that this leg starts at (its door); set by `witnessLegs`, which skips a relation that has no anchor. */
+  from?: number;
 }
 
 const centerOf = (r: Rect): Point => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
@@ -59,7 +61,7 @@ export function witnessLegs(layout: Pick<LayoutResult, "rooms" | "doors" | "wing
     if (from === null || to === null) continue;
     const door = doors.get(route.relationIds[k] as string);
     const points: Point[] = [from, ...(door === undefined ? [] : door.arrow.slice(1)), to];
-    legs.push({ points, length: polylineLength(points) });
+    legs.push({ points, length: polylineLength(points), from: k });
   }
   return legs;
 }
@@ -108,6 +110,8 @@ export interface Walker {
   /** Move on by `deltaMs` at `unitsPerSecond` scene units per second (the screen speed divided by the zoom now). */
   advance(deltaMs: number, unitsPerSecond: number): void;
   readonly leg: number;
+  /** The lap the ghost is on: 1 at the start, and one more each time it comes back to its first door. */
+  readonly lap: number;
   readonly at: Point;
   readonly pausing: boolean;
 }
@@ -119,6 +123,7 @@ export interface Walker {
  */
 export function createWalker(legs: readonly Leg[], pauseMs: number): Walker {
   let leg = 0;
+  let lap = 1;
   let pausing = true;
   let paused = 0;
   let distance = 0;
@@ -149,6 +154,7 @@ export function createWalker(legs: readonly Leg[], pauseMs: number): Walker {
           } else {
             remaining -= need;
             leg = (leg + 1) % n;
+            if (leg === 0) lap += 1;
             pausing = true;
             paused = 0;
           }
@@ -157,6 +163,9 @@ export function createWalker(legs: readonly Leg[], pauseMs: number): Walker {
     },
     get leg() {
       return leg;
+    },
+    get lap() {
+      return lap;
     },
     get at() {
       const l = legs[leg];

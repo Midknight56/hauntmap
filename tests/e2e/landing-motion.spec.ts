@@ -10,6 +10,9 @@ interface Moving {
   ghost: { x: number; y: number } | null;
   glow: string;
   windows: string[];
+  bats: { x: number; y: number }[];
+  fog: { x: number; y: number }[];
+  moon: { x: number; y: number } | null;
 }
 
 /** What moves on the landing page now, read from the page. The ghost and the windows are found by their classes. */
@@ -19,7 +22,15 @@ async function moving(page: Page): Promise<Moving> {
     const ghost = manor?.querySelector(".manor-ghost")?.getBoundingClientRect();
     const glow = manor?.querySelector(".landing-candle");
     const windows = [...(manor?.querySelectorAll(".manor-window") ?? [])].map((w) => getComputedStyle(w).opacity);
+    const at = (el: Element): { x: number; y: number } => {
+      const r = el.getBoundingClientRect();
+      return { x: Math.round(r.x * 10) / 10, y: Math.round(r.y * 10) / 10 };
+    };
+    const moon = manor?.querySelector(".landing-moon");
     return {
+      bats: [...(manor?.querySelectorAll(".landing-bat") ?? [])].map(at),
+      fog: [...(manor?.querySelectorAll(".landing-fog") ?? [])].map(at),
+      moon: moon === null || moon === undefined ? null : at(moon),
       running: document.getAnimations().filter((a) => a.playState === "running").length,
       ghost: ghost === undefined ? null : { x: Math.round(ghost.x * 10) / 10, y: Math.round(ghost.y * 10) / 10 },
       glow: glow === null || glow === undefined ? "" : getComputedStyle(glow).opacity,
@@ -44,6 +55,36 @@ test.describe("the living manor of the landing page", () => {
     expect(a.windows.length).toBeGreaterThan(3);
     expect(b.windows.join(), "the windows flicker").not.toEqual(a.windows.join());
     expect(b.glow, "the candle glow breathes").not.toEqual(a.glow);
+    expect(a.bats.length, "bats are there").toBeGreaterThanOrEqual(2);
+    expect(b.bats, "the bats flit").not.toEqual(a.bats);
+    expect(a.fog.length, "fog is there").toBeGreaterThanOrEqual(2);
+    expect(b.fog, "the fog drifts").not.toEqual(a.fog);
+  });
+
+  test("a moon stands behind the manor, with fog and bats, and none of it is text or can be focused", async ({ page }) => {
+    await page.goto("/");
+    const a = await moving(page);
+    expect(a.moon, "the moon is there").not.toBeNull();
+    const manor = page.locator(SELECTOR);
+    expect(await manor.textContent()).toBe("");
+    expect(await manor.locator("[tabindex], a, button, input").count()).toBe(0);
+    // The moon is behind the manor: it comes before the wings in the drawing order, so that the wings are drawn over it.
+    const behind = await page.evaluate((root) => {
+      const svg = document.querySelector(`${root} svg`) as SVGSVGElement;
+      const all = [...svg.querySelectorAll("*")];
+      const moon = all.findIndex((e) => e.classList.contains("landing-moon"));
+      const wall = all.findIndex((e) => e.classList.contains("manor-wall"));
+      return moon >= 0 && wall >= 0 && moon < wall;
+    }, SELECTOR);
+    expect(behind).toBe(true);
+    // The moon and the bats do not sit on the title.
+    const title = await page.locator(".landing h1").boundingBox();
+    const moonBox = await page.locator(".landing-moon").first().boundingBox();
+    expect(title).not.toBeNull();
+    expect(moonBox).not.toBeNull();
+    const t = title as { x: number; y: number; width: number; height: number };
+    const m = moonBox as { x: number; y: number; width: number; height: number };
+    expect(m.x < t.x + t.width && t.x < m.x + m.width && m.y < t.y + t.height && t.y < m.y + m.height, "the moon does not cover the title").toBe(false);
   });
 
   test("keeps the words and the two buttons exactly as they were", async ({ page }) => {

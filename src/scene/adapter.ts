@@ -1,7 +1,9 @@
 import { Application, Container, Graphics, type Texture } from "pixi.js";
 import { createAnimator } from "./animation";
 import { candleAlpha, playCameraEase, playCompareEntry, playDoorOpen, playIntro, playRemoved, playSelection, restingRoomAlpha } from "./effects";
+import { createDecor } from "./decor";
 import { createMotes, MAX_MOTES, newFx, type Motes, type SceneFx } from "./fx";
+import type { Box } from "./labels";
 import { MAX_PARTICLES } from "./corridors";
 import { applyComparison, closingKey, shouldClose, type ComparisonDebug, type ComparisonStyle } from "./compare";
 import { collapsedWingMarks, type CollapsedMark } from "./compare/collapsed";
@@ -47,7 +49,7 @@ function live(node: { alpha: number; destroyed: boolean }): { alpha: number } {
   };
 }
 
-const emptyFx = (): SceneDebug["fx"] => ({ clock: 0, camera: { x: 0, y: 0, zoom: 1 }, motes: [], lamps: [], roomAlphas: {}, layerAlpha: 1, addedScales: [], farewell: null, removed: [], door: null });
+const emptyFx = (): SceneDebug["fx"] => ({ clock: 0, camera: { x: 0, y: 0, zoom: 1 }, motes: [], lamps: [], roomAlphas: {}, layerAlpha: 1, addedScales: [], farewell: null, removed: [], door: null, doors: [], loop: null, decor: [] });
 
 /** Wait for the committed Almendra SC and Spline Sans Mono files, for at most two seconds; the plaques and names then measure and draw with the real faces. */
 async function ensureDisplayFont(): Promise<void> {
@@ -194,15 +196,22 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
       marks: view.marks,
     });
     const ctx: DrawContext = { layers, textures, states, reduced, labels, zoom: displayed.zoom, related, compact: container.clientWidth < 520, fx, selectedRoom: states.haloRoom };
+    // The halloween details: cobwebs, candles and cracks come with the wings and rooms; the fog, the bats and the spiders after the wings.
+    // What moves in them counts inside the 40 particles, before the dust of the loops and the motes.
+    const decor = createDecor({ reduced, zoom: displayed.zoom, bounds: drawn.bounds, clockMs: fxClock, fog: textures.get("fog", "default") });
+    fx.decor = decor;
     drawWings(ctx, drawn);
+    decor.sky(layers, drawn.wings);
+    ctx.particlesTaken = decor.movers;
     drawCorridors(ctx, drawn);
     roomNodes = drawRooms(ctx, drawn);
+    decor.finish(layers);
     drawDoors(ctx, drawn);
     drawComparisonMarks(layers.selected, view, ctx);
     wingMarks = collapsedWingMarks(drawn, comparison);
     drawCollapsedMarks(layers.selected, wingMarks, ctx);
     route = drawRoute(ctx, drawn);
-    particles = route?.particleCount ?? 0;
+    particles = decor.movers + (route?.particleCount ?? 0);
     // A few faint dust motes drift in the light of the map; they count inside the particle limit, and there are none under reduced motion.
     const moteCount = reduced ? 0 : Math.max(0, Math.min(MAX_MOTES, MAX_PARTICLES - particles));
     if (moteCount > 0) {
@@ -219,6 +228,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
       }
     }
     applyCulling();
+    settleDecor();
     playEffects(view, drawn, states.haloRoom);
     if (fade) {
       world.alpha = 0;
@@ -309,12 +319,43 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     }
   }
 
+  /** Where every drawn name, title, plate and number lies now, in scene units, a little grown: the places the details must keep clear. */
+  function labelBoxes(): Box[] {
+    const pad = 2 / Math.max(displayed.zoom, 0.0001);
+    const out: Box[] = [];
+    const add = (b: Box | null | undefined): void => {
+      if (b !== null && b !== undefined) out.push({ x: b.x - pad, y: b.y - pad, w: b.w + 2 * pad, h: b.h + 2 * pad });
+    };
+    for (const label of labels) {
+      if (!label.visible()) continue;
+      if (label.box !== undefined) add(label.box());
+      else {
+        const g = label.node.getBounds();
+        add({ x: (g.x - world.position.x) / displayed.zoom, y: (g.y - world.position.y) / displayed.zoom, w: g.width / displayed.zoom, h: g.height / displayed.zoom });
+      }
+      add(label.plate?.());
+    }
+    return out;
+  }
+
+  /** True when the names moved since the details last checked them; the ticker checks again at most every 60 ms of scene time. */
+  let decorDirty = false;
+  let decorSettledAt = 0;
+  function settleDecor(): void {
+    decorDirty = false;
+    decorSettledAt = sceneClock;
+    fx.decor?.settle(labelBoxes());
+  }
+
   /** Re-choose the words and the scale of every name and title for the camera zoom (never under 12 CSS pixels). */
   function relayoutLabels(): void {
     for (const label of labels) if ((label.active ?? label.visible)()) label.layout(displayed.zoom);
     settleLabels(labels);
     route?.setZoom(displayed.zoom);
     motes?.setZoom(displayed.zoom);
+    fx.decor?.setZoom(displayed.zoom);
+    // A camera move lays the names out at every frame; the details follow them a few times a second, not at every frame.
+    decorDirty = true;
   }
 
   function applyCamera(camera: Camera): void {
@@ -354,10 +395,12 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     frames += 1;
     sceneClock += app.ticker.deltaMS;
     animator.tick(app.ticker.deltaMS);
+    if (decorDirty && (sceneClock - decorSettledAt >= 60 || animator.activeTweens === 0)) settleDecor();
     route?.update(app.ticker.deltaMS);
     if (!reduced) {
       fxClock += app.ticker.deltaMS;
       motes?.update(fxClock);
+      fx.decor?.update(fxClock);
       // The candle flicker of the lamps, multiplied with their flicker-on.
       for (const lamp of fx.lamps) if (!lamp.node.destroyed) lamp.node.alpha = lamp.entrance * candleAlpha(fxClock, lamp.seed, false);
     }
@@ -566,6 +609,15 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
               ? []
               : [{ outline: (fx.removedOutlines[0] as { alpha: number }).alpha, solid: fx.removedSolid === null || fx.removedSolid.destroyed ? 0 : fx.removedSolid.alpha }],
           door: fx.openDoor === null ? null : { swing: fx.openDoor.swing, draw: fx.openDoor.draw },
+          doors: route?.doors() ?? [],
+          loop: route?.loop() ?? null,
+          decor: (fx.decor?.readings() ?? []).map((r) => {
+            const vp = viewport();
+            const a = toScreen(displayed, vp, { x: r.box.x, y: r.box.y });
+            const b = toScreen(displayed, vp, { x: r.box.x + r.box.w, y: r.box.y + r.box.h });
+            const origin = container.getBoundingClientRect();
+            return { kind: r.kind, moving: r.moving, visible: r.visible, rect: { x: origin.left + a.x, y: origin.top + a.y, width: b.x - a.x, height: b.y - a.y } };
+          }),
         },
         states: { ...comparisonStates },
       };

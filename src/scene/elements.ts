@@ -149,6 +149,14 @@ function draw(kind: string, stateName: string): { node: Container; frame: Rectan
       // The `?` is a text of the scene (doors.ts), so that it keeps 12 CSS pixels at every zoom.
       return { node, frame: new Rectangle(0, 0, DOOR_BASE, DOOR_BASE) };
     }
+    case "fog": {
+      // A soft round cloud: white rings, each a little smaller and a little more opaque in the middle. The scene tints and thins it.
+      const g = new Graphics();
+      const rings = 24;
+      for (let k = 0; k < rings; k++) g.circle(64, 64, 64 * (1 - k / rings)).fill({ color: "#ffffff", alpha: 0.09 });
+      node.addChild(g);
+      return { node, frame: new Rectangle(0, 0, 128, 128) };
+    }
     default: {
       // corridor: the pill behind an import count.
       const g = new Graphics();

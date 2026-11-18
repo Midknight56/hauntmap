@@ -1719,6 +1719,82 @@ button.toolbar-main {
       inspector-fade-b 150ms ease-out;
   }
 }
+/* ---- The moon, the fog and the bats behind the landing title (halloween detail pass) ---- */
+.moon-disc {
+  fill: var(--ink);
+  opacity: 0.2;
+  animation: moon-glow 9000ms ease-in-out infinite alternate;
+}
+
+.moon-crater {
+  fill: var(--floor);
+  opacity: 0.22;
+}
+
+/* A wisp of fog is an ellipse of the drawing, so that it never widens the page as it drifts past the edge. */
+.landing-fog {
+  animation: fog-drift 80000ms linear infinite;
+}
+
+/* A bat rests at --bat-x when nothing moves; with motion it crosses the page in about 6 s of every 26 s. */
+.landing-bat {
+  transform: translate(var(--bat-x, 200px), 0);
+  animation: bat-fly 26000ms linear infinite;
+}
+
+.landing-bat-wings {
+  transform-box: fill-box;
+  transform-origin: 50% 70%;
+  animation: bat-flap 320ms ease-in-out infinite alternate;
+}
+
+.landing-bat-body {
+  fill: var(--ink-muted);
+  opacity: 0.4;
+}
+
+@keyframes moon-glow {
+  from {
+    opacity: 0.16;
+  }
+  to {
+    opacity: 0.24;
+  }
+}
+
+@keyframes fog-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(2300px);
+  }
+}
+
+@keyframes bat-fly {
+  0% {
+    transform: translate(-140px, 0);
+  }
+  7% {
+    transform: translate(420px, -22px);
+  }
+  14% {
+    transform: translate(980px, 16px);
+  }
+  24%,
+  100% {
+    transform: translate(1740px, -12px);
+  }
+}
+
+@keyframes bat-flap {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0.3);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -1,7 +1,9 @@
 import { Graphics, Sprite, Text } from "pixi.js";
-import { FONT } from "./elements";
+import { easeInOut } from "./effects";
+import { FONT, shade } from "./elements";
 import { pinText, type DrawContext } from "./rooms";
-import type { LayoutResult, Point } from "./layout/types";
+import type { DoorLeaf } from "./fx";
+import type { DoorBox, LayoutResult, Point } from "./layout/types";
 import { REMOVED_ALPHA, SEALED_GLYPH, TOKENS, removedStrokeWidth, type State } from "./styles";
 import { polylineLength, polylinePrefix } from "./walk";
 
@@ -51,6 +53,34 @@ export function dashedPolyline(g: Graphics, points: readonly Point[], dash: numb
       }
     }
   }
+}
+
+/**
+ * The leaf of a door that swings for the ghost or the traveling light: a closed wooden leaf inside the arch, hinged at the left jamb.
+ * It is drawn at the size of the 16 unit arch texture and scaled to the door. Open (1) it is a thin edge at the jamb; shut (0) it
+ * fills the arch. Drawing only.
+ */
+function makeLeaf(door: DoorBox, color: string): { node: Graphics; leaf: DoorLeaf } {
+  const g = new Graphics();
+  const frame = (): void => void g.moveTo(3, 14.5).lineTo(3, 7).arc(8, 7, 5, Math.PI, 0).lineTo(13, 14.5).closePath();
+  frame();
+  g.fill(shade(TOKENS.room, -0.45));
+  g.moveTo(8, 2.4).lineTo(8, 14.5).stroke({ width: 0.7, color: TOKENS.wallLine, alpha: 0.8 });
+  frame();
+  g.stroke({ width: 1.2, color });
+  g.circle(11, 10.5, 0.9).fill(TOKENS.focus);
+  const sx = door.w / 16;
+  const sy = door.h / 16;
+  g.pivot.set(3, 0);
+  g.position.set(door.x + 3 * sx, door.y);
+  const leaf: DoorLeaf = {
+    setOpen(fraction) {
+      if (g.destroyed) return;
+      g.scale.set(sx * (1 - 0.88 * easeInOut(Math.min(1, Math.max(0, fraction)))), sy);
+    },
+  };
+  leaf.setOpen(0);
+  return { node: g, leaf };
 }
 
 /** Doors with arrows, sealed doorways with `?`, and the step numbers of a witness or trace route. */
@@ -110,6 +140,12 @@ export function drawDoors(ctx: DrawContext, layout: LayoutResult): void {
     sprite.height = door.h;
     if (faded) sprite.alpha = FADED_DOOR_ALPHA;
     layer.addChild(sprite);
+    if (ctx.fx !== undefined && (info.state === "witness" || info.state === "selected" || info.state === "trace")) {
+      // The doors of a loop, of a route and of the selected relation have a leaf that swings; the route handle drives it.
+      const made = makeLeaf(door, color);
+      layer.addChild(made.node);
+      ctx.fx.leaves.set(door.relationId, made.leaf);
+    }
     if (ctx.fx !== undefined) {
       ctx.fx.doorSprites.set(door.relationId, sprite);
       if (info.state === "selected") {

@@ -1,7 +1,8 @@
 import { CanvasTextMetrics, Container, Graphics, Sprite, Text, TextStyle, type Texture } from "pixi.js";
 import { restingRoomAlpha, SUBDUED_ROOM_ALPHA } from "./effects";
 import { DISPLAY_FONT, FONT } from "./elements";
-import type { SceneFx } from "./fx";
+import type { RoomLight, SceneFx } from "./fx";
+import { DIM_BRIGHTNESS } from "./loopLights";
 import { fitLines, firstPlateFit, labelScale, plateCandidates, plateRect, rectsOverlap, roomNameFor, stemOfId, TARGET_LABEL_PX, wingTitleFor, type Box } from "./labels";
 import type { LayerName } from "./layers";
 import type { LayoutResult, Rect } from "./layout/types";
@@ -86,6 +87,8 @@ export interface DrawContext {
   fx?: SceneFx;
   /** The module ID of the selected room, or null: the other rooms rest at 60 percent while one is selected. */
   selectedRoom?: string | null;
+  /** The particles of the 40 that the decor already uses (what moves in it); the dust of the loops takes what is left. */
+  particlesTaken?: number;
 }
 
 /** `src/orders Ãƒâ€šÃ‚Â· 7 modules`; the same words as the wing tooltip. */
@@ -173,6 +176,7 @@ export function drawWings(ctx: DrawContext, layout: LayoutResult): void {
     hall.roundRect(wing.x + 6, wing.y + 6, wing.w - 12, wing.h - 12, 2).stroke({ width: 1, color: TOKENS.wallLine, alpha: 0.85 });
     if (selected) hall.roundRect(wing.x + 1.5, wing.y + 1.5, wing.w - 3, wing.h - 3, 4).stroke({ width: STATE_STYLES.selected.outlineWidth, color: TOKENS.focus });
     ctx.layers.floor.addChild(hall);
+    ctx.fx?.decor?.wing(wing, ctx.layers);
 
     // The plaque on the top wall: above the rooms, in the top strip the layout keeps free, drawn over everything else.
     const plate = new Graphics();
@@ -255,6 +259,44 @@ function glowOf(state: State): { color: string; strength: number } | null {
   }
 }
 
+/**
+ * The candle light of a room on a loop. The room starts each lap dim (a veil of the floor color over it, so that it shows at 45 percent)
+ * and, when the ghost reaches its door, a warm glow comes around it and a pool of candle light on its floor, and the veil goes. The veil
+ * is under the name, and the pool lies under the line of the name, so that the name keeps its contrast. Drawing only.
+ */
+function addLoopLight(ctx: DrawContext, room: { w: number; h: number; id: string }, node: Container): void {
+  const fx = ctx.fx as SceneFx;
+  // One drawing for the whole light of the room, made again when the glow changes (a few times in the 200 ms of a lighting, never at rest).
+  const g = new Graphics();
+  node.addChild(g);
+  let shown = -1;
+  const light: RoomLight = {
+    setGlow(fraction) {
+      if (g.destroyed) return;
+      const f = Math.round(Math.min(1, Math.max(0, fraction)) * 20) / 20;
+      if (f === shown) return;
+      shown = f;
+      g.clear();
+      // The veil: the floor color over the room, so that it shows at 45 percent until the ghost has come.
+      if (f < 1) g.roundRect(0, 0, room.w, room.h, 3).fill({ color: TOKENS.floor, alpha: (1 - DIM_BRIGHTNESS) * (1 - f) });
+      if (f <= 0) return;
+      // The pool of candle light on the floor of the room, under the line of the name.
+      g.ellipse(room.w / 2, room.h * 0.82, room.w * 0.42, room.h * 0.15).fill({ color: TOKENS.light, alpha: 0.12 * f });
+      g.ellipse(room.w / 2, room.h * 0.82, room.w * 0.26, room.h * 0.09).fill({ color: TOKENS.light, alpha: 0.14 * f });
+      // The halo: three wider and fainter outlines around the walls, no blur.
+      for (const [grow, alpha] of [
+        [9, 0.07],
+        [5, 0.12],
+        [2, 0.2],
+      ] as const) {
+        g.roundRect(-grow, -grow, room.w + grow * 2, room.h + grow * 2, 3 + grow).stroke({ width: grow * 1.4, color: TOKENS.light, alpha: alpha * 1.4 * f });
+      }
+    },
+  };
+  light.setGlow(ctx.reduced ? 1 : 0);
+  fx.loopRooms.set(room.id, light);
+}
+
 /** Draw every room (body and name; a subdued room is shown by its opacity and its dotted rail, not by words). Returns the nodes by module ID for culling. */
 export function drawRooms(ctx: DrawContext, layout: LayoutResult): Map<string, Container> {
   const nodes = new Map<string, Container>();
@@ -269,6 +311,8 @@ export function drawRooms(ctx: DrawContext, layout: LayoutResult): Map<string, C
       ctx.fx?.glows.set(room.id, lit);
     }
     node.addChild(new Sprite(ctx.textures.get("room", state)));
+    ctx.fx?.decor?.room(room, state);
+    if (state === "witness" && ctx.fx !== undefined) addLoopLight(ctx, room, node);
     const subdued = state === "subdued";
     node.alpha = restingRoomAlpha({ roomSelected: (ctx.selectedRoom ?? null) !== null, isSelected: ctx.selectedRoom === room.id, subdued });
     const ink = subdued ? TOKENS.roomSubduedInk : TOKENS.roomInk;

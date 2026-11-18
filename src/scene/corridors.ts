@@ -5,6 +5,8 @@ import { pinText, type DrawContext } from "./rooms";
 import type { LayoutResult, Point } from "./layout/types";
 import { TOKENS } from "./styles";
 import { glowAlphaAt } from "./effects";
+import { createDoorKeeper, type DoorKeeper, type DoorReading } from "./doorKeeper";
+import { createLoopLights, type RoomLightReading } from "./loopLights";
 import { bobOffsetPx, createWalker, GHOST_PAUSE_MS, GHOST_SPEED_PX_S, lightProgress, pointOnPolyline, polylineLength, witnessLegs, type Leg } from "./walk";
 
 export const MAX_PARTICLES = 40;
@@ -67,6 +69,30 @@ export interface RouteHandle {
   glowAlpha(): number | null;
   /** The traveling light on the selected path (scene units); null while it rests between two runs or when nothing is selected. */
   light(): { x: number; y: number } | null;
+  /** The doors that swing for the ghost or the light, with the phase of each swing (halloween detail pass). */
+  doors(): DoorReading[];
+  /** The rooms of the loop the ghost walks and the lap it is on; null when this part is not a loop. */
+  loop(): { lap: number; rooms: RoomLightReading[] } | null;
+}
+
+const NO_LOOP = (): null => null;
+
+/** Hand the swing of each kept door to its leaf (drawing only). */
+function applyLeaves(ctx: DrawContext, keeper: DoorKeeper, ids: readonly string[]): void {
+  const leaves = ctx.fx?.leaves;
+  if (leaves === undefined) return;
+  for (const id of ids) leaves.get(id)?.setOpen(keeper.swing(id));
+}
+
+/** The kept doors of a route: every distinct relation of it whose door is drawn, with its center and width. */
+function keptDoors(layout: LayoutResult, relationIds: readonly string[]): { id: string; x: number; y: number; w: number }[] {
+  const byId = new Map(layout.doors.map((d) => [d.relationId, d] as const));
+  const out: { id: string; x: number; y: number; w: number }[] = [];
+  for (const id of new Set(relationIds)) {
+    const d = byId.get(id);
+    if (d !== undefined) out.push({ id, x: d.x + d.w / 2, y: d.y + d.h / 2, w: d.w });
+  }
+  return out;
 }
 
 function center(r: { x: number; y: number; w: number; h: number }): Point {
@@ -132,6 +158,18 @@ function combine(parts: RouteHandle[]): RouteHandle | null {
     },
     glowAlpha: () => parts.map((p) => p.glowAlpha()).find((a) => a !== null) ?? null,
     light: () => parts.map((p) => p.light()).find((l) => l !== null) ?? null,
+    doors: () => parts.flatMap((p) => p.doors()),
+    loop: () => {
+      const loops = parts.map((p) => p.loop()).filter((l): l is NonNullable<typeof l> => l !== null);
+      if (loops.length === 0) return null;
+      // A room on two loops is lit when either ghost has lit it.
+      const rooms = new Map<string, RoomLightReading>();
+      for (const r of loops.flatMap((l) => l.rooms)) {
+        const known = rooms.get(r.id);
+        if (known === undefined || r.glow > known.glow || (r.lit && !known.lit)) rooms.set(r.id, r);
+      }
+      return { lap: (loops[0] as NonNullable<(typeof loops)[number]>).lap, rooms: [...rooms.values()] };
+    },
   };
 }
 
@@ -144,20 +182,26 @@ function combine(parts: RouteHandle[]): RouteHandle | null {
 export function drawRoute(ctx: DrawContext, layout: LayoutResult): RouteHandle | null {
   const parts: RouteHandle[] = [];
   const route = ctx.states.route;
-  const budget = { left: MAX_PARTICLES };
+  // The things the decor moves count inside the 40 particles first; the dust of the loops takes what is left.
+  const budget = { left: Math.max(0, MAX_PARTICLES - (ctx.particlesTaken ?? 0)) };
+  // The doors the ghost opens are the ghost's: the light of a selected relation leaves them alone.
+  const claimed = new Set<string>();
   if (route !== null && route.kind === "witness") {
     const part = drawLoop(ctx, layout, route, true, budget);
     if (part !== null) parts.push(part);
+    route.relationIds.forEach((id) => claimed.add(id));
   } else if (route !== null && route.kind === "trace") {
     const part = drawTrace(ctx, layout, route);
     if (part !== null) parts.push(part);
+    route.relationIds.forEach((id) => claimed.add(id));
   } else if (route === null) {
     for (const loop of ctx.states.ambient) {
       const part = drawLoop(ctx, layout, loop, false, budget);
       if (part !== null) parts.push(part);
+      loop.relationIds.forEach((id) => claimed.add(id));
     }
   }
-  const light = drawSelectedLight(ctx, layout);
+  const light = drawSelectedLight(ctx, layout, claimed);
   if (light !== null) parts.push(light);
   return combine(parts);
 }
@@ -200,9 +244,30 @@ function drawLoop(ctx: DrawContext, layout: LayoutResult, route: { modules: stri
   };
   setZoom(ctx.zoom);
   place();
+  // The rooms of the loop light as the ghost reaches their door, and the doors it passes swing open and shut. Both read the walker only.
+  const legModules = legs.map((leg, k) => route.modules[leg.from ?? k] as string);
+  const lights = createLoopLights(legModules);
+  const kept = keptDoors(layout, route.relationIds);
+  const keeper = createDoorKeeper(kept);
+  const keptIds = kept.map((d) => d.id);
+  const roomHandles = ctx.fx?.loopRooms;
+  const applyLights = (): void => {
+    if (roomHandles === undefined) return;
+    for (const r of lights.rooms()) roomHandles.get(r.id)?.setGlow(r.glow);
+  };
+  const readLoop = (): { lap: number; rooms: RoomLightReading[] } => ({ lap: lights.lap, rooms: lights.rooms().filter((r) => roomHandles === undefined || roomHandles.has(r.id)) });
   if (ctx.reduced) {
-    return { update: () => undefined, setZoom, particleCount: 0, ghost: () => ({ ...state }), glow: true, glowAlpha: () => 1, light: EMPTY_LIGHT };
+    // Still: every room of the loop is lit, the ghost stands at its first door and that door is open, the others are shut.
+    lights.still();
+    applyLights();
+    keeper.settle(walker.at);
+    applyLeaves(ctx, keeper, keptIds);
+    return { update: () => undefined, setZoom, particleCount: 0, ghost: () => ({ ...state }), glow: true, glowAlpha: () => 1, light: EMPTY_LIGHT, doors: () => keeper.list(), loop: readLoop };
   }
+  lights.sync(walker.leg, walker.lap);
+  applyLights();
+  keeper.update(0, walker.at);
+  applyLeaves(ctx, keeper, keptIds);
 
   const loop: Point[] = legs.flatMap((leg) => leg.points);
   const total = polylineLength(loop);
@@ -236,6 +301,11 @@ function drawLoop(ctx: DrawContext, layout: LayoutResult, route: { modules: stri
       place();
       placeDust();
       breathe();
+      lights.sync(walker.leg, walker.lap);
+      lights.advance(deltaMs);
+      applyLights();
+      keeper.update(deltaMs, walker.at);
+      applyLeaves(ctx, keeper, keptIds);
     },
     setZoom,
     particleCount,
@@ -243,6 +313,8 @@ function drawLoop(ctx: DrawContext, layout: LayoutResult, route: { modules: stri
     glow: true,
     glowAlpha: () => glow.alpha,
     light: EMPTY_LIGHT,
+    doors: () => keeper.list(),
+    loop: readLoop,
   };
 }
 
@@ -262,7 +334,7 @@ function makeLight(): Container {
  * The traveling light on the selected door: it runs the path of the door in 900 ms, ease in and out, every 2.5 s.
  * Under reduced motion it is a static dot in the middle of the path.
  */
-function drawSelectedLight(ctx: DrawContext, layout: LayoutResult): RouteHandle | null {
+function drawSelectedLight(ctx: DrawContext, layout: LayoutResult, claimed: ReadonlySet<string>): RouteHandle | null {
   let selected: string | null = null;
   for (const [id, info] of ctx.states.doors) {
     if (info.state === "selected") {
@@ -289,11 +361,21 @@ function drawSelectedLight(ctx: DrawContext, layout: LayoutResult): RouteHandle 
     light.scale.set(scale);
   };
   place();
+  // The door of the selected relation swings open as the light reaches it and shuts after the light has gone; a door that the ghost of a
+  // loop already walks through is the ghost's. Under reduced motion the light is a static marker and the door stays open.
+  const kept = claimed.has(selected) ? [] : keptDoors(layout, [selected]);
+  const keeper = createDoorKeeper(kept);
+  const keptIds = kept.map((d) => d.id);
+  if (ctx.reduced) keeper.setAll(true);
+  else keeper.update(0, at);
+  applyLeaves(ctx, keeper, keptIds);
   return {
     update(deltaMs) {
       if (ctx.reduced) return;
       clock += deltaMs;
       place();
+      keeper.update(deltaMs, at);
+      applyLeaves(ctx, keeper, keptIds);
     },
     setZoom(zoom) {
       scale = 1 / Math.max(zoom, 0.0001);
@@ -304,6 +386,8 @@ function drawSelectedLight(ctx: DrawContext, layout: LayoutResult): RouteHandle 
     glow: false,
     glowAlpha: () => null,
     light: () => (at === null ? null : { ...at }),
+    doors: () => keeper.list(),
+    loop: NO_LOOP,
   };
 }
 
@@ -338,10 +422,26 @@ function drawTrace(ctx: DrawContext, layout: LayoutResult, route: { kind: string
     }
   });
 
-  if (ctx.reduced) return { update: () => undefined, setZoom: () => undefined, particleCount: 0, ghost: () => null, glow: false, glowAlpha: () => null, light: EMPTY_LIGHT };
+  // The doors of the route swing open as the light passes them and shut after it has gone. The light runs through each door on its way
+  // from room to room (the drawn line stays from room to room). Under reduced motion every door of the route stays open.
+  const kept = keptDoors(layout, route.relationIds);
+  const keeper = createDoorKeeper(kept);
+  const keptIds = kept.map((d) => d.id);
+  if (ctx.reduced) {
+    keeper.setAll(true);
+    applyLeaves(ctx, keeper, keptIds);
+    return { update: () => undefined, setZoom: () => undefined, particleCount: 0, ghost: () => null, glow: false, glowAlpha: () => null, light: EMPTY_LIGHT, doors: () => keeper.list(), loop: NO_LOOP };
+  }
 
   // The light runs the whole dependency path in 900 ms, ease in and out, and starts again every 2.5 s.
-  const total = polylineLength(points);
+  const path: Point[] = [points[0] as Point];
+  route.relationIds.forEach((id, i) => {
+    const door = doors.get(id);
+    const b = points[i + 1];
+    if (door !== undefined) path.push(center(door));
+    if (b !== undefined) path.push(b);
+  });
+  const total = polylineLength(path);
   const light = new Graphics();
   light.circle(0, 0, 6).fill(TOKENS.light);
   ctx.layers.selected.addChild(light);
@@ -350,14 +450,18 @@ function drawTrace(ctx: DrawContext, layout: LayoutResult, route: { kind: string
   const place = (): void => {
     const progress = lightProgress(clock);
     light.visible = progress !== null;
-    at = progress === null ? null : pointOnPolyline(points, progress * total);
+    at = progress === null ? null : pointOnPolyline(path, progress * total);
     if (at !== null) light.position.set(at.x, at.y);
   };
   place();
+  keeper.update(0, at);
+  applyLeaves(ctx, keeper, keptIds);
   return {
     update(deltaMs) {
       clock += deltaMs;
       place();
+      keeper.update(deltaMs, at);
+      applyLeaves(ctx, keeper, keptIds);
     },
     setZoom: () => undefined,
     particleCount: 0,
@@ -365,5 +469,7 @@ function drawTrace(ctx: DrawContext, layout: LayoutResult, route: { kind: string
     glow: false,
     glowAlpha: () => null,
     light: () => (at === null ? null : { ...at }),
+    doors: () => keeper.list(),
+    loop: NO_LOOP,
   };
 }

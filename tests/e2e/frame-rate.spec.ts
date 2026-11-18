@@ -5,13 +5,13 @@ import { expandAllWings, openManor, sceneDebug, settled, storeAction } from "./h
 // Design pass 3, item 11: the frames per second of the map with the biggest demo graph (the manor with every wing open, its loop shown,
 // then with the comparison on) and of the landing page, over 5 s, with motion on, in headless Chromium at 1920 x 1080. Headless
 // Chromium draws with software rendering here (SwiftShader), so the figures say what this renderer does, not what a graphics card does.
-// The figures are printed (and attached to the report); the floor below only catches a frame loop that has stopped or become heavy.
+// The figures are printed (and attached to the report). The halloween detail pass sets the floor at 55 frames per second for the page and for the scene, so that a frame loop that has become heavy fails here.
 // The spec is the perf project of playwright.config.ts: it runs after the other projects, one test at a time.
 test.describe.configure({ mode: "serial" });
 
 const SECONDS = 5;
-/** A floor for software rendering: the work per frame is a few dozen nodes, so far fewer frames than this means something heavy runs per frame. */
-const FLOOR_FPS = 10;
+/** The floor of the halloween detail pass: 55 frames per second over 5 s, with the effects running, in software rendering. */
+const FLOOR_FPS = 55;
 
 /** Count the animation frames the page gets in 5 s. */
 async function pageFps(page: Page): Promise<number> {
@@ -62,6 +62,9 @@ test.describe("frame rate with motion on, 1920 x 1080", () => {
     const sceneLoop = ((during.frames - before.frames) * 1000) / (SECONDS * 1000);
     expect(during.textureCount, "no new texture per frame").toBe(before.textureCount);
     expect(during.textureCount).toBeLessThanOrEqual(24);
+    expect(during.fx.loop, "the loop is shown, with its rooms lighting").not.toBeNull();
+    expect(during.fx.decor.length, "the details are drawn").toBeGreaterThan(10);
+    expect(during.particleCount, "inside the particle limit").toBeLessThanOrEqual(40);
 
     await compareWithSample(page);
     await waitForStatus(page, READY_MANOR_PAIR);
@@ -78,8 +81,10 @@ test.describe("frame rate with motion on, 1920 x 1080", () => {
     const line = `FPS 1920x1080 map, manor all wings, loop shown: page ${loopFps.toFixed(1)}, scene ${sceneLoop.toFixed(1)}; compare on: page ${compareFps.toFixed(1)}, scene ${sceneCompare.toFixed(1)}; textures ${d2.textureCount}; renderer ${gpu}`;
     console.log(line);
     info.annotations.push({ type: "fps", description: line });
-    expect(loopFps).toBeGreaterThan(FLOOR_FPS);
-    expect(compareFps).toBeGreaterThan(FLOOR_FPS);
+    expect(loopFps, "page frames per second, map with the loop").toBeGreaterThanOrEqual(FLOOR_FPS);
+    expect(sceneLoop, "scene frames per second, map with the loop").toBeGreaterThanOrEqual(FLOOR_FPS);
+    expect(compareFps, "page frames per second, map with the comparison").toBeGreaterThanOrEqual(FLOOR_FPS);
+    expect(sceneCompare, "scene frames per second, map with the comparison").toBeGreaterThanOrEqual(FLOOR_FPS);
   });
 
   test("the landing page", async ({ page }, info) => {
@@ -92,6 +97,6 @@ test.describe("frame rate with motion on, 1920 x 1080", () => {
     const line = `FPS 1920x1080 landing: page ${fps.toFixed(1)}; renderer ${gpu}`;
     console.log(line);
     info.annotations.push({ type: "fps", description: line });
-    expect(fps).toBeGreaterThan(FLOOR_FPS);
+    expect(fps, "page frames per second, landing").toBeGreaterThanOrEqual(FLOOR_FPS);
   });
 });

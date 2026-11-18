@@ -363,7 +363,8 @@ test.describe("comparison scene journeys", () => {
     expect(view.closingRelationIds).toEqual([REMOVED]);
     const debug = await sceneDebug(page);
     // No dust of a loop remains; the faint motes of the map light are the only particles (design pass 3, item 8).
-    expect(debug.particleCount).toBe(debug.fx.motes.length);
+    // Only the motes and the things of the halloween details that move are left once the loop has closed.
+    expect(debug.particleCount).toBe(debug.fx.motes.length + debug.fx.decor.filter((d) => d.moving).length);
     expect(await page.evaluate(() => (window as unknown as { __hauntmap: { store: { getState(): { routeFilter: unknown } } } }).__hauntmap.store.getState().routeFilter)).toBeNull();
     expect(await rectangles(page, rooms, wings)).toEqual(first);
     expect((await sceneStates(page))[REMOVED]).toBe("comparison-removed");

@@ -1,0 +1,417 @@
+import { expect, test, type Page } from "@playwright/test";
+import { expandAllWings, openManor, sceneDebug, settled, storeAction, type HookFx } from "./helpers";
+
+// The halloween detail pass, read through the scene debug data of the dev build:
+//   1 doors swing open as the ghost reaches them and shut after it has gone,
+//   2 the rooms of the loop start each lap dim and light up as the ghost reaches them,
+//   3 cobwebs, candles, cracks, fog, bats and spiders never cover a name and never take a name under 4.5 to 1,
+//   4 under reduced motion everything stands still and every loop room is lit.
+// Headless Chromium here draws with software rendering (SwiftShader).
+
+interface Sample {
+  t: number;
+  ghost: { leg: number; x: number; y: number } | null;
+  fx: HookFx;
+  particles: number;
+}
+
+/** Sample the scene on every animation frame for `ms` of wall time, or until the ghost has walked `laps` more laps (when given). */
+async function sampleFor(page: Page, ms: number, laps = 0): Promise<Sample[]> {
+  return page.evaluate(
+    ([duration, more]) =>
+      new Promise<Sample[]>((resolve) => {
+        const hook = (window as unknown as { __hauntmap: { scene(): { debug(): Record<string, unknown> } | null } }).__hauntmap;
+        const out: Sample[] = [];
+        const start = performance.now();
+        let lastRead = -Infinity;
+        const tick = (): void => {
+          const scene = hook.scene();
+          // At most every 40 ms: a reading lists every label, and reading at every frame would take the CPU from the other browsers.
+          if (scene !== null && performance.now() - lastRead >= 40) {
+            lastRead = performance.now();
+            const d = scene.debug() as { ghost: Sample["ghost"]; fx: HookFx; particleCount: number };
+            out.push({ t: d.fx.clock, ghost: d.ghost, fx: { ...d.fx, roomAlphas: {}, decor: [] }, particles: d.particleCount });
+          }
+          const first = out[0]?.fx.loop?.lap ?? 0;
+          const last = out[out.length - 1]?.fx.loop?.lap ?? 0;
+          if (performance.now() - start >= duration || (more > 0 && last - first >= more)) resolve(out);
+          else requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
+    [ms, laps] as const,
+  );
+}
+
+async function loopModules(page: Page): Promise<string[]> {
+  await page.getByRole("button", { name: "Dependency loops" }).click();
+  return page.evaluate(() => {
+    const s = (window as unknown as { __hauntmap: { store: { getState(): { panel: { kind: string; report: { components: { witness: { modules: string[] } }[] } | null } } } } }).__hauntmap.store.getState();
+    if (s.panel.kind !== "loops" || s.panel.report === null) throw new Error("the loops panel is not open");
+    return (s.panel.report.components[0] as { witness: { modules: string[] } }).witness.modules;
+  });
+}
+
+const dist = (g: { x: number; y: number }, d: { x: number; y: number }): number => Math.hypot(g.x - d.x, g.y - d.y);
+
+test.describe("with motion allowed", () => {
+  test.use({ viewport: { width: 1280, height: 720 } });
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+  });
+
+  test("1 a door is open only while the ghost is at it or within one door width, swings open in about 120 ms and shut in about 300 ms", async ({ page }) => {
+    test.setTimeout(90_000);
+    await openManor(page);
+    await expandAllWings(page);
+    await settled(page);
+    const samples = (await sampleFor(page, 16_000)).filter((s) => s.ghost !== null);
+    expect(samples.length).toBeGreaterThan(60);
+    const states = new Set<string>();
+    const nearSince = new Map<string, number>();
+    const farSince = new Map<string, number>();
+    const openTimes: number[] = [];
+    const shutTimes: number[] = [];
+    const counted = new Set<string>();
+    // A door counts for the timing of its swing only when it was seen shut (or shutting) just before the ghost came.
+    const armed = new Set<string>();
+    const last = new Map<string, string>();
+    for (const s of samples) {
+      const ghost = s.ghost as { x: number; y: number };
+      expect(s.fx.doors.length, "the loop doors are listed").toBeGreaterThanOrEqual(3);
+      for (const d of s.fx.doors) {
+        const distance = dist(ghost, d);
+        states.add(d.state);
+        if (d.state === "open" || d.state === "opening") expect(distance, `door ${d.relationId} ${d.state} at ${s.t}`).toBeLessThanOrEqual(d.w + 2);
+        if (d.state === "closed") expect(distance, `door ${d.relationId} closed at ${s.t}`).toBeGreaterThan(d.w - 2);
+        if (distance <= d.w) {
+          farSince.delete(d.relationId);
+          if (!nearSince.has(d.relationId)) {
+            nearSince.set(d.relationId, s.t);
+            if (last.get(d.relationId) === "closed" || last.get(d.relationId) === "closing") armed.add(d.relationId);
+            else armed.delete(d.relationId);
+          }
+          const key = `open ${d.relationId} ${nearSince.get(d.relationId)}`;
+          if (d.state === "open" && armed.has(d.relationId) && !counted.has(key)) {
+            counted.add(key);
+            openTimes.push(s.t - (nearSince.get(d.relationId) as number));
+          }
+        } else {
+          nearSince.delete(d.relationId);
+          if (!farSince.has(d.relationId)) farSince.set(d.relationId, s.t);
+          const away = s.t - (farSince.get(d.relationId) as number);
+          const key = `shut ${d.relationId} ${farSince.get(d.relationId)}`;
+          // The door was open when the ghost left (it has been seen open) and is shut now: how long that took.
+          if (d.state === "closed" && !counted.has(key) && counted.has(`seen ${d.relationId}`)) {
+            counted.add(key);
+            shutTimes.push(away);
+          }
+          // 300 ms to shut, and a frame or two of slack.
+          if (away > 300 + 2 * 100 + 20) expect(d.state, `door ${d.relationId} ${away} ms after the ghost left`).toBe("closed");
+        }
+        last.set(d.relationId, d.state);
+        if (d.state === "open") counted.add(`seen ${d.relationId}`);
+        if (d.state === "closed") counted.delete(`seen ${d.relationId}`);
+      }
+    }
+    expect([...states].sort(), "a door goes through all four states").toEqual(["closed", "closing", "open", "opening"]);
+    expect(openTimes.length).toBeGreaterThanOrEqual(2);
+    // The scene clock counts a slow frame as at most 100 ms, so a reading is at most a frame or two late.
+    const step = Math.max(...samples.slice(1).map((s, i) => s.t - (samples[i] as Sample).t));
+    for (const ms of openTimes) {
+      expect(ms, `opened after ${ms} ms`).toBeGreaterThanOrEqual(120 - step);
+      expect(ms, `opened after ${ms} ms`).toBeLessThan(120 + 2 * step + 20);
+    }
+    expect(shutTimes.length).toBeGreaterThanOrEqual(2);
+    for (const ms of shutTimes) {
+      expect(ms, `shut after ${ms} ms`).toBeGreaterThanOrEqual(300 - step);
+      expect(ms, `shut after ${ms} ms`).toBeLessThan(300 + 2 * step + 20);
+    }
+  });
+
+  test("1 the same on a selected dependency path: the door of the selected relation opens as the traveling light reaches it and is shut while the light rests", async ({ page }) => {
+    test.setTimeout(60_000);
+    await openManor(page);
+    await settled(page);
+    const first = await page.evaluate(() => {
+      const hook = (window as unknown as { __hauntmap: { store: { getState(): { layout: { doors: { relationId: string; from: string; to: string }[] } } } } }).__hauntmap;
+      return hook.store.getState().layout.doors.find((d) => !/receipt|checkout|charge/.test(d.from + d.to))?.relationId ?? null;
+    });
+    expect(first).not.toBeNull();
+    await storeAction(page, "select", { kind: "relation", relationId: first }, { from: "dom" });
+    await settled(page);
+    const samples = await page.evaluate(
+      () =>
+        new Promise<{ light: { x: number; y: number } | null; doors: HookFx["doors"]; t: number }[]>((resolve) => {
+          const hook = (window as unknown as { __hauntmap: { scene(): { debug(): { light: { x: number; y: number } | null; fx: HookFx } } } }).__hauntmap;
+          const out: { light: { x: number; y: number } | null; doors: HookFx["doors"]; t: number }[] = [];
+          const start = performance.now();
+          let lastRead = -Infinity;
+          const tick = (): void => {
+            if (performance.now() - lastRead >= 30) {
+              lastRead = performance.now();
+              const d = hook.scene().debug();
+              out.push({ light: d.light, doors: d.fx.doors, t: d.fx.clock });
+            }
+            if (performance.now() - start > 7000) resolve(out);
+            else requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }),
+    );
+    const seen = new Set<string>();
+    for (const s of samples) {
+      const door = s.doors.find((d) => d.relationId === first);
+      expect(door, "the door of the selected relation is listed").toBeDefined();
+      const d = door as HookFx["doors"][number];
+      seen.add(d.state);
+      if (s.light === null) {
+        // Rests: nothing is near, so the door is shut or shutting.
+        expect(["closed", "closing"]).toContain(d.state);
+      } else if (d.state === "open" || d.state === "opening") expect(dist(s.light, d), `light at ${s.t}`).toBeLessThanOrEqual(d.w + 2);
+    }
+    expect(seen.has("open") || seen.has("opening"), "the door opens when the light starts from it").toBe(true);
+    expect(seen.has("closed"), "and is shut while the light rests").toBe(true);
+  });
+
+  test("2 the rooms of the loop are dim at the start of a lap, light up as the ghost reaches their door and reset on the next lap", async ({ page }) => {
+    test.setTimeout(180_000);
+    await openManor(page);
+    await expandAllWings(page);
+    await settled(page);
+    const modules = await loopModules(page);
+    expect(modules.length).toBeGreaterThanOrEqual(3);
+    // Zoomed out the loop is short on screen, so a lap takes a few seconds.
+    await storeAction(page, "setCamera", { x: 0, y: 0, zoom: 0.3 });
+    await settled(page);
+    await expect.poll(async () => (await sceneDebug(page)).fx.loop !== null).toBe(true);
+    const samples = (await sampleFor(page, 90_000, 2)).filter((s) => s.ghost !== null && s.fx.loop !== null);
+    const laps = new Set(samples.map((s) => (s.fx.loop as { lap: number }).lap));
+    expect(laps.size, "the ghost walks more than one lap").toBeGreaterThanOrEqual(3);
+    const lightAt = new Map<string, number>();
+    let previous: Sample | null = null;
+    let resets = 0;
+    for (const s of samples) {
+      const loop = s.fx.loop as NonNullable<HookFx["loop"]>;
+      const ghost = s.ghost as { leg: number };
+      const drawn = new Set(loop.rooms.map((r) => r.id));
+      expect(drawn.size, "the rooms of the loop are drawn").toBe(modules.length);
+      const expected = modules.slice(0, ghost.leg + 1).filter((m) => drawn.has(m)).sort();
+      const lit = loop.rooms.filter((r) => r.lit).map((r) => r.id).sort();
+      expect(lit, `lap ${loop.lap}, leg ${ghost.leg}, at ${s.t}`).toEqual(expected);
+      for (const r of loop.rooms) {
+        if (!r.lit) expect(r.brightness, `${r.id} dim`).toBeCloseTo(0.45, 2);
+        else {
+          const key = `${loop.lap}|${r.id}`;
+          if (!lightAt.has(key)) lightAt.set(key, s.t);
+          // Lit rooms are on their way up to full in 200 ms and then stay there.
+          if (s.t - (lightAt.get(key) as number) > 260) expect(r.brightness, `${r.id} lit`).toBeGreaterThan(0.99);
+          expect(r.brightness).toBeGreaterThan(0.449);
+        }
+      }
+      const before = previous === null ? null : (previous.fx.loop as NonNullable<HookFx["loop"]>);
+      if (before !== null && loop.lap === before.lap + 1) {
+        resets++;
+        expect(before.rooms.filter((r) => r.lit).length, "all were lit at the end of the lap").toBe(drawn.size);
+        expect(lit, "only the first room is lit at the start of the next lap").toEqual([modules[0]]);
+      }
+      previous = s;
+    }
+    expect(resets).toBeGreaterThanOrEqual(1);
+    expect(lightAt.size).toBeGreaterThan(modules.length);
+    // A room that is not on the loop keeps its look: it is not listed and its opacity is untouched.
+    const d = await sceneDebug(page);
+    const onLoop = new Set((d.fx.loop as NonNullable<HookFx["loop"]>).rooms.map((r) => r.id));
+    const others = Object.entries(d.fx.roomAlphas).filter(([id]) => !onLoop.has(id));
+    expect(others.length).toBeGreaterThan(5);
+    for (const [, alpha] of others) expect(alpha).toBe(1);
+  });
+
+  test("3 no effect covers a name, the particle limit holds, and every kind of detail is drawn", async ({ page }) => {
+    test.setTimeout(120_000);
+    await openManor(page);
+    await expandAllWings(page);
+    await settled(page);
+    const kinds = new Set<string>();
+    const everVisible = new Set<string>();
+    let worstParticles = 0;
+    const covering: string[] = [];
+    for (let round = 0; round < 3; round++) {
+      const samples = await sampleManyLabels(page, round === 0 ? 14_000 : 6000);
+      for (const s of samples) {
+        worstParticles = Math.max(worstParticles, s.particles);
+        for (const e of s.decor) {
+          kinds.add(e.kind);
+          if (e.visible) everVisible.add(e.kind);
+          if (!e.visible || e.kind === "fog") continue;
+          for (const l of s.labels) {
+            for (const box of [l.rect, l.plate]) {
+              if (box === undefined) continue;
+              const overlap = e.rect.x < box.x + box.width && box.x < e.rect.x + e.rect.width && e.rect.y < box.y + box.height && box.y < e.rect.y + e.rect.height;
+              if (overlap) covering.push(`${e.kind} at ${JSON.stringify(e.rect)} covers ${l.kind} ${l.id}`);
+            }
+          }
+        }
+      }
+      // A second round after a pan shows the same, and the camera moves the labels under the effects.
+      await storeAction(page, "setCamera", { x: 200 * (round + 1), y: 80, zoom: 0.8 + 0.4 * round });
+      await settled(page);
+    }
+    expect(covering.slice(0, 5), "no detail covers a name or a plate").toEqual([]);
+    for (const kind of ["web", "crack", "candle", "fog", "bat", "spider"]) expect(kinds.has(kind), `${kind} is drawn`).toBe(true);
+    for (const kind of ["web", "crack", "candle", "bat", "spider"]) expect(everVisible.has(kind), `${kind} is seen`).toBe(true);
+    expect(worstParticles).toBeLessThanOrEqual(40);
+    expect(worstParticles).toBeGreaterThan(0);
+    const d = await sceneDebug(page);
+    expect(d.textureCount).toBeLessThanOrEqual(24);
+  });
+
+  test("3 every name keeps 4.5 to 1 against what is under it while the effects run", async ({ page }) => {
+    test.setTimeout(120_000);
+    await openManor(page);
+    await expandAllWings(page);
+    await settled(page);
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+    const worst = new Map<string, number>();
+    let measured = 0;
+    for (let round = 0; round < 6; round++) {
+      await page.waitForTimeout(1700);
+      const d = await sceneDebug(page);
+      const png = await page.screenshot();
+      const out = await page.evaluate(
+        async ([b64, labels]) => {
+          const css = (name: string): string => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+          const inks: Record<string, string> = { room: css("--room-ink"), wing: css("--plate-ink"), "wing-note": css("--ink-muted"), count: css("--ink-muted"), step: css("--ink") };
+          const img = new Image();
+          img.src = `data:image/png;base64,${b64 as string}`;
+          await img.decode();
+          const c = document.createElement("canvas");
+          c.width = img.width;
+          c.height = img.height;
+          const g = c.getContext("2d") as CanvasRenderingContext2D;
+          g.drawImage(img, 0, 0);
+          const lin = (v: number): number => {
+            const s = v / 255;
+            return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+          };
+          const hex = (h: string): number => {
+            const n = (o: number): number => parseInt(h.slice(o, o + 2), 16);
+            return 0.2126 * lin(n(1)) + 0.7152 * lin(n(3)) + 0.0722 * lin(n(5));
+          };
+          const rows: { id: string; kind: string; ratio: number; bg: number }[] = [];
+          for (const l of labels as { kind: string; id: string; rect?: { x: number; y: number; width: number; height: number } }[]) {
+            const ink = inks[l.kind];
+            if (ink === undefined || l.rect === undefined) continue;
+            const x0 = Math.max(0, Math.floor(l.rect.x));
+            const y0 = Math.max(0, Math.floor(l.rect.y));
+            const w = Math.min(c.width, Math.ceil(l.rect.x + l.rect.width)) - x0;
+            const h = Math.min(c.height, Math.ceil(l.rect.y + l.rect.height)) - y0;
+            if (w < 8 || h < 8) continue;
+            const data = g.getImageData(x0, y0, w, h).data;
+            const L = new Float64Array(w * h);
+            for (let i = 0; i < w * h; i++) L[i] = 0.2126 * lin(data[i * 4] as number) + 0.7152 * lin(data[i * 4 + 1] as number) + 0.0722 * lin(data[i * 4 + 2] as number);
+            const sorted = Array.from(L).sort((a, b) => a - b);
+            const median = sorted[Math.floor(sorted.length / 2)] as number;
+            const odd = new Uint8Array(w * h);
+            for (let i = 0; i < w * h; i++) if (Math.abs((L[i] as number) - median) > 0.02) odd[i] = 1;
+            let bgMax = 0;
+            let bgCount = 0;
+            for (let y = 0; y < h; y++) {
+              for (let x = 0; x < w; x++) {
+                let near = false;
+                for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1; dx++) if (odd[Math.min(h - 1, Math.max(0, y + dy)) * w + Math.min(w - 1, Math.max(0, x + dx))] === 1) near = true;
+                if (near) continue;
+                bgCount++;
+                bgMax = Math.max(bgMax, L[y * w + x] as number);
+              }
+            }
+            if (bgCount < w * h * 0.2) continue;
+            const inkL = hex(ink);
+            rows.push({ id: l.id, kind: l.kind, bg: bgMax, ratio: (Math.max(inkL, bgMax) + 0.05) / (Math.min(inkL, bgMax) + 0.05) });
+          }
+          return rows;
+        },
+        [png.toString("base64"), d.labels] as const,
+      );
+      measured += out.length;
+      for (const row of out) worst.set(`${row.kind} ${row.id}`, Math.min(worst.get(`${row.kind} ${row.id}`) ?? Infinity, row.ratio));
+    }
+    expect(measured, "labels were measured").toBeGreaterThan(30);
+    for (const [name, ratio] of worst) expect(ratio, name).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test("3 the annex with three loops keeps the particle limit and draws the details", async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto("/");
+    await page.getByRole("button", { name: "Explore the annex" }).click();
+    await page.getByRole("application", { name: "Haunted map" }).waitFor();
+    await settled(page);
+    await expandAllWings(page);
+    await settled(page);
+    await expect.poll(async () => (await sceneDebug(page)).visibleRooms, { timeout: 30_000 }).toBeGreaterThan(0);
+    const samples = await sampleFor(page, 4000);
+    expect(samples.length).toBeGreaterThan(50);
+    for (const s of samples) expect(s.particles).toBeLessThanOrEqual(40);
+    expect(Math.max(...samples.map((s) => s.particles))).toBeGreaterThan(10);
+    const d = await sceneDebug(page);
+    expect(d.fx.loop, "a loop is shown").not.toBeNull();
+    expect(d.textureCount).toBeLessThanOrEqual(24);
+  });
+});
+
+interface LabelSample {
+  particles: number;
+  decor: HookFx["decor"];
+  labels: { kind: string; id: string; rect?: { x: number; y: number; width: number; height: number }; plate?: { x: number; y: number; width: number; height: number } }[];
+}
+
+/** Read the effects and the labels together every 250 ms for `ms`. */
+async function sampleManyLabels(page: Page, ms: number): Promise<LabelSample[]> {
+  const out: LabelSample[] = [];
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    const d = await sceneDebug(page);
+    out.push({ particles: d.particleCount, decor: d.fx.decor, labels: d.labels });
+    await page.waitForTimeout(250);
+  }
+  return out;
+}
+
+for (const how of ["system", "toggle"] as const) {
+  test.describe(`reduced motion by the ${how} setting`, () => {
+    test.use({ viewport: { width: 1280, height: 720 } });
+
+    test("4 everything on the map is still: the ghost stands at its first door, the doors and the details stay, and every loop room is lit", async ({ page }) => {
+      test.setTimeout(60_000);
+      if (how === "system") await page.emulateMedia({ reducedMotion: "reduce" });
+      else {
+        await page.emulateMedia({ reducedMotion: "no-preference" });
+        await page.addInitScript(() => localStorage.setItem("hauntmap.prefs.v1", JSON.stringify({ version: 1, motion: "reduce", legendOpen: true, preset: "static-value" })));
+      }
+      await openManor(page);
+      await expandAllWings(page);
+      await settled(page);
+      await expect.poll(async () => (await sceneDebug(page)).fx.loop !== null).toBe(true);
+      const read = async (): Promise<unknown> => {
+        const d = await sceneDebug(page);
+        return { ghost: d.ghost, doors: d.fx.doors, loop: d.fx.loop, decor: d.fx.decor, motes: d.fx.motes, glowAlpha: d.glowAlpha, particles: d.particleCount, tweens: d.activeTweens };
+      };
+      const a = (await read()) as { ghost: { leg: number }; doors: HookFx["doors"]; loop: NonNullable<HookFx["loop"]>; decor: HookFx["decor"]; particles: number; tweens: number };
+      await page.waitForTimeout(2500);
+      const b = await read();
+      expect(b, "nothing moved between two readings").toEqual(a);
+      expect(a.ghost.leg, "the ghost stands at its first door").toBe(0);
+      expect(a.loop.rooms.length).toBeGreaterThanOrEqual(3);
+      for (const r of a.loop.rooms) {
+        expect(r.lit, `${r.id} is lit`).toBe(true);
+        expect(r.brightness).toBe(1);
+      }
+      expect(a.particles).toBe(0);
+      expect(a.tweens).toBe(0);
+      expect(a.doors.length).toBeGreaterThanOrEqual(3);
+      for (const door of a.doors) expect(["open", "closed"]).toContain(door.state);
+      const kinds = new Set(a.decor.map((e) => e.kind));
+      for (const kind of ["web", "crack", "candle", "fog", "bat", "spider"]) expect(kinds.has(kind as never), `${kind} is drawn, standing still`).toBe(true);
+    });
+  });
+}

@@ -87,6 +87,12 @@ export interface SceneDebug {
     farewell: { corridor: number; ghost: number } | null;
     removed: { outline: number; solid: number }[];
     door: { swing: number; draw: number } | null;
+    /** The doors that swing for the ghost or the traveling light: the center and width in scene units, and the phase of the swing. */
+    doors: { relationId: string; x: number; y: number; w: number; state: "closed" | "opening" | "open" | "closing"; swing: number }[];
+    /** The rooms of the loop the ghost walks (lit or dim, with the brightness 0.45 to 1) and the lap it is on; null when no loop is shown. */
+    loop: { lap: number; rooms: { id: string; lit: boolean; glow: number; brightness: number }[] } | null;
+    /** The cobwebs, cracks, candles, fog, bats and spiders with their boxes in client pixels; `visible` is false while one rests, is culled or would cover a name. */
+    decor: { kind: "web" | "crack" | "candle" | "fog" | "bat" | "spider"; moving: boolean; visible: boolean; rect: { x: number; y: number; width: number; height: number } }[];
   };
 }
 

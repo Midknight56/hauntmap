@@ -55,6 +55,12 @@ export interface HookFx {
   removed: { outline: number; solid: number }[];
   /** The door of the selected relation: how far it has swung open and how far its corridor is drawn (0 to 1); null when no door is selected. */
   door: { swing: number; draw: number } | null;
+  /** The doors that swing for the ghost or the traveling light: center and width in scene units, and the phase of the swing (halloween detail pass). */
+  doors: { relationId: string; x: number; y: number; w: number; state: "closed" | "opening" | "open" | "closing"; swing: number }[];
+  /** The rooms of the loop the ghost walks: lit or dim, and the lap the ghost is on; null when no loop is shown. */
+  loop: { lap: number; rooms: { id: string; lit: boolean; glow: number; brightness: number }[] } | null;
+  /** Every drawn effect of the halloween pass with its box in client pixels; `visible` is false while it rests, is culled or would cover a name. */
+  decor: { kind: "web" | "crack" | "candle" | "fog" | "bat" | "spider"; moving: boolean; visible: boolean; rect: { x: number; y: number; width: number; height: number } }[];
 }
 
 export interface HookScene {

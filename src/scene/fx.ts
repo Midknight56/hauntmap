@@ -1,4 +1,5 @@
 import { Container, Graphics, type Sprite } from "pixi.js";
+import type { Decor } from "./decor";
 import type { Point, Rect } from "./layout/types";
 import { TOKENS } from "./styles";
 
@@ -32,6 +33,16 @@ export interface AddedFx {
   pulse: Graphics;
 }
 
+/** A room of the loop: the candle glow that lights it as the ghost reaches it (0 dim, 1 lit). */
+export interface RoomLight {
+  setGlow(fraction: number): void;
+}
+
+/** The leaf of a door that swings for the ghost or the traveling light (0 shut, 1 open). */
+export interface DoorLeaf {
+  setOpen(fraction: number): void;
+}
+
 export interface SceneFx {
   /** The window of each room that is lit (selected, on a route, added): by module ID. */
   glows: Map<string, Container>;
@@ -44,10 +55,16 @@ export interface SceneFx {
   /** The solid corridors that the removed outlines replace (a copy that fades out). */
   removedSolid: Container | null;
   openDoor: DoorOpen | null;
+  /** The rooms of the loops shown, by module ID. */
+  loopRooms: Map<string, RoomLight>;
+  /** The leaf of each door that swings, by relation ID. */
+  leaves: Map<string, DoorLeaf>;
+  /** The cobwebs, candles, cracks, fog, bats and spiders. */
+  decor: Decor | null;
 }
 
 export function newFx(): SceneFx {
-  return { glows: new Map(), doorSprites: new Map(), lamps: [], added: [], removedOutlines: [], removedSolid: null, openDoor: null };
+  return { glows: new Map(), doorSprites: new Map(), lamps: [], added: [], removedOutlines: [], removedSolid: null, openDoor: null, loopRooms: new Map(), leaves: new Map(), decor: null };
 }
 
 /** A pure pseudo-random number in [0, 1) from two integers, so that the motes start in the same places on every run. */
