@@ -7,8 +7,11 @@ import { TOKENS } from "./styles";
 import { glowAlphaAt } from "./effects";
 import type { CostSink } from "./fx";
 import { createDoorKeeper, type DoorKeeper, type DoorReading } from "./doorKeeper";
-import { doorReachUnits } from "./doorLook";
+import { doorGrow, doorReachUnits } from "./doorLook";
+import { createHaunt, HAUNT, type Haunt, type HauntDoor, type HauntReading } from "./haunt";
+import { createHauntView } from "./hauntView";
 import { createLoopLights, type RoomLightReading } from "./loopLights";
+import type { Box } from "./labels";
 import { bobOffsetPx, createWalker, GHOST_PAUSE_MS, GHOST_SPEED_PX_S, lightProgress, pointOnPolyline, polylineLength, witnessLegs, type Leg } from "./walk";
 
 export const MAX_PARTICLES = 40;
@@ -83,9 +86,18 @@ export interface RouteHandle {
   doors(): DoorReading[];
   /** The rooms of the loop the ghost walks and the lap it is on; null when this part is not a loop. */
   loop(): { lap: number; rooms: RoomLightReading[] } | null;
+  /** The boxes of the names, plates and titles in scene units: what the critters and the dust of a haunt keep clear of. */
+  setLabels(boxes: readonly Box[]): void;
+  /** The haunt of each loop (what is on screen at a door), in scene units; empty under reduced motion and for a trace or a light. */
+  haunts(): HauntReading[];
 }
 
 const NO_LOOP = (): null => null;
+const NO_LABELS = (): void => undefined;
+const NO_HAUNTS = (): HauntReading[] => [];
+/** The critters and the puffs of dust one haunt can show at once: they count inside the 40 particles. */
+const HAUNT_CRITTERS = HAUNT.maxCritters;
+const HAUNT_PUFFS = 4;
 
 /** Hand the swing of each kept door to its leaf (drawing only). */
 function applyLeaves(ctx: DrawContext, keeper: DoorKeeper, ids: readonly string[]): void {
@@ -170,6 +182,8 @@ function combine(parts: RouteHandle[]): RouteHandle | null {
     glowAlpha: () => parts.map((p) => p.glowAlpha()).find((a) => a !== null) ?? null,
     light: () => parts.map((p) => p.light()).find((l) => l !== null) ?? null,
     doors: () => parts.flatMap((p) => p.doors()),
+    setLabels: (boxes) => parts.forEach((p) => p.setLabels(boxes)),
+    haunts: () => parts.flatMap((p) => p.haunts()),
     loop: () => {
       const loops = parts.map((p) => p.loop()).filter((l): l is NonNullable<typeof l> => l !== null);
       if (loops.length === 0) return null;
@@ -194,7 +208,7 @@ export function drawRoute(ctx: DrawContext, layout: LayoutResult): RouteHandle |
   const parts: RouteHandle[] = [];
   const route = ctx.states.route;
   // The things the decor moves count inside the 40 particles first; the dust of the loops takes what is left.
-  const budget = { left: Math.max(0, MAX_PARTICLES - (ctx.particlesTaken ?? 0)) };
+  const budget = { left: Math.max(0, MAX_PARTICLES - (ctx.particlesTaken ?? 0)), loops: 0 };
   // The doors the ghost opens are the ghost's: the light of a selected relation leaves them alone.
   const claimed = new Set<string>();
   if (route !== null && route.kind === "witness") {
@@ -217,7 +231,7 @@ export function drawRoute(ctx: DrawContext, layout: LayoutResult): RouteHandle |
   return combine(parts);
 }
 
-function drawLoop(ctx: DrawContext, layout: LayoutResult, route: { modules: string[]; relationIds: string[] }, steps: boolean, budget: { left: number }): RouteHandle | null {
+function drawLoop(ctx: DrawContext, layout: LayoutResult, route: { modules: string[]; relationIds: string[] }, steps: boolean, budget: { left: number; loops: number }): RouteHandle | null {
   const legs = witnessLegs(layout, route);
   if (legs.length === 0) return null;
   const glow = new Container();
@@ -239,6 +253,9 @@ function drawLoop(ctx: DrawContext, layout: LayoutResult, route: { modules: stri
   let clock = 0;
   const first = (legs[0] as Leg).points[0] as Point;
   let state = { leg: 0, x: first.x, y: first.y };
+  // The haunt of a door (drawing only): the ghost goes into a door of the loop and comes out of it; it shrinks a little as it goes in.
+  let hauntScale = 1;
+  let haunt: Haunt | null = null;
   // The ghost walks door to door at 60 px per second on screen at the zoom of every frame, and bobs 3 px every 800 ms.
   const walker = createWalker(legs, GHOST_PAUSE_MS);
   const place = (): void => {
@@ -246,14 +263,15 @@ function drawLoop(ctx: DrawContext, layout: LayoutResult, route: { modules: stri
     const bob = ctx.reduced ? 0 : bobOffsetPx(clock) * scale;
     state = { leg: walker.leg, x: at.x, y: at.y };
     ghost.position.set(at.x, at.y + bob);
-    ghost.scale.set(scale);
+    ghost.scale.set(scale * hauntScale);
   };
   let keeperOf: DoorKeeper | null = null;
   const setZoom = (zoom: number): void => {
     zoomNow = Math.max(zoom, 0.0001);
     scale = size / zoomNow;
-    ghost.scale.set(scale);
+    ghost.scale.set(scale * hauntScale);
     keeperOf?.setReach(doorReachUnits(zoomNow));
+    haunt?.setUnit(1 / zoomNow);
   };
   setZoom(ctx.zoom);
   place();
@@ -276,20 +294,76 @@ function drawLoop(ctx: DrawContext, layout: LayoutResult, route: { modules: stri
     applyLights();
     keeper.settle(walker.at);
     applyLeaves(ctx, keeper, keptIds);
-    return { update: () => undefined, setZoom, particleCount: 0, ghost: () => ({ ...state }), glow: true, glowAlpha: () => 1, light: EMPTY_LIGHT, doors: () => keeper.list(), loop: readLoop };
+    return { update: () => undefined, setZoom, particleCount: 0, ghost: () => ({ ...state }), glow: true, glowAlpha: () => 1, light: EMPTY_LIGHT, doors: () => keeper.list(), loop: readLoop, setLabels: NO_LABELS, haunts: NO_HAUNTS };
   }
   lights.sync(walker.leg, walker.lap);
   applyLights();
   keeper.update(0, walker.at);
   applyLeaves(ctx, keeper, keptIds);
 
+  // The haunt takes its critters and its puffs of dust from the 40 particles, before the dust of the loop and the motes.
+  const hauntIndex = budget.loops++;
+  const critterSlots = ctx.fx !== undefined && ctx.hauntSeed !== undefined ? Math.min(HAUNT_CRITTERS, budget.left) : 0;
+  budget.left -= critterSlots;
+  const puffSlots = critterSlots > 0 ? Math.min(HAUNT_PUFFS, budget.left) : 0;
+  budget.left -= puffSlots;
+  const view = critterSlots > 0 ? createHauntView(ctx.layers.particles, ctx.textures, critterSlots, puffSlots) : null;
+  if (view !== null) {
+    haunt = createHaunt({ seed: ((ctx.hauntSeed as number) + 7919 * hauntIndex) | 0, critterSlots, puffSlots });
+    haunt.setUnit(1 / zoomNow);
+  }
+  const boxesOfDoors = new Map(layout.doors.map((d) => [d.relationId, d] as const));
+  /** The door of the loop that the ghost stands at (its center), with the size it is drawn at; null where the loop has no drawn door (a room or a wing center). */
+  const hauntDoorAt = (at: Point): HauntDoor | null => {
+    for (const k of kept) {
+      if (Math.hypot(at.x - k.x, at.y - k.y) > 1.5) continue;
+      const box = boxesOfDoors.get(k.id);
+      const grow = doorGrow(zoomNow);
+      return { id: k.id, x: k.x, y: k.y, w: (box?.w ?? 16) * grow, h: (box?.h ?? 16) * grow };
+    }
+    return null;
+  };
+  let handled = walker.arrivals;
+  let lingering = false;
+  let hauntedDoor: string | null = null;
+  /** One step of the haunt: it begins when the ghost arrives at a drawn door, holds the ghost and the door, and lets the ghost go on at its end. */
+  const stepHaunt = (dt: number): void => {
+    if (haunt === null || view === null) return;
+    if (!haunt.active && walker.pausing && walker.arrivals > handled) {
+      handled = walker.arrivals;
+      const door = hauntDoorAt(walker.at);
+      if (door !== null) haunt.start(door);
+    }
+    const was = haunt.active;
+    haunt.update(dt);
+    if (was && !haunt.active) walker.endPause();
+    if (!was && !haunt.active && !lingering) return;
+    const r = haunt.read();
+    lingering = r.critters.length > 0 || r.puffs.length > 0;
+    view.apply(r);
+    if (!lingering) view.clear();
+    ghost.alpha = r.ghostAlpha;
+    ghost.visible = r.ghostAlpha > 0;
+    hauntScale = r.ghostScale;
+    if (r.door !== null) {
+      hauntedDoor = r.door;
+      keeper.hold(r.door, r.hold);
+      ctx.fx?.shakeDoor?.(r.door, r.shake.x, r.shake.y);
+    } else if (hauntedDoor !== null) {
+      keeper.hold(hauntedDoor, null);
+      ctx.fx?.shakeDoor?.(hauntedDoor, 0, 0);
+      hauntedDoor = null;
+    }
+  };
+
   const loop: Point[] = legs.flatMap((leg) => leg.points);
   const total = polylineLength(loop);
-  const particleCount = Math.max(0, Math.min(budget.left, 4 * legs.length));
-  budget.left -= particleCount;
+  const dustCount = Math.max(0, Math.min(budget.left, 4 * legs.length));
+  budget.left -= dustCount;
+  const particleCount = dustCount + critterSlots + puffSlots;
   const dust = new Container();
   const particles: Graphics[] = [];
-  for (let i = 0; i < particleCount; i++) {
+  for (let i = 0; i < dustCount; i++) {
     const p = new Graphics();
     p.circle(0, 0, 1.6).fill({ color: TOKENS.corridor, alpha: 0.65 });
     dust.addChild(p);
@@ -298,7 +372,7 @@ function drawLoop(ctx: DrawContext, layout: LayoutResult, route: { modules: stri
   ctx.layers.particles.addChild(dust);
   const placeDust = (): void => {
     particles.forEach((p, i) => {
-      const u = (((clock / (3000 * legs.length) + i / particleCount) % 1) + 1) % 1;
+      const u = (((clock / (3000 * legs.length) + i / dustCount) % 1) + 1) % 1;
       const pos = pointOnPolyline(loop, u * total);
       p.position.set(pos.x, pos.y + Math.sin(clock / 400 + i) * 3);
     });
@@ -312,7 +386,9 @@ function drawLoop(ctx: DrawContext, layout: LayoutResult, route: { modules: stri
     update(deltaMs, cost) {
       const t0 = cost === undefined ? 0 : performance.now();
       clock += deltaMs;
-      walker.advance(deltaMs, GHOST_SPEED_PX_S / zoomNow);
+      // The ghost stands still while it is in a door (the haunt holds it and lets it go).
+      if (haunt === null || !haunt.active) walker.advance(deltaMs, GHOST_SPEED_PX_S / zoomNow);
+      stepHaunt(deltaMs);
       place();
       placeDust();
       breathe();
@@ -337,6 +413,8 @@ function drawLoop(ctx: DrawContext, layout: LayoutResult, route: { modules: stri
     light: EMPTY_LIGHT,
     doors: () => keeper.list(),
     loop: readLoop,
+    setLabels: (boxes) => haunt?.setLabels(boxes),
+    haunts: () => (haunt === null ? [] : [haunt.read()]),
   };
 }
 
@@ -412,7 +490,7 @@ function drawSelectedLight(ctx: DrawContext, layout: LayoutResult, claimed: Read
     glowAlpha: () => null,
     light: () => (at === null ? null : { ...at }),
     doors: () => keeper.list(),
-    loop: NO_LOOP,
+    loop: NO_LOOP, setLabels: NO_LABELS, haunts: NO_HAUNTS,
   };
 }
 
@@ -455,7 +533,7 @@ function drawTrace(ctx: DrawContext, layout: LayoutResult, route: { kind: string
   if (ctx.reduced) {
     keeper.setAll(true);
     applyLeaves(ctx, keeper, keptIds);
-    return { update: () => undefined, setZoom: () => undefined, particleCount: 0, ghost: () => null, glow: false, glowAlpha: () => null, light: EMPTY_LIGHT, doors: () => keeper.list(), loop: NO_LOOP };
+    return { update: () => undefined, setZoom: () => undefined, particleCount: 0, ghost: () => null, glow: false, glowAlpha: () => null, light: EMPTY_LIGHT, doors: () => keeper.list(), loop: NO_LOOP, setLabels: NO_LABELS, haunts: NO_HAUNTS };
   }
 
   // The light runs the whole dependency path in 900 ms, ease in and out, and starts again every 2.5 s.
@@ -497,6 +575,6 @@ function drawTrace(ctx: DrawContext, layout: LayoutResult, route: { kind: string
     glowAlpha: () => null,
     light: () => (at === null ? null : { ...at }),
     doors: () => keeper.list(),
-    loop: NO_LOOP,
+    loop: NO_LOOP, setLabels: NO_LABELS, haunts: NO_HAUNTS,
   };
 }

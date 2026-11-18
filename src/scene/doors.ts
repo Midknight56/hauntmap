@@ -85,10 +85,12 @@ function makePanel(door: DoorBox, grow: number): { node: Graphics; leaf: DoorLea
   let sx = (door.w / DOOR_BASE_UNITS) * grow;
   let sy = (door.h / DOOR_BASE_UNITS) * grow;
   let open = 0;
+  let shakeX = 0;
+  let shakeY = 0;
   g.pivot.set(FRAME.innerLeft, 0);
   const apply = (): void => {
     if (g.destroyed) return;
-    g.position.set(door.x + door.w / 2 + (FRAME.innerLeft - 8) * sx, door.y + door.h / 2 - 8 * sy);
+    g.position.set(door.x + door.w / 2 + (FRAME.innerLeft - 8) * sx + shakeX, door.y + door.h / 2 - 8 * sy + shakeY);
     g.scale.set(sx * panelScaleAt(open), sy);
   };
   const leaf: DoorLeaf = {
@@ -108,6 +110,11 @@ function makePanel(door: DoorBox, grow: number): { node: Graphics; leaf: DoorLea
     setGrow(next) {
       sx = (door.w / DOOR_BASE_UNITS) * next;
       sy = (door.h / DOOR_BASE_UNITS) * next;
+      apply();
+    },
+    setShake(x, y) {
+      shakeX = x;
+      shakeY = y;
       apply();
     },
   };
@@ -238,13 +245,41 @@ export function drawDoors(ctx: DrawContext, layout: LayoutResult): void {
       const h = door.h * grow;
       sprite.width = w;
       sprite.height = h;
-      sprite.position.set(door.x + door.w / 2 - w / 2, door.y + door.h / 2 - h / 2);
+      const o = rattle !== null && rattle.id === door.relationId ? rattle : { x: 0, y: 0 };
+      sprite.position.set(door.x + door.w / 2 - w / 2 + o.x, door.y + door.h / 2 - h / 2 + o.y);
     }
-    for (const g of byLayer.values()) g.clear();
-    for (const s of swinging) drawDoorway(byLayer.get(s.layer) as Graphics, s.door, grow);
+    drawOpenings(grow);
     for (const s of swinging) ctx.fx?.leaves.get(s.door.relationId)?.setGrow(grow);
   };
-  if (ctx.fx !== undefined) ctx.fx.setDoorZoom = setZoom;
+  // The dark openings, one shared Graphics for each layer; the opening of a rattling door is drawn where its panel is.
+  let rattle: { id: string; x: number; y: number } | null = null;
+  const drawOpenings = (grow: number): void => {
+    for (const g of byLayer.values()) g.clear();
+    for (const s of swinging) {
+      const o = rattle !== null && rattle.id === s.door.relationId ? rattle : { x: 0, y: 0 };
+      drawDoorway(byLayer.get(s.layer) as Graphics, o.x === 0 && o.y === 0 ? s.door : { ...s.door, x: s.door.x + o.x, y: s.door.y + o.y }, grow);
+    }
+  };
+  if (ctx.fx !== undefined) {
+    ctx.fx.setDoorZoom = setZoom;
+    // The haunt of a door: its frame, its opening and its panel rattle together by a few pixels. Not a redraw of the zoom step: `doorDraws` does not count it.
+    ctx.fx.shakeDoor = (relationId, x, y) => {
+      const before = rattle;
+      rattle = x === 0 && y === 0 ? null : { id: relationId, x, y };
+      if (before === null && rattle === null) return;
+      for (const id of new Set([before?.id, relationId])) {
+        if (id === undefined) continue;
+        const o = rattle !== null && rattle.id === id ? rattle : { x: 0, y: 0 };
+        ctx.fx?.leaves.get(id)?.setShake(o.x, o.y);
+        const entry = sprites.find((s) => s.door.relationId === id);
+        if (entry !== undefined && !entry.sprite.destroyed) {
+          const { sprite, door } = entry;
+          sprite.position.set(door.x + door.w / 2 - sprite.width / 2 + o.x, door.y + door.h / 2 - sprite.height / 2 + o.y);
+        }
+      }
+      drawOpenings(shownGrow);
+    };
+  }
   setZoom(ctx.zoom);  for (const add of late) add();
   for (const sealed of layout.sealed) {
     const state = ctx.states.sealed.get(sealed.relationId) ?? "default";

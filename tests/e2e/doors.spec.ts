@@ -19,6 +19,8 @@ interface Sample {
   zoom: number;
   draws: number;
   textures: number;
+  /** True while the ghost is inside a door (the haunt pass): it is not drawn, and the panel is shut on it or bursts open. */
+  hidden: boolean;
 }
 
 /** Read the scene on animation frames, at most every 30 ms, for `ms` of wall time. */
@@ -35,7 +37,7 @@ async function sampleFor(page: Page, ms: number): Promise<Sample[]> {
           if (scene !== null && performance.now() - lastRead >= 30) {
             lastRead = performance.now();
             const d = scene.debug() as { ghost: Sample["ghost"]; light: Sample["light"]; textureCount: number; fx: HookFx };
-            out.push({ t: d.fx.clock, ghost: d.ghost, light: d.light, doors: d.fx.doorBoxes, readings: d.fx.doors, zoom: d.fx.camera.zoom, draws: d.fx.doorDraws, textures: d.textureCount });
+            out.push({ t: d.fx.clock, ghost: d.ghost, light: d.light, doors: d.fx.doorBoxes, readings: d.fx.doors, zoom: d.fx.camera.zoom, draws: d.fx.doorDraws, textures: d.textureCount, hidden: d.fx.haunts.some((h) => h.phase !== "none" && h.ghostAlpha === 0) });
           }
           if (performance.now() - start >= duration) resolve(out);
           else requestAnimationFrame(tick);
@@ -136,13 +138,14 @@ test.describe("the doors at the first view, 1920 x 1080", () => {
         // The ghost is 28 px wide and a door 18 px: once the ghost is within 20 px of a door it covers it, and the door must be open by then
         // (it opens while the ghost is still 32 px away, so that the swing is seen and not hidden under the ghost).
         if (s.readings.some((r) => r.relationId === door.relationId)) {
-          if (distance * s.zoom <= 20) expect(door.open, `door ${door.relationId} with the ghost ${(distance * s.zoom).toFixed(0)} px away at ${s.t}`).toBeGreaterThanOrEqual(0.999);
+          // The claim is about a ghost that is seen: while it is inside the door (the haunt pass) the panel is shut on it, and that is the haunt.
+          if (!s.hidden && distance * s.zoom <= 20) expect(door.open, `door ${door.relationId} with the ghost ${(distance * s.zoom).toFixed(0)} px away at ${s.t}`).toBeGreaterThanOrEqual(0.999);
         }
         if (distance <= 2) {
           // The ghost stands on the door (it pauses there): the panel is fully open once the 120 ms of the swing have passed.
           const since = (s.t - (leftAt.get(`near ${door.relationId}`) ?? s.t));
           if (!leftAt.has(`near ${door.relationId}`)) leftAt.set(`near ${door.relationId}`, s.t);
-          if (since >= 150) {
+          if (since >= 150 && !s.hidden) {
             expect(door.open, `door ${door.relationId} while the ghost stands on it`).toBeGreaterThanOrEqual(0.999);
             expect(door.openingPx, `the opening of door ${door.relationId} is half its width or more`).toBeGreaterThanOrEqual(door.widthPx / 2);
             fullyOpenAtGhost++;

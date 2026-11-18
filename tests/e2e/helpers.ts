@@ -83,6 +83,20 @@ export interface HookFx {
   /** How many times the frames and doorways of the doors were drawn again since the map was drawn (a camera step does; a swing never does). */
   doorDraws: number;
   cost: Record<"fog" | "bats" | "spiders" | "motes" | "doors" | "loopLights" | "candles" | "ghost", number>;
+  /** The haunt of each loop the ghost walks: the phase, the door, the opacity of the ghost, the rattle of the door and what is on screen. */
+  haunts: HookHaunt[];
+  /** The seed of the random of the haunts (a development build can fix it with `?hauntSeed=`). */
+  hauntSeed: number | null;
+}
+
+export interface HookHaunt {
+  phase: "none" | "enter" | "shake" | "burst" | "exit";
+  door: string | null;
+  ghostAlpha: number;
+  /** The offset of the door panel and frame, in scene units. */
+  shake: { x: number; y: number };
+  critters: { id: number; kind: "bat" | "cat"; x: number; y: number; alpha: number; visible: boolean; rect: HookRect }[];
+  puffs: { x: number; y: number; r: number; alpha: number; visible: boolean; rect: HookRect }[];
 }
 
 export interface HookScene {
@@ -259,6 +273,23 @@ export function expected(): ManorExpected {
   const wings: Record<string, number> = {};
   for (const [key, count] of Object.entries(raw.wings)) wings[`src/${key}`] = count;
   return { ...raw, wings };
+}
+
+/**
+ * The center, in client pixels, of the door the scene draws for `relationId` (`fx.doorBoxes` of the debug data). The scene draws a door on
+ * the wall of its room just outside it (src/scene/doorPlace.ts), so this is where a person sees the door, not the layout's door box.
+ */
+export async function drawnDoorCenter(page: Page, relationId: string): Promise<{ x: number; y: number }> {
+  const boxes = (await sceneDebug(page)).fx.doorBoxes;
+  const box = boxes.find((b) => b.relationId === relationId);
+  if (box === undefined) throw new Error(`The door ${relationId} is not drawn`);
+  return { x: box.rect.x + box.rect.width / 2, y: box.rect.y + box.rect.height / 2 };
+}
+
+/** Click the center of the drawn door of a relation (`drawnDoorCenter`). */
+export async function clickDrawnDoor(page: Page, relationId: string): Promise<void> {
+  const at = await drawnDoorCenter(page, relationId);
+  await page.mouse.click(at.x, at.y);
 }
 
 /** Click the center of a door's screen rectangle. */

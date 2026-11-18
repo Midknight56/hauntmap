@@ -140,12 +140,12 @@ test.describe("titles and the right column (item 6)", () => {
       expect(d.particleCount).toBe(0);
       expect(d.activeTweens).toBe(0);
     }
-    const layout = await layoutOf(page);
     const relation = await page.evaluate(() => (window as unknown as { __hauntmap: { store: { getState(): { routeFilter: { relationIds: string[] } } } } }).__hauntmap.store.getState().routeFilter.relationIds[0]);
-    const door = layout.doors.find((d) => d.relationId === relation);
+    // The scene draws a door on the wall of its room just outside it, so the ghost stands at the center of the drawn door (fx.doorBoxes), not of the layout box.
+    const door = first.fx.doorBoxes.find((d) => d.relationId === relation);
     expect(door).toBeDefined();
-    expect(first.ghost?.x).toBeCloseTo((door?.x ?? 0) + (door?.w ?? 0) / 2, 5);
-    expect(first.ghost?.y).toBeCloseTo((door?.y ?? 0) + (door?.h ?? 0) / 2, 5);
+    expect(first.ghost?.x).toBeCloseTo(door?.x ?? 0, 5);
+    expect(first.ghost?.y).toBeCloseTo(door?.y ?? 0, 5);
   });
 
   test("the loop is shown from the start: a glowing corridor and a ghost, with no selection, no route filter and no step done", async ({ page }) => {

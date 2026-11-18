@@ -37,6 +37,19 @@ interface Props {
 /** A pointer drag shorter than this is a click. */
 const DRAG_SLOP = 5;
 
+/** A development build can fix the seed of the random of the haunts (drawing only) with `?hauntSeed=11`; a release build never reads it. */
+function developmentHauntSeed(): number | undefined {
+  if (!DEVHOOK_ENABLED) return undefined;
+  const raw = new URLSearchParams(window.location.search).get("hauntSeed");
+  if (raw === null || !/^\d{1,9}$/.test(raw)) return undefined;
+  return Number(raw);
+}
+
+/** A development build can turn the haunts off for one page with `?hauntSeed=off` (a test of the plain pause at a door); a release build never reads it. */
+function developmentHauntsOff(): boolean {
+  return DEVHOOK_ENABLED && new URLSearchParams(window.location.search).get("hauntSeed") === "off";
+}
+
 function developmentRendererOff(): boolean {
   if (!DEVHOOK_ENABLED) return false;
   return devState.forceFailure || new URLSearchParams(window.location.search).get("renderer") === "off";
@@ -145,6 +158,8 @@ export function MapView({ store, createScene, forceFailure, comparison }: Props)
       container: host,
       reducedMotion: reducedRef.current,
       debug: DEVHOOK_ENABLED,
+      ...(developmentHauntSeed() === undefined ? {} : { hauntSeed: developmentHauntSeed() as number }),
+      ...(developmentHauntsOff() ? { hauntsOff: true } : {}),
       forceFailure: forceFailure ?? developmentRendererOff(),
     }).then((init) => {
       if (!init.ok) {

@@ -89,6 +89,8 @@ export interface DrawContext {
   selectedRoom?: string | null;
   /** The particles of the 40 that the decor already uses (what moves in it); the dust of the loops takes what is left. */
   particlesTaken?: number;
+  /** The seed of the random of the haunts (drawing only); absent in tests that draw without effects, where no haunt is made. */
+  hauntSeed?: number;
 }
 
 /** `src/orders Ãƒâ€šÃ‚Â· 7 modules`; the same words as the wing tooltip. */

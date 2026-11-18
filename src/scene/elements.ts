@@ -1,4 +1,5 @@
 import { Container, Graphics, Rectangle, type Renderer, type Texture } from "pixi.js";
+import { drawCritter } from "./critters";
 import { FRAME } from "./doorLook";
 import { STATE_STYLES, TOKENS, type State } from "./styles";
 import type { TextureRenderer } from "./textures";
@@ -196,6 +197,11 @@ function draw(kind: string, stateName: string): { node: Container; frame: Rectan
       // The `?` is a text of the scene (doors.ts), so that it keeps 12 CSS pixels at every zoom.
       return { node, frame: new Rectangle(0, 0, DOOR_BASE, DOOR_BASE) };
     }
+    case "critter": {
+      // The bat and the cat of the haunt (`stateName` is the kind): drawn once, a dark silhouette with a thin light rim.
+      const critter = drawCritter(stateName);
+      return { node: critter.node, frame: new Rectangle(0, 0, critter.w, critter.h) };
+    }
     case "fog": {
       // A soft round cloud: white rings, each a little smaller and a little more opaque in the middle. The scene tints and thins it.
       const g = new Graphics();
@@ -220,7 +226,7 @@ export function createElementTextures(renderer: Renderer): TextureRenderer<Textu
     create(kind, state) {
       const { node, frame } = draw(kind, state);
       // A door and a sealed doorway are small and seen close up: they get a finer texture than the rooms.
-      const texture = renderer.generateTexture({ target: node, frame, resolution: kind === "door" || kind === "sealed" ? 4 : 2 });
+      const texture = renderer.generateTexture({ target: node, frame, resolution: kind === "door" || kind === "sealed" || kind === "critter" ? 4 : 2 });
       node.destroy({ children: true });
       return texture;
     },

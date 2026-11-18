@@ -9,6 +9,10 @@ export interface SceneOptions {
   /** Development builds only: `debug()` returns live counters. */
   debug: boolean;
   forceFailure?: boolean;
+  /** Development builds fix the seed of the random of the haunts (drawing only); a release build draws a new one for each map. */
+  hauntSeed?: number;
+  /** Development builds can turn the haunts off for one page (`?hauntSeed=off`), so that a test sees the plain pause of the ghost at a door. */
+  hauntsOff?: boolean;
 }
 
 export type SceneInitFailure = "init-failed" | "no-webgl" | "forced";
@@ -50,6 +54,16 @@ export interface DebugLabel {
   rect?: { x: number; y: number; width: number; height: number };
   /** The plate behind a name that is drawn on one, in client pixels. */
   plate?: { x: number; y: number; width: number; height: number };
+}
+
+/** One haunt as the debug data reports it; boxes are in client pixels, positions in scene units. */
+export interface HauntDebug {
+  phase: "none" | "enter" | "shake" | "burst" | "exit";
+  door: string | null;
+  ghostAlpha: number;
+  shake: { x: number; y: number };
+  critters: { id: number; kind: "bat" | "cat"; x: number; y: number; alpha: number; visible: boolean; rect: { x: number; y: number; width: number; height: number } }[];
+  puffs: { x: number; y: number; r: number; alpha: number; visible: boolean; rect: { x: number; y: number; width: number; height: number } }[];
 }
 
 export interface SceneDebug {
@@ -102,6 +116,10 @@ export interface SceneDebug {
     /** The milliseconds per frame that the update of each effect takes (a running mean over the last frames); zero in the release build. */
     cost: Record<"fog" | "bats" | "spiders" | "motes" | "doors" | "loopLights" | "candles" | "ghost", number>;
     decor: { kind: "web" | "crack" | "candle" | "fog" | "bat" | "spider"; moving: boolean; visible: boolean; rect: { x: number; y: number; width: number; height: number } }[];
+    /** The haunt of each loop the ghost walks: the phase, the door it is at, the opacity of the ghost, and what is on screen. Empty under reduced motion. */
+    haunts: HauntDebug[];
+    /** The seed of the random of the haunts; null in a release build. */
+    hauntSeed: number | null;
   };
 }
 

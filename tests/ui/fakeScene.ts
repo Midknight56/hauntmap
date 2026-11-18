@@ -92,7 +92,7 @@ export function createFakeScene(initial: Camera = { x: 0, y: 0, zoom: 1 }): Fake
       },
       debug(): SceneDebug {
         if (fake.destroyed) throw new Error("Scene destroyed");
-        return { textureCount: 0, visibleRooms: 0, tickerRunning: true, activeTweens: 0, drawnDoors: 0, particleCount: 0, frames: 0, labels: [], ghost: null, glow: false, glowAlpha: null, light: null, wingMarks: [], theme: "candlelit-manor", fx: { clock: 0, camera: { x: 0, y: 0, zoom: 1 }, motes: [], lamps: [], roomAlphas: {}, layerAlpha: 1, addedScales: [], farewell: null, removed: [], door: null, doors: [], loop: null, decor: [], doorPx: [], doorways: 0, doorBoxes: [], doorDraws: 0, cost: { fog: 0, bats: 0, spiders: 0, motes: 0, doors: 0, loopLights: 0, candles: 0, ghost: 0 } } };
+        return { textureCount: 0, visibleRooms: 0, tickerRunning: true, activeTweens: 0, drawnDoors: 0, particleCount: 0, frames: 0, labels: [], ghost: null, glow: false, glowAlpha: null, light: null, wingMarks: [], theme: "candlelit-manor", fx: { clock: 0, camera: { x: 0, y: 0, zoom: 1 }, motes: [], lamps: [], roomAlphas: {}, layerAlpha: 1, addedScales: [], farewell: null, removed: [], door: null, doors: [], loop: null, decor: [], doorPx: [], doorways: 0, doorBoxes: [], doorDraws: 0, cost: { fog: 0, bats: 0, spiders: 0, motes: 0, doors: 0, loopLights: 0, candles: 0, ghost: 0 }, haunts: [], hauntSeed: null } };
       },
       destroy() {
         record("destroy");

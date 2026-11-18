@@ -49,6 +49,8 @@ export interface DoorLeaf {
   setOpen(fraction: number): void;
   /** Grow the leaf to `factor` times the 16 unit door (the doorway is drawn by the same step). */
   setGrow(factor: number): void;
+  /** Move the panel by this much (scene units): the rattle of a haunted door. The frame and the opening move with it (`SceneFx.shakeDoor`). */
+  setShake(x: number, y: number): void;
 }
 
 /** The effects whose update cost is measured in the dev build, in milliseconds per frame. */
@@ -79,12 +81,14 @@ export interface SceneFx {
   doorDraws: number;
   /** Called at every zoom: the doorways and leaves follow it in steps. */
   setDoorZoom: ((zoom: number) => void) | null;
+  /** Rattle one door: its frame, its dark opening and its panel move by (x, y) scene units; (0, 0) puts them back. Drawing only. */
+  shakeDoor: ((relationId: string, x: number, y: number) => void) | null;
   /** The cobwebs, candles, cracks, fog, bats and spiders. */
   decor: Decor | null;
 }
 
 export function newFx(): SceneFx {
-  return { glows: new Map(), doorSprites: new Map(), lamps: [], added: [], removedOutlines: [], removedSolid: null, openDoor: null, loopRooms: new Map(), leaves: new Map(), doorways: 0, doorDraws: 0, setDoorZoom: null, decor: null };
+  return { glows: new Map(), doorSprites: new Map(), lamps: [], added: [], removedOutlines: [], removedSolid: null, openDoor: null, loopRooms: new Map(), leaves: new Map(), doorways: 0, doorDraws: 0, setDoorZoom: null, shakeDoor: null, decor: null };
 }
 
 /** A pure pseudo-random number in [0, 1) from two integers, so that the motes start in the same places on every run. */

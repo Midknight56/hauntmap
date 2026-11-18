@@ -61,11 +61,11 @@ test.describe("with motion allowed", () => {
   });
 
   test("1 a door is open only while the ghost is at it or within one door width, swings open in about 120 ms and shut in about 300 ms", async ({ page }) => {
-    test.setTimeout(90_000);
+    test.setTimeout(120_000);
     await openManor(page);
     await expandAllWings(page);
     await settled(page);
-    const samples = (await sampleFor(page, 16_000)).filter((s) => s.ghost !== null);
+    const samples = (await sampleFor(page, 30_000)).filter((s) => s.ghost !== null);
     expect(samples.length).toBeGreaterThan(60);
     const states = new Set<string>();
     const nearSince = new Map<string, number>();
@@ -83,7 +83,9 @@ test.describe("with motion allowed", () => {
         const distance = dist(ghost, d);
         states.add(d.state);
         if (d.state === "open" || d.state === "opening") expect(distance, `door ${d.relationId} ${d.state} at ${s.t}`).toBeLessThanOrEqual(d.w + 2);
-        if (d.state === "closed") expect(distance, `door ${d.relationId} closed at ${s.t}`).toBeGreaterThan(d.w - 2);
+        // A closed door has no ghost at it, except while the ghost is inside the door (the haunt pass): it is not drawn then, and the panel is shut on it.
+        const inside = s.fx.haunts.some((h) => h.door === d.relationId && h.phase !== "none" && h.ghostAlpha === 0);
+        if (d.state === "closed" && !inside) expect(distance, `door ${d.relationId} closed at ${s.t}`).toBeGreaterThan(d.w - 2);
         if (distance <= d.w) {
           farSince.delete(d.relationId);
           if (!nearSince.has(d.relationId)) {
@@ -240,6 +242,18 @@ test.describe("with motion allowed", () => {
       const samples = await sampleManyLabels(page, round === 0 ? 14_000 : 6000);
       for (const s of samples) {
         worstParticles = Math.max(worstParticles, s.particles);
+        // The bats, cats and dust of the haunt are effects too: none that is shown covers a name or a plate.
+        for (const h of s.haunts) {
+          for (const e of [...h.critters.map((c) => ({ kind: c.kind, visible: c.visible && c.alpha > 0.02, rect: c.rect })), ...h.puffs.map((p) => ({ kind: "dust", visible: p.visible && p.alpha > 0.02, rect: p.rect }))]) {
+            if (!e.visible) continue;
+            for (const l of s.labels) {
+              for (const box of [l.rect, l.plate]) {
+                if (box === undefined) continue;
+                if (e.rect.x < box.x + box.width && box.x < e.rect.x + e.rect.width && e.rect.y < box.y + box.height && box.y < e.rect.y + e.rect.height) covering.push(`${e.kind} at ${JSON.stringify(e.rect)} covers ${l.kind} ${l.id}`);
+              }
+            }
+          }
+        }
         for (const e of s.decor) {
           kinds.add(e.kind);
           if (e.visible) everVisible.add(e.kind);
@@ -484,11 +498,29 @@ test.describe("the look at the first view, 1920 x 1080", () => {
         const r = (window as unknown as { __hauntmap: { scene(): { screenRectOf(t: { kind: string; id: string }): DOMRect } } }).__hauntmap.scene().screenRectOf({ kind: "room", id: moduleId });
         return { x: r.x, y: r.y, width: r.width, height: r.height };
       }, id);
+    // Before the haunt pass the ghost stood at the door of the room it had just lit, and the bands beside the walls were read with it there (the
+    // thresholds below come from that). Now the ghost goes into the door first, so the bands are read once it is seen again (at 90 percent or more)
+    // at the room: the same picture, and never with the ghost hidden.
+    const ghostBack = (id: string): Promise<boolean> =>
+      page.evaluate((moduleId) => {
+        const scene = (window as unknown as { __hauntmap: { scene(): { debug(): { ghost: { x: number; y: number } | null; fx: HookFx }; screenRectOf(t: { kind: string; id: string }): DOMRect } } }).__hauntmap.scene();
+        const d = scene.debug();
+        if (d.fx.haunts.some((h) => h.phase !== "none" && h.ghostAlpha < 0.9)) return false;
+        if (d.ghost === null) return false;
+        const canvas = document.querySelector("canvas") as HTMLCanvasElement;
+        const box = canvas.getBoundingClientRect();
+        const room = scene.screenRectOf({ kind: "room", id: moduleId });
+        const gx = box.left + box.width / 2 + (d.ghost.x - d.fx.camera.x) * d.fx.camera.zoom;
+        const gy = box.top + box.height / 2 + (d.ghost.y - d.fx.camera.y) * d.fx.camera.zoom;
+        const dx = Math.max(room.x - gx, 0, gx - (room.x + room.width));
+        const dy = Math.max(room.y - gy, 0, gy - (room.y + room.height));
+        return Math.hypot(dx, dy) <= 30;
+      }, id);
     type Read = { share: number; mean: number; warm: number; peak: number }[];
     const stable = async (id: string, wantLit: boolean): Promise<Read | null> => {
       const ok = (s: { lit: boolean; glow: number }): boolean => (wantLit ? s.glow > 0.99 : !s.lit);
       const before = await roomOf(id);
-      if (!ok(before)) return null;
+      if (!ok(before) || (wantLit && !(await ghostBack(id)))) return null;
       const rect = await rectOf(id);
       const bands = [
         { x: rect.x - 9, y: rect.y + 12, width: 6, height: rect.height - 24 },
@@ -507,6 +539,9 @@ test.describe("the look at the first view, 1920 x 1080", () => {
       dimRead = await stable(id, false);
       if (dimRead === null) continue;
       await expect.poll(async () => (await roomOf(id)).glow, { timeout: 30_000, intervals: [30] }).toBeGreaterThan(0.99);
+      // Wait until the ghost is seen again at the door of the room (or the lap has ended, which starts the next attempt).
+      const lap = (await roomOf(id)).lap;
+      await expect.poll(async () => (await roomOf(id)).lap !== lap || (await ghostBack(id)), { timeout: 30_000, intervals: [20] }).toBe(true);
       litRead = await stable(id, true);
     }
     expect(dimRead, "a dim reading was taken").not.toBeNull();
@@ -525,6 +560,7 @@ test.describe("the look at the first view, 1920 x 1080", () => {
 });
 interface LabelSample {
   particles: number;
+  haunts: HookFx["haunts"];
   decor: HookFx["decor"];
   labels: { kind: string; id: string; rect?: { x: number; y: number; width: number; height: number }; plate?: { x: number; y: number; width: number; height: number } }[];
 }
@@ -535,7 +571,7 @@ async function sampleManyLabels(page: Page, ms: number): Promise<LabelSample[]> 
   const end = Date.now() + ms;
   while (Date.now() < end) {
     const d = await sceneDebug(page);
-    out.push({ particles: d.particleCount, decor: d.fx.decor, labels: d.labels });
+    out.push({ particles: d.particleCount, haunts: d.fx.haunts, decor: d.fx.decor, labels: d.labels });
     await page.waitForTimeout(250);
   }
   return out;

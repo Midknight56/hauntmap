@@ -50,7 +50,7 @@ function live(node: { alpha: number; destroyed: boolean }): { alpha: number } {
   };
 }
 
-const emptyFx = (): SceneDebug["fx"] => ({ clock: 0, camera: { x: 0, y: 0, zoom: 1 }, motes: [], lamps: [], roomAlphas: {}, layerAlpha: 1, addedScales: [], farewell: null, removed: [], door: null, doors: [], loop: null, decor: [], doorPx: [], doorways: 0, doorBoxes: [], doorDraws: 0, cost: { fog: 0, bats: 0, spiders: 0, motes: 0, doors: 0, loopLights: 0, candles: 0, ghost: 0 } });
+const emptyFx = (): SceneDebug["fx"] => ({ clock: 0, camera: { x: 0, y: 0, zoom: 1 }, motes: [], lamps: [], roomAlphas: {}, layerAlpha: 1, addedScales: [], farewell: null, removed: [], door: null, doors: [], loop: null, decor: [], doorPx: [], doorways: 0, doorBoxes: [], doorDraws: 0, haunts: [], hauntSeed: null, cost: { fog: 0, bats: 0, spiders: 0, motes: 0, doors: 0, loopLights: 0, candles: 0, ghost: 0 } });
 
 /** Wait for the committed Almendra SC and Spline Sans Mono files, for at most two seconds; the plaques and names then measure and draw with the real faces. */
 async function ensureDisplayFont(): Promise<void> {
@@ -117,6 +117,8 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
   }, world);
 
   const animator = createAnimator({ reduced: opts.reducedMotion });
+  // The random of the haunts is drawing only: a fixed seed in a development build (`?hauntSeed=`), a new one for each map otherwise.
+  const hauntSeed = opts.hauntSeed ?? (Math.floor(Math.random() * 4294967296) >>> 0);
   const textures = createTextureCache<Texture>(createElementTextures(app.renderer));
   const listeners = new Map<string, Set<Listener>>();
   const emit = (event: string, arg?: unknown): void => {
@@ -207,7 +209,7 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
       routeFilter: styleState?.routeFilter ?? null,
       marks: view.marks,
     });
-    const ctx: DrawContext = { layers, textures, states, reduced, labels, zoom: displayed.zoom, related, compact: container.clientWidth < 520, fx, selectedRoom: states.haloRoom };
+    const ctx: DrawContext = { layers, textures, states, reduced, labels, zoom: displayed.zoom, related, compact: container.clientWidth < 520, fx, selectedRoom: states.haloRoom, ...(opts.hauntsOff === true ? {} : { hauntSeed }) };
     // The halloween details: cobwebs, candles and cracks come with the wings and rooms; the fog, the bats and the spiders after the wings.
     // What moves in them counts inside the 40 particles, before the dust of the loops and the motes.
     const decor = createDecor({ reduced, zoom: displayed.zoom, bounds: drawn.bounds, clockMs: fxClock, fog: textures.get("fog", "default") });
@@ -358,8 +360,8 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
   }
 
   /** Where every drawn name, title, plate and number lies now, in scene units, a little grown: the places the details must keep clear. */
-  function labelBoxes(): Box[] {
-    const pad = 2 / Math.max(displayed.zoom, 0.0001);
+  function labelBoxes(padPx = 2): Box[] {
+    const pad = padPx / Math.max(displayed.zoom, 0.0001);
     const out: Box[] = [];
     const add = (b: Box | null | undefined): void => {
       if (b !== null && b !== undefined) out.push({ x: b.x - pad, y: b.y - pad, w: b.w + 2 * pad, h: b.h + 2 * pad });
@@ -382,7 +384,29 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
   function settleDecor(): void {
     decorDirty = false;
     decorSettledAt = sceneClock;
-    fx.decor?.settle(labelBoxes());
+    const boxes = labelBoxes();
+    fx.decor?.settle(boxes);
+    // The haunt keeps clear of the names by half a pixel only: its door stands close to the wall of a room, and the shake is a few pixels.
+    route?.setLabels(labelBoxes(0.5));
+  }
+
+  /** Every haunt as the debug data reports it: the boxes of the critters and the puffs in client pixels. */
+  function hauntReadings(): SceneDebug["fx"]["haunts"] {
+    const vp = viewport();
+    const origin = container.getBoundingClientRect();
+    const rectOf = (b: Box): { x: number; y: number; width: number; height: number } => {
+      const a = toScreen(displayed, vp, { x: b.x, y: b.y });
+      const e = toScreen(displayed, vp, { x: b.x + b.w, y: b.y + b.h });
+      return { x: origin.left + a.x, y: origin.top + a.y, width: e.x - a.x, height: e.y - a.y };
+    };
+    return (route?.haunts() ?? []).map((h) => ({
+      phase: h.phase,
+      door: h.door,
+      ghostAlpha: h.ghostAlpha,
+      shake: { ...h.shake },
+      critters: h.critters.map((c) => ({ id: c.id, kind: c.kind, x: c.x, y: c.y, alpha: c.alpha, visible: c.visible, rect: rectOf(c.box) })),
+      puffs: h.puffs.map((p) => ({ x: p.x, y: p.y, r: p.r, alpha: p.alpha, visible: p.visible, rect: rectOf(p.box) })),
+    }));
   }
 
   /** Re-choose the words and the scale of every name and title for the camera zoom (never under 12 CSS pixels). */
@@ -577,7 +601,8 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     },
     focusOn(on, zoomFloor, zoom) {
       guard();
-      const rect = layout === null ? null : rectOfTarget(layout, on);
+      const shown = drawnLayout ?? layout;
+      const rect = shown === null ? null : rectOfTarget(shown, on);
       if (rect === null) return { ...target };
       const camera: Camera = { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2, zoom: clampZoom(zoom ?? Math.max(target.zoom, zoomFloor)) };
       moveCamera(camera, "animate");
@@ -585,7 +610,8 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     },
     screenRectOf(on: { kind: HitKind; id: string }) {
       guard();
-      const rect = layout === null ? null : rectOfTarget(layout, on);
+      const shown = drawnLayout ?? layout;
+      const rect = shown === null ? null : rectOfTarget(shown, on);
       if (rect === null) return null;
       const vp = viewport();
       const a = toScreen(displayed, vp, { x: rect.x, y: rect.y });
@@ -664,6 +690,8 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
           doorways: fx.doorways,
           doorDraws: fx.doorDraws,
           doorBoxes: doorBoxes(),
+          haunts: hauntReadings(),
+          hauntSeed: opts.hauntsOff === true ? null : hauntSeed,
           cost: { ...meanCost },
           decor: (fx.decor?.readings() ?? []).map((r) => {
             const vp = viewport();

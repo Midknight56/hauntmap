@@ -114,6 +114,10 @@ export interface Walker {
   readonly lap: number;
   readonly at: Point;
   readonly pausing: boolean;
+  /** How many times the ghost has come to a door at the end of a leg (the first pause at the start is not one). */
+  readonly arrivals: number;
+  /** End the pause at the door at once: the next step of time starts the walk (the haunt of a door holds the ghost, then lets it go). */
+  endPause(): void;
 }
 
 /**
@@ -127,6 +131,7 @@ export function createWalker(legs: readonly Leg[], pauseMs: number): Walker {
   let pausing = true;
   let paused = 0;
   let distance = 0;
+  let arrivals = 0;
   const n = legs.length;
   return {
     advance(deltaMs, unitsPerSecond) {
@@ -155,6 +160,7 @@ export function createWalker(legs: readonly Leg[], pauseMs: number): Walker {
             remaining -= need;
             leg = (leg + 1) % n;
             if (leg === 0) lap += 1;
+            arrivals += 1;
             pausing = true;
             paused = 0;
           }
@@ -173,6 +179,12 @@ export function createWalker(legs: readonly Leg[], pauseMs: number): Walker {
     },
     get pausing() {
       return pausing;
+    },
+    get arrivals() {
+      return arrivals;
+    },
+    endPause() {
+      if (pausing) paused = pauseMs;
     },
   };
 }

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expected, openManor, inStaticValue, roomPoint, settled, snapshot, storeAction } from "./helpers";
+import { drawnDoorCenter, expected, openManor, inStaticValue, roomPoint, settled, snapshot, storeAction } from "./helpers";
 
 const manor = expected();
 
@@ -75,7 +75,7 @@ test.describe("legend and tooltips", () => {
     expect(JSON.parse((await page.evaluate(() => localStorage.getItem("hauntmap.prefs.v1"))) ?? "{}")).toMatchObject({ legendOpen: false });
   });
 
-  test("5.2 hovering a room, a door and a wing shows the legend wording and the fact; Escape dismisses it", async ({ page }) => {
+  test("5.2 hovering a room, a drawn door and a wing shows the legend wording and the fact; Escape dismisses it", async ({ page }) => {
     await openManor(page);
     const room = await roomPoint(page, "src/orders/checkout.ts");
     await page.mouse.move(room!.x, room!.y);
@@ -85,7 +85,7 @@ test.describe("legend and tooltips", () => {
     await expect(tooltip(page)).toHaveCount(0);
 
     const door = (await snapshot(page)).layout!.doors[0]!;
-    const at = await centerOf(page, "door", door.relationId);
+    const at = await drawnDoorCenter(page, door.relationId);
     await page.mouse.move(at.x + 1, at.y + 1);
     await page.mouse.move(at.x, at.y);
     await expect(tooltip(page)).toBeVisible();

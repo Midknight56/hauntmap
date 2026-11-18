@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { wide } from "../ui/generators";
 import {
   clickDoor,
+  clickDrawnDoor,
   expected,
   inStaticValue,
   inspectorHeading,
@@ -124,13 +125,13 @@ test.describe("map scene", () => {
     expect(ranks(again)).toEqual(ranks(before));
   });
 
-  test("9.2 a click on the center of each door of src/orders selects that relation", async ({ page }) => {
+  test("9.2 a click on the center of each drawn door of src/orders selects that relation", async ({ page }) => {
     await openManor(page);
     const { layout } = await snapshot(page);
     const orders = (layout?.doors ?? []).filter((d) => wingOfId(d.from) === "src/orders" && wingOfId(d.to) === "src/orders");
     expect(orders.length).toBe(11);
     for (const door of orders) {
-      await clickDoor(page, door.relationId);
+      await clickDrawnDoor(page, door.relationId);
       await expect(inspectorHeading(page)).toHaveText(`${door.from} imports ${door.to}`);
     }
   });

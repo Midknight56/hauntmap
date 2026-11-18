@@ -92,6 +92,16 @@ async function expectStill(page: Page): Promise<void> {
   expect(first.ghost, "the ghost is drawn").not.toBeNull();
   expect((first.ghost as { leg: number }).leg, "the ghost stands at its first door").toBe(0);
   expect(first.light, "the light is a static marker").not.toBeNull();
+  // The haunt pass: no haunt, no shake and no critter under reduced motion; the ghost stays at its first door, seen.
+  const haunted = (await sceneDebug(page)).fx.haunts;
+  for (const h of haunted) {
+    expect(h.phase, "no haunt").toBe("none");
+    expect(h.door).toBeNull();
+    expect(h.critters, "no critter").toEqual([]);
+    expect(h.puffs, "no dust").toEqual([]);
+    expect(h.shake).toEqual({ x: 0, y: 0 });
+    expect(h.ghostAlpha, "the ghost is seen").toBe(1);
+  }
   for (const s of samples) {
     expect(s.ghost).toEqual(first.ghost);
     expect(s.light).toEqual(first.light);

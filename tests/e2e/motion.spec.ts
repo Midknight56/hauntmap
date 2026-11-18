@@ -41,6 +41,69 @@ async function stopSampler(page: Page): Promise<Sample[]> {
   });
 }
 
+/** The phases of a haunt in milliseconds (`HAUNT` in src/scene/haunt.ts). */
+const HAUNT_MS = { enter: 700, shakeMin: 1000, shakeMax: 1500, burst: 600, exit: 500 };
+
+/** The sample indices of a haunt that was sampled whole (`findWholeHaunt`). */
+interface WholeHaunt {
+  stoodFrom: number;
+  enter: number;
+  shake: number;
+  burst: number;
+  exit: number;
+  end: number;
+  movesAgain: number;
+}
+
+/**
+ * The first haunt in `samples` that was sampled from before it began to after the ghost walked on, or null: the last frame the ghost moved
+ * before it (`stoodFrom`), the first frame of each phase (the frame before `enter` has no haunt), the first frame with no haunt after the exit
+ * (`end`) and the first frame the ghost moved after it (`movesAgain`). Self-contained, because the page runs it from its source text too.
+ */
+function findWholeHaunt(samples: readonly unknown[]): WholeHaunt | null {
+  type S = { t: number; ghost: { leg: number; x: number; y: number } | null; fx: { haunts: { phase: string }[] } };
+  const list = samples as readonly S[];
+  const phaseOf = (i: number): string => list[i]?.fx.haunts[0]?.phase ?? "none";
+  const moved = (i: number): boolean => {
+    const a = list[i - 1]?.ghost;
+    const b = list[i]?.ghost;
+    if (a === null || a === undefined || b === null || b === undefined) return false;
+    return a.leg !== b.leg || Math.hypot(b.x - a.x, b.y - a.y) > 1e-6;
+  };
+  const next = (phase: string, from: number): number => {
+    for (let i = from; i < list.length; i++) {
+      const p = phaseOf(i);
+      if (p === phase) return i;
+      // A phase may only be followed by the next one; anything else is a haunt sampled in part.
+      if (p !== phaseOf(from - 1)) return -1;
+    }
+    return -1;
+  };
+  for (let enter = 1; enter < list.length; enter++) {
+    if (phaseOf(enter) !== "enter" || phaseOf(enter - 1) !== "none") continue;
+    let stoodFrom = enter;
+    while (stoodFrom > 1 && !moved(stoodFrom)) stoodFrom--;
+    if (!moved(stoodFrom)) continue;
+    const shake = next("shake", enter + 1);
+    const burst = shake < 0 ? -1 : next("burst", shake + 1);
+    const exit = burst < 0 ? -1 : next("exit", burst + 1);
+    const end = exit < 0 ? -1 : next("none", exit + 1);
+    if (end < 0) return null;
+    let movesAgain = end;
+    while (movesAgain < list.length && !moved(movesAgain)) movesAgain++;
+    if (movesAgain >= list.length) return null;
+    return { stoodFrom, enter, shake, burst, exit, end, movesAgain };
+  }
+  return null;
+}
+
+/** Open the manor on the page `/` plus `query` (a development build reads `hauntSeed` from it). */
+async function openManorWith(page: Page, query: string): Promise<void> {
+  await page.goto(`/${query}`);
+  await page.getByRole("button", { name: "Explore the manor" }).click();
+  await page.waitForFunction(() => performance.getEntriesByName("hauntmap:usable").length > 0);
+}
+
 async function still(page: Page): Promise<void> {
   await settled(page);
   await expect.poll(async () => (await sceneDebug(page)).activeTweens).toBe(0);
@@ -52,9 +115,11 @@ test.describe("with motion allowed", () => {
     await page.emulateMedia({ reducedMotion: "no-preference" });
   });
 
-  test("1 the ghost walks 60 screen pixels per second at any zoom and stands about 400 ms at each door", async ({ page }) => {
+  test("1 the ghost walks 60 screen pixels per second at any zoom and stands about 400 ms at each door where no haunt runs", async ({ page }) => {
     test.setTimeout(60_000);
-    await openManor(page);
+    // `?hauntSeed=off` (development build only) turns the haunts off for this page: a door pause is then the plain pause of the walker.
+    await openManorWith(page, "?hauntSeed=off");
+    expect((await sceneDebug(page)).fx.haunts, "no haunt runs on this page").toEqual([]);
     await still(page);
     const speeds: number[] = [];
     const pauses: number[] = [];
@@ -92,6 +157,51 @@ test.describe("with motion allowed", () => {
     // A pause is measured between the last frame of a walk and the first of the next one, so it is about 400 ms plus up to a frame or two.
     const plausible = pauses.filter((p) => p > 300 && p < 600);
     expect(plausible.length, `pauses ${pauses.map(Math.round).join(", ")}`).toBeGreaterThan(0);
+  });
+
+  test("1b a pause that holds a haunt lasts as long as its phases: enter, shake of 1 to 1.5 s, burst and exit", async ({ page }) => {
+    test.setTimeout(90_000);
+    await openManorWith(page, "?hauntSeed=11");
+    await still(page);
+    await startSampler(page);
+    // The sampler starts wherever the ghost is, and under load that can be in the middle of a haunt, whose first phase would then look short.
+    // So the test measures the first haunt that is sampled whole: the ghost walks, a frame with no haunt, then enter, shake, burst, exit, a
+    // frame with no haunt again, and the ghost walks on. It waits until such a haunt is in the samples, with the same finder it measures with.
+    await page.waitForFunction(
+      ([source]) => {
+        const find = new Function(`return (${source as string});`)() as (samples: unknown[]) => unknown;
+        return find((window as unknown as { __samples: unknown[] }).__samples) !== null;
+      },
+      [findWholeHaunt.toString()] as const,
+      { timeout: 70_000, polling: 250 },
+    );
+    const samples = await stopSampler(page);
+    const found = findWholeHaunt(samples);
+    expect(found, "a whole haunt is sampled").not.toBeNull();
+    const { stoodFrom, enter, shake, burst, exit, end, movesAgain } = found as WholeHaunt;
+    const time = (i: number): number => (samples[i] as Sample).t;
+    // A phase is read between the first frame of it and the first frame of the next one, so it is exact to the frame before and the frame at the end.
+    const frame = (i: number): number => time(i) - time(i - 1);
+    const within = (name: string, measured: number, expected: number, ...bracket: number[]): void => {
+      const tolerance = bracket.reduce((sum, i) => sum + frame(i), 0) + 1;
+      expect(Math.abs(measured - expected), `${name}: ${Math.round(measured)} ms against ${Math.round(expected)} ms (tolerance ${Math.round(tolerance)})`).toBeLessThanOrEqual(tolerance);
+    };
+    within("enter", time(shake) - time(enter), HAUNT_MS.enter, enter, shake);
+    within("burst", time(exit) - time(burst), HAUNT_MS.burst, burst, exit);
+    within("exit", time(end) - time(exit), HAUNT_MS.exit, exit, end);
+    const shakeMs = time(burst) - time(shake);
+    const slack = frame(shake) + frame(burst);
+    expect(shakeMs, `shake ${Math.round(shakeMs)} ms`).toBeGreaterThanOrEqual(HAUNT_MS.shakeMin - slack);
+    expect(shakeMs, `shake ${Math.round(shakeMs)} ms`).toBeLessThanOrEqual(HAUNT_MS.shakeMax + slack);
+    const phases = time(end) - time(enter);
+    // The walker stands from its arrival (the last frame it moved) to its first step after the haunt (the first frame it moved again).
+    const stood = time(movesAgain) - time(stoodFrom);
+    // Exact to the frames that bracket the pause: the arrival frame, the haunt start and the first step after the haunt.
+    const bracket = frame(stoodFrom + 1) + frame(enter) + frame(movesAgain);
+    expect(stood, `the ghost stood ${Math.round(stood)} ms, the phases took ${Math.round(phases)} ms`).toBeGreaterThanOrEqual(phases - bracket);
+    expect(stood, `the ghost stood ${Math.round(stood)} ms, the phases took ${Math.round(phases)} ms`).toBeLessThanOrEqual(phases + bracket);
+    expect(phases).toBeGreaterThanOrEqual(HAUNT_MS.enter + HAUNT_MS.shakeMin + HAUNT_MS.burst + HAUNT_MS.exit - bracket);
+    expect(phases).toBeLessThanOrEqual(HAUNT_MS.enter + HAUNT_MS.shakeMax + HAUNT_MS.burst + HAUNT_MS.exit + bracket);
   });
 
   test("3 and 7 Zoom in eases out and is done in 300 ms", async ({ page }) => {
