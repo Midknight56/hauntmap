@@ -7,6 +7,7 @@ import { TOKENS } from "./styles";
 import { glowAlphaAt } from "./effects";
 import type { CostSink } from "./fx";
 import { createDoorKeeper, type DoorKeeper, type DoorReading } from "./doorKeeper";
+import { doorReachUnits } from "./doorLook";
 import { createLoopLights, type RoomLightReading } from "./loopLights";
 import { bobOffsetPx, createWalker, GHOST_PAUSE_MS, GHOST_SPEED_PX_S, lightProgress, pointOnPolyline, polylineLength, witnessLegs, type Leg } from "./walk";
 
@@ -94,12 +95,13 @@ function applyLeaves(ctx: DrawContext, keeper: DoorKeeper, ids: readonly string[
 }
 
 /** The kept doors of a route: every distinct relation of it whose door is drawn, with its center and width. */
-function keptDoors(layout: LayoutResult, relationIds: readonly string[]): { id: string; x: number; y: number; w: number }[] {
+function keptDoors(layout: LayoutResult, relationIds: readonly string[], zoom: number): { id: string; x: number; y: number; w: number; stand: number }[] {
   const byId = new Map(layout.doors.map((d) => [d.relationId, d] as const));
-  const out: { id: string; x: number; y: number; w: number }[] = [];
+  const out: { id: string; x: number; y: number; w: number; stand: number }[] = [];
   for (const id of new Set(relationIds)) {
     const d = byId.get(id);
-    if (d !== undefined) out.push({ id, x: d.x + d.w / 2, y: d.y + d.h / 2, w: d.w });
+    // The door opens within its reach (the ghost is wider than the door); under reduced motion only the door the actor stands on is open.
+    if (d !== undefined) out.push({ id, x: d.x + d.w / 2, y: d.y + d.h / 2, w: doorReachUnits(zoom), stand: d.w });
   }
   return out;
 }
@@ -246,18 +248,21 @@ function drawLoop(ctx: DrawContext, layout: LayoutResult, route: { modules: stri
     ghost.position.set(at.x, at.y + bob);
     ghost.scale.set(scale);
   };
+  let keeperOf: DoorKeeper | null = null;
   const setZoom = (zoom: number): void => {
     zoomNow = Math.max(zoom, 0.0001);
     scale = size / zoomNow;
     ghost.scale.set(scale);
+    keeperOf?.setReach(doorReachUnits(zoomNow));
   };
   setZoom(ctx.zoom);
   place();
   // The rooms of the loop light as the ghost reaches their door, and the doors it passes swing open and shut. Both read the walker only.
   const legModules = legs.map((leg, k) => route.modules[leg.from ?? k] as string);
   const lights = createLoopLights(legModules);
-  const kept = keptDoors(layout, route.relationIds);
+  const kept = keptDoors(layout, route.relationIds, ctx.zoom);
   const keeper = createDoorKeeper(kept);
+  keeperOf = keeper;
   const keptIds = kept.map((d) => d.id);
   const roomHandles = ctx.fx?.loopRooms;
   const applyLights = (): void => {
@@ -380,7 +385,7 @@ function drawSelectedLight(ctx: DrawContext, layout: LayoutResult, claimed: Read
   place();
   // The door of the selected relation swings open as the light reaches it and shuts after the light has gone; a door that the ghost of a
   // loop already walks through is the ghost's. Under reduced motion the light is a static marker and the door stays open.
-  const kept = claimed.has(selected) ? [] : keptDoors(layout, [selected]);
+  const kept = claimed.has(selected) ? [] : keptDoors(layout, [selected], ctx.zoom);
   const keeper = createDoorKeeper(kept);
   const keptIds = kept.map((d) => d.id);
   if (ctx.reduced) keeper.setAll(true);
@@ -399,6 +404,7 @@ function drawSelectedLight(ctx: DrawContext, layout: LayoutResult, claimed: Read
     setZoom(zoom) {
       scale = 1 / Math.max(zoom, 0.0001);
       light.scale.set(scale);
+      keeper.setReach(doorReachUnits(zoom));
     },
     particleCount: 0,
     ghost: () => null,
@@ -443,7 +449,7 @@ function drawTrace(ctx: DrawContext, layout: LayoutResult, route: { kind: string
 
   // The doors of the route swing open as the light passes them and shut after it has gone. The light runs through each door on its way
   // from room to room (the drawn line stays from room to room). Under reduced motion every door of the route stays open.
-  const kept = keptDoors(layout, route.relationIds);
+  const kept = keptDoors(layout, route.relationIds, ctx.zoom);
   const keeper = createDoorKeeper(kept);
   const keptIds = kept.map((d) => d.id);
   if (ctx.reduced) {
@@ -484,7 +490,7 @@ function drawTrace(ctx: DrawContext, layout: LayoutResult, route: { kind: string
       applyLeaves(ctx, keeper, keptIds);
       cost?.("doors", performance.now() - t0);
     },
-    setZoom: () => undefined,
+    setZoom: (zoom) => keeper.setReach(doorReachUnits(zoom)),
     particleCount: 0,
     ghost: () => null,
     glow: false,

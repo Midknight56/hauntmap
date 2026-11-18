@@ -432,7 +432,7 @@ async function readRects(page: Page, rects: { x: number; y: number; width: numbe
 test.describe("the look at the first view, 1920 x 1080", () => {
   test.use({ viewport: { width: 1920, height: 1080 } });
 
-  test("6 the doors of the loop are 10 to 14 px wide, the cobwebs are large and bright, the cracks show, lit rooms have a warm halo", async ({ page }) => {
+  test("6 the doors of the loop are 16 to 20 px wide, the cobwebs are large and bright, the cracks show, lit rooms have a warm halo", async ({ page }) => {
     test.setTimeout(90_000);
     await page.emulateMedia({ reducedMotion: "no-preference" });
     await openManor(page);
@@ -442,8 +442,8 @@ test.describe("the look at the first view, 1920 x 1080", () => {
     const d = await sceneDebug(page);
     expect(d.fx.doorPx.length, "the loop has doors that swing").toBeGreaterThanOrEqual(3);
     for (const px of d.fx.doorPx) {
-      expect(px, "a swinging door is 10 to 14 px wide on the screen").toBeGreaterThanOrEqual(10);
-      expect(px).toBeLessThanOrEqual(14);
+      expect(px, "a swinging door is 16 to 20 px wide on the screen").toBeGreaterThanOrEqual(16);
+      expect(px).toBeLessThanOrEqual(20);
     }
     expect(d.fx.doorways, "each swinging door has a dark doorway behind it").toBe(d.fx.doorPx.length);
 
@@ -560,7 +560,7 @@ for (const how of ["system", "toggle"] as const) {
         const d = await sceneDebug(page);
         return { ghost: d.ghost, doors: d.fx.doors, loop: d.fx.loop, decor: d.fx.decor, motes: d.fx.motes, glowAlpha: d.glowAlpha, particles: d.particleCount, tweens: d.activeTweens };
       };
-      const a = (await read()) as { ghost: { leg: number }; doors: HookFx["doors"]; loop: NonNullable<HookFx["loop"]>; decor: HookFx["decor"]; particles: number; tweens: number };
+      const a = (await read()) as { ghost: { leg: number; x: number; y: number }; doors: HookFx["doors"]; loop: NonNullable<HookFx["loop"]>; decor: HookFx["decor"]; particles: number; tweens: number };
       await page.waitForTimeout(2500);
       const b = await read();
       expect(b, "nothing moved between two readings").toEqual(a);
@@ -574,6 +574,22 @@ for (const how of ["system", "toggle"] as const) {
       expect(a.tweens).toBe(0);
       expect(a.doors.length).toBeGreaterThanOrEqual(3);
       for (const door of a.doors) expect(["open", "closed"]).toContain(door.state);
+      // The drawn panels agree: no swing and no half-open panel. A door is open while the ghost stands on it and shut otherwise.
+      const ghostAt = a.ghost;
+      const boxes = (await sceneDebug(page)).fx.doorBoxes;
+      expect(boxes.length).toBeGreaterThanOrEqual(10);
+      let openCount = 0;
+      for (const box of boxes) {
+        const onIt = Math.hypot(ghostAt.x - box.x, ghostAt.y - box.y) <= box.w;
+        expect([0, 1], `door ${box.relationId} is open or shut, never half open`).toContain(box.open);
+        if (box.open === 1) {
+          openCount++;
+          expect(onIt, `door ${box.relationId} is open only while the ghost stands on it`).toBe(true);
+          expect(box.openingPx, "an open door shows half its width or more").toBeGreaterThanOrEqual(box.widthPx / 2);
+        } else expect(box.openingPx).toBe(0);
+        if (onIt) expect(box.open, `door ${box.relationId} is open while the ghost stands on it`).toBe(1);
+      }
+      expect(openCount, "the door under the ghost is open").toBeGreaterThanOrEqual(1);
       const kinds = new Set(a.decor.map((e) => e.kind));
       for (const kind of ["web", "crack", "candle", "fog", "bat", "spider"]) expect(kinds.has(kind as never), `${kind} is drawn, standing still`).toBe(true);
     });

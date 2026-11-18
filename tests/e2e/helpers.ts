@@ -35,6 +35,19 @@ export interface HookSceneDebug {
   fx: HookFx;
 }
 
+export interface HookDoorBox {
+  relationId: string;
+  /** The center and the width of the door in scene units. */
+  x: number;
+  y: number;
+  w: number;
+  /** The box in client pixels. */
+  rect: HookRect;
+  widthPx: number;
+  open: number;
+  openingPx: number;
+}
+
 export interface HookFx {
   /** The time the scene has animated, in milliseconds: the sum of its frame times (a frame counts at most 100 ms). Durations are measured in it, so that a loaded machine does not change them. */
   clock: number;
@@ -65,6 +78,10 @@ export interface HookFx {
   /** The width on the screen, in pixels, of each swinging door leaf, and the number of dark doorways drawn behind them. */
   doorPx: number[];
   doorways: number;
+  /** Every drawn door: its box in client pixels, its width on the screen, how far its panel is open (0 shut, 1 open) and how wide the opening is in pixels. */
+  doorBoxes: HookDoorBox[];
+  /** How many times the frames and doorways of the doors were drawn again since the map was drawn (a camera step does; a swing never does). */
+  doorDraws: number;
   cost: Record<"fog" | "bats" | "spiders" | "motes" | "doors" | "loopLights" | "candles" | "ghost", number>;
 }
 

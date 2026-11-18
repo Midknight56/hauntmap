@@ -1,4 +1,5 @@
 import { Container, Graphics, Rectangle, type Renderer, type Texture } from "pixi.js";
+import { FRAME } from "./doorLook";
 import { STATE_STYLES, TOKENS, type State } from "./styles";
 import type { TextureRenderer } from "./textures";
 
@@ -125,6 +126,52 @@ function arch(fill: string, state: State, baseOutline: string, mark: string | nu
   return g;
 }
 
+/** The outer edge of a door frame (two jambs and an arched lintel) in the 16 unit grid. */
+export function framePath(g: Graphics, outer: boolean): void {
+  const left = outer ? FRAME.outerLeft : FRAME.innerLeft;
+  const right = outer ? FRAME.outerRight : FRAME.innerRight;
+  const cy = outer ? FRAME.outerArchCenterY : FRAME.innerArchCenterY;
+  const r = outer ? FRAME.outerArchRadius : FRAME.innerArchRadius;
+  g.moveTo(left, FRAME.bottom).lineTo(left, cy).arc(8, cy, r, Math.PI, 0).lineTo(right, FRAME.bottom).closePath();
+}
+
+/**
+ * The closed panel inside the opening of a door: wood, one plank seam, two hinge plates on the left jamb and a knob on the right.
+ * The scene draws the same panel as a separate node for the doors that swing (doors.ts), so that it can turn on its hinge.
+ */
+export function drawPanel(g: Graphics): void {
+  framePath(g, false);
+  g.fill(shade(TOKENS.room, -0.45));
+  g.moveTo(8, FRAME.innerArchCenterY - FRAME.innerArchRadius + 0.6).lineTo(8, FRAME.bottom).stroke({ width: 0.6, color: TOKENS.wallLine, alpha: 0.85 });
+  g.rect(FRAME.innerLeft, 8.4, 1.3, 1.5).fill(TOKENS.wallLine);
+  g.rect(FRAME.innerLeft, 12.2, 1.3, 1.5).fill(TOKENS.wallLine);
+  g.circle(11.3, 11.3, 1).fill(TOKENS.focus);
+}
+
+/**
+ * A door seen from the front: a stone frame (two jambs and an arched lintel) in the color of its state, the dark opening, and the closed
+ * panel with its knob and hinge plates. Drawn once into the texture of its state and reused by every door.
+ */
+function doorFrame(fill: string, state: State, baseOutline: string): Graphics {
+  const style = STATE_STYLES[state];
+  const g = new Graphics();
+  const width = Math.max(1, style.outlineWidth);
+  if (state === "comparison-removed") {
+    // A ghost: a faint frame inside a dashed box.
+    framePath(g, true);
+    g.fill({ color: fill, alpha: 0.3 });
+    dashedRect(g, width / 2, width / 2, DOOR_BASE - width, DOOR_BASE - width, width, TOKENS.removed);
+    return g;
+  }
+  framePath(g, true);
+  g.fill(fill);
+  framePath(g, false);
+  g.fill(shade(TOKENS.floor, -0.6));
+  drawPanel(g);
+  framePath(g, true);
+  g.stroke({ width: Math.min(width, 2.5), color: outlineColor(state, baseOutline) });
+  return g;
+}
 /** The display object to render into the texture of `(kind, state)`, and its pixel frame. */
 function draw(kind: string, stateName: string): { node: Container; frame: Rectangle } {
   const state = stateOf(stateName);
@@ -141,7 +188,7 @@ function draw(kind: string, stateName: string): { node: Container; frame: Rectan
     }
     case "door": {
       const fill = state === "witness" ? TOKENS.corridor : state === "trace" ? TOKENS.light : TOKENS.door;
-      node.addChild(arch(fill, state, TOKENS.floor, null));
+      node.addChild(doorFrame(fill, state, TOKENS.floor));
       return { node, frame: new Rectangle(0, 0, DOOR_BASE, DOOR_BASE) };
     }
     case "sealed": {
@@ -172,7 +219,8 @@ export function createElementTextures(renderer: Renderer): TextureRenderer<Textu
   return {
     create(kind, state) {
       const { node, frame } = draw(kind, state);
-      const texture = renderer.generateTexture({ target: node, frame, resolution: 2 });
+      // A door and a sealed doorway are small and seen close up: they get a finer texture than the rooms.
+      const texture = renderer.generateTexture({ target: node, frame, resolution: kind === "door" || kind === "sealed" ? 4 : 2 });
       node.destroy({ children: true });
       return texture;
     },

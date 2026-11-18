@@ -95,6 +95,10 @@ export interface SceneDebug {
     /** The width on the screen, in pixels, of each swinging door leaf, and the number of dark doorways drawn behind them. */
     doorPx: number[];
     doorways: number;
+    /** Every drawn door: its center and width in scene units, its box in client pixels, the width on the screen, how far its panel is open (0 shut, 1 open) and the width of the opening in pixels. */
+    doorBoxes: { relationId: string; x: number; y: number; w: number; rect: { x: number; y: number; width: number; height: number }; widthPx: number; open: number; openingPx: number }[];
+    /** How many times the frames and doorways of the doors were drawn again since the map was drawn: a camera step does, a swing never does. */
+    doorDraws: number;
     /** The milliseconds per frame that the update of each effect takes (a running mean over the last frames); zero in the release build. */
     cost: Record<"fog" | "bats" | "spiders" | "motes" | "doors" | "loopLights" | "candles" | "ghost", number>;
     decor: { kind: "web" | "crack" | "candle" | "fog" | "bat" | "spider"; moving: boolean; visible: boolean; rect: { x: number; y: number; width: number; height: number } }[];

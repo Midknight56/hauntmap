@@ -11,6 +11,7 @@ import { drawCollapsedMarks, drawComparisonMarks } from "./compare/states";
 import { closeCorridor } from "./compare/transition";
 import { drawCorridors, drawRoute, type RouteHandle } from "./corridors";
 import { drawDoors } from "./doors";
+import { presentDoors } from "./doorPlace";
 import { createElementTextures, DISPLAY_FONT, FONT } from "./elements";
 import { buildHitTargets, hitTest } from "./hitTest";
 import { relatedRelations } from "./emphasis";
@@ -49,7 +50,7 @@ function live(node: { alpha: number; destroyed: boolean }): { alpha: number } {
   };
 }
 
-const emptyFx = (): SceneDebug["fx"] => ({ clock: 0, camera: { x: 0, y: 0, zoom: 1 }, motes: [], lamps: [], roomAlphas: {}, layerAlpha: 1, addedScales: [], farewell: null, removed: [], door: null, doors: [], loop: null, decor: [], doorPx: [], doorways: 0, cost: { fog: 0, bats: 0, spiders: 0, motes: 0, doors: 0, loopLights: 0, candles: 0, ghost: 0 } });
+const emptyFx = (): SceneDebug["fx"] => ({ clock: 0, camera: { x: 0, y: 0, zoom: 1 }, motes: [], lamps: [], roomAlphas: {}, layerAlpha: 1, addedScales: [], farewell: null, removed: [], door: null, doors: [], loop: null, decor: [], doorPx: [], doorways: 0, doorBoxes: [], doorDraws: 0, cost: { fog: 0, bats: 0, spiders: 0, motes: 0, doors: 0, loopLights: 0, candles: 0, ghost: 0 } });
 
 /** Wait for the committed Almendra SC and Spline Sans Mono files, for at most two seconds; the plaques and names then measure and draw with the real faces. */
 async function ensureDisplayFont(): Promise<void> {
@@ -194,7 +195,8 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
     motes = null;
     if (layout === null) return;
     const view = applyComparison(layout, deriveStates(layout, styleState ?? { selection: { kind: "none" }, routeFilter: null }), comparison);
-    const drawn = view.drawn;
+    // A door on the wall of its room is drawn just outside it, so that the bigger door never covers a name; the ghost, the hit targets and the labels follow it.
+    const drawn = presentDoors(view.drawn);
     const states = view.states;
     drawnLayout = drawn;
     comparisonStates = view.debug;
@@ -327,6 +329,32 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
         });
       }
     }
+  }
+
+  /** Every drawn door as the debug data reports it: its box on the screen, its width, and how far its panel is open. */
+  function doorBoxes(): SceneDebug["fx"]["doorBoxes"] {
+    const vp = viewport();
+    const origin = container.getBoundingClientRect();
+    const byId = new Map((drawnLayout ?? layout)?.doors.map((d) => [d.relationId, d] as const) ?? []);
+    const out: SceneDebug["fx"]["doorBoxes"] = [];
+    for (const [id, sprite] of fx.doorSprites) {
+      const door = byId.get(id);
+      if (sprite.destroyed || door === undefined) continue;
+      const a = toScreen(displayed, vp, { x: sprite.x, y: sprite.y });
+      const b = toScreen(displayed, vp, { x: sprite.x + sprite.width, y: sprite.y + sprite.height });
+      const leaf = fx.leaves.get(id);
+      out.push({
+        relationId: id,
+        x: door.x + door.w / 2,
+        y: door.y + door.h / 2,
+        w: door.w,
+        rect: { x: origin.left + a.x, y: origin.top + a.y, width: b.x - a.x, height: b.y - a.y },
+        widthPx: sprite.width * displayed.zoom,
+        open: leaf?.open ?? 0,
+        openingPx: (leaf?.openingUnits ?? 0) * displayed.zoom,
+      });
+    }
+    return out;
   }
 
   /** Where every drawn name, title, plate and number lies now, in scene units, a little grown: the places the details must keep clear. */
@@ -634,6 +662,8 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
           loop: route?.loop() ?? null,
           doorPx: [...fx.leaves.values()].map((l) => l.widthUnits * displayed.zoom),
           doorways: fx.doorways,
+          doorDraws: fx.doorDraws,
+          doorBoxes: doorBoxes(),
           cost: { ...meanCost },
           decor: (fx.decor?.readings() ?? []).map((r) => {
             const vp = viewport();

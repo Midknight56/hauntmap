@@ -1,6 +1,6 @@
 import { Container, Graphics, Sprite, Text } from "pixi.js";
-import { easeInOut } from "./effects";
-import { FONT, shade } from "./elements";
+import { DOOR_BASE_UNITS, FRAME, doorGrow, openingShare, panelScaleAt } from "./doorLook";
+import { FONT, drawPanel, shade } from "./elements";
 import { pinText, type DrawContext } from "./rooms";
 import type { DoorLeaf } from "./fx";
 import type { DoorBox, LayoutResult, Point } from "./layout/types";
@@ -55,85 +55,74 @@ export function dashedPolyline(g: Graphics, points: readonly Point[], dash: numb
   }
 }
 
-/** A door of a loop, a route or the selected relation is drawn so that its leaf is this wide on the screen at the zoom of the draw (the stated look is 10 to 14 px). */
-export const LEAF_TARGET_PX = 12;
-/** The most the leaf and its doorway grow past the 16 unit door of the layout. */
-const LEAF_MAX_GROW = 2.2;
-
-/** The corners of the arch of the door in the 16 unit grid of its texture. */
-function archPath(g: Graphics): void {
-  g.moveTo(3, 14.5).lineTo(3, 7).arc(8, 7, 5, Math.PI, 0).lineTo(13, 14.5).closePath();
-}
-
 /**
- * The doorway of a door that swings: a dark arch with a stone frame, drawn at the size of the leaf, into one Graphics shared by every
- * door of the map (one draw call). The leaf swings in front of it. Drawing only.
+ * The dark opening of a door that swings, drawn at the size of the door at the zoom of the draw, into one Graphics shared by every door of
+ * the map (one draw call). The panel swings in front of it, and the frame of the door texture stays around it. Drawing only.
  */
-function drawDoorway(g: Graphics, door: DoorBox, grow: number, color: string): void {
-  const sx = (door.w / 16) * grow;
-  const sy = (door.h / 16) * grow;
+function drawDoorway(g: Graphics, door: DoorBox, grow: number): void {
+  const sx = (door.w / DOOR_BASE_UNITS) * grow;
+  const sy = (door.h / DOOR_BASE_UNITS) * grow;
   const ox = door.x + door.w / 2 - 8 * sx;
   const oy = door.y + door.h / 2 - 8 * sy;
   const at = (gx: number, gy: number): Point => ({ x: ox + gx * sx, y: oy + gy * sy });
-  const pts: Point[] = [at(3, 14.5), at(3, 7)];
+  const pts: Point[] = [at(FRAME.innerLeft, FRAME.bottom), at(FRAME.innerLeft, FRAME.innerArchCenterY)];
   for (let i = 1; i <= 8; i++) {
     const a = Math.PI + (Math.PI * i) / 8;
-    pts.push(at(8 + 5 * Math.cos(a), 7 + 5 * Math.sin(a)));
+    pts.push(at(8 + FRAME.innerArchRadius * Math.cos(a), FRAME.innerArchCenterY + FRAME.innerArchRadius * Math.sin(a)));
   }
-  pts.push(at(13, 14.5));
-  const flat = pts.flatMap((p) => [p.x, p.y]);
-  g.poly(flat).fill({ color: shade(TOKENS.floor, -0.6), alpha: 0.96 });
-  g.poly(flat).stroke({ width: 1.4, color, alpha: 0.9 });
+  pts.push(at(FRAME.innerRight, FRAME.bottom));
+  g.poly(pts.flatMap((p) => [p.x, p.y])).fill({ color: shade(TOKENS.floor, -0.6), alpha: 1 });
 }
 
 /**
- * The leaf of a door that swings for the ghost or the traveling light: a closed wooden leaf inside the arch, hinged at the left jamb.
- * It is drawn at the size of the 16 unit arch texture, grown so that it is about 12 px wide on the screen, and scaled to the door.
- * Open (1) it is a thin edge at the jamb; shut (0) it fills the arch. Drawing only.
+ * The panel of a door that swings for the ghost or the traveling light: the same wooden panel as the door texture, hinged at the left
+ * jamb. Open (1) it is a thin edge at the hinge and the dark opening shows; shut (0) it fills the opening. It is drawn once; each frame of a
+ * swing changes only its scale. Drawing only.
  */
-function makeLeaf(door: DoorBox, color: string, grow: number): { node: Graphics; leaf: DoorLeaf } {
+function makePanel(door: DoorBox, grow: number): { node: Graphics; leaf: DoorLeaf } {
   const g = new Graphics();
-  const frame = (): void => archPath(g);
-  frame();
-  g.fill(shade(TOKENS.room, -0.45));
-  g.moveTo(8, 2.4).lineTo(8, 14.5).stroke({ width: 0.7, color: TOKENS.wallLine, alpha: 0.8 });
-  frame();
-  g.stroke({ width: 1.2, color });
-  g.circle(11, 10.5, 0.9).fill(TOKENS.focus);
-  let sx = (door.w / 16) * grow;
-  let sy = (door.h / 16) * grow;
+  drawPanel(g);
+  let sx = (door.w / DOOR_BASE_UNITS) * grow;
+  let sy = (door.h / DOOR_BASE_UNITS) * grow;
   let open = 0;
-  g.pivot.set(3, 0);
+  g.pivot.set(FRAME.innerLeft, 0);
   const apply = (): void => {
     if (g.destroyed) return;
-    g.position.set(door.x + door.w / 2 + (3 - 8) * sx, door.y + door.h / 2 - 8 * sy);
-    g.scale.set(sx * (1 - 0.88 * easeInOut(open)), sy);
+    g.position.set(door.x + door.w / 2 + (FRAME.innerLeft - 8) * sx, door.y + door.h / 2 - 8 * sy);
+    g.scale.set(sx * panelScaleAt(open), sy);
   };
   const leaf: DoorLeaf = {
     get widthUnits() {
-      return 10 * sx;
+      return DOOR_BASE_UNITS * sx;
+    },
+    get open() {
+      return open;
+    },
+    get openingUnits() {
+      return DOOR_BASE_UNITS * sx * openingShare(open);
     },
     setOpen(fraction) {
       open = Math.min(1, Math.max(0, fraction));
       apply();
     },
     setGrow(next) {
-      sx = (door.w / 16) * next;
-      sy = (door.h / 16) * next;
+      sx = (door.w / DOOR_BASE_UNITS) * next;
+      sy = (door.h / DOOR_BASE_UNITS) * next;
       apply();
     },
   };
   leaf.setOpen(0);
   return { node: g, leaf };
-}
-/** Doors with arrows, sealed doorways with `?`, and the step numbers of a witness or trace route. */
+}/** Doors with arrows, sealed doorways with `?`, and the step numbers of a witness or trace route. */
 export function drawDoors(ctx: DrawContext, layout: LayoutResult): void {
   // Every door in the default state shares two Graphics (bright and faded): one draw call each instead of one per door.
   const plain = new Graphics();
   const dim = new Graphics();
   ctx.layers.rooms.addChild(plain, dim);
   // The doorways and leaves of the doors that swing go on top of every door texture of their layer, and the step numbers over them.
-  const swinging: { layer: Container; door: DoorBox; color: string }[] = [];
+  const swinging: { layer: Container; door: DoorBox }[] = [];
+  // Every door sprite follows the zoom in steps of a tenth, so that a door is about 18 px wide on the screen at the first view.
+  const sprites: { sprite: Sprite; door: DoorBox }[] = [];
   const late: (() => void)[] = [];
   for (const door of layout.doors) {
     const info = ctx.states.doors.get(door.relationId) ?? { state: "default" as State, step: null };
@@ -181,14 +170,12 @@ export function drawDoors(ctx: DrawContext, layout: LayoutResult): void {
     paint(line, points, true);
     if (info.state === "comparison-removed") ctx.fx?.removedOutlines.push(line);    if (!shared) layer.addChild(line);
     const sprite = new Sprite(ctx.textures.get("door", info.state));
-    sprite.position.set(door.x, door.y);
-    sprite.width = door.w;
-    sprite.height = door.h;
     if (faded) sprite.alpha = FADED_DOOR_ALPHA;
     layer.addChild(sprite);
+    sprites.push({ sprite, door });
     if (ctx.fx !== undefined && (info.state === "witness" || info.state === "selected" || info.state === "trace")) {
       // The doors of a loop, of a route and of the selected relation have a leaf that swings; the route handle drives it.
-      swinging.push({ layer, door, color });
+      swinging.push({ layer, door });
     }
     if (ctx.fx !== undefined) {
       ctx.fx.doorSprites.set(door.relationId, sprite);
@@ -206,9 +193,7 @@ export function drawDoors(ctx: DrawContext, layout: LayoutResult): void {
           },
           setSwing(fraction) {
             state.swing = fraction;
-            // A redraw may have destroyed the door while its effect still runs.
-            if (sprite.destroyed) return;
-            sprite.width = Math.max(1, door.w * (0.15 + 0.85 * fraction));
+            // The frame of the door is drawn once and never moves: the panel is what swings (see `makePanel`).
           },
           setDraw(fraction) {
             state.draw = fraction;
@@ -222,36 +207,45 @@ export function drawDoors(ctx: DrawContext, layout: LayoutResult): void {
     const step = info.step;
     if (step !== null) late.push(() => layer.addChild(pinText(ctx, "step", String(step), stepMark(step, door.x + door.w / 2, door.y + door.h / 2 - 14), STEP_FONT)));
   }
-  if (ctx.fx !== undefined && swinging.length > 0) {
-    // One shared Graphics for each layer that holds swinging doors (in practice, one).
-    const byLayer = new Map<Container, Graphics>();
-    for (const s of swinging) {
-      if (byLayer.has(s.layer)) continue;
-      const shared = new Graphics();
-      byLayer.set(s.layer, shared);
-      s.layer.addChild(shared);
-    }
+  // One shared Graphics for each layer that holds swinging doors (in practice, one): the dark openings behind the panels.
+  const byLayer = new Map<Container, Graphics>();
+  for (const s of swinging) {
+    if (byLayer.has(s.layer)) continue;
+    const shared = new Graphics();
+    byLayer.set(s.layer, shared);
+    s.layer.addChild(shared);
+  }
+  if (ctx.fx !== undefined) {
     ctx.fx.doorways = swinging.length;
-    let shownGrow = 0;
-    // The leaves and doorways follow the zoom in steps of a tenth, so that a door is about 12 px wide on the screen. The doorways are drawn again
-    // only when that step changes (a camera move), never at a frame of the swing.
-    const setZoom = (zoom: number): void => {
-      const grow = Math.round(Math.min(LEAF_MAX_GROW, Math.max(1, LEAF_TARGET_PX / Math.max(zoom, 0.0001) / 10)) * 10) / 10;
-      if (grow === shownGrow) return;
-      shownGrow = grow;
-      for (const g of byLayer.values()) g.clear();
-      for (const s of swinging) drawDoorway(byLayer.get(s.layer) as Graphics, s.door, grow, s.color);
-      for (const s of swinging) ctx.fx?.leaves.get(s.door.relationId)?.setGrow(grow);
-    };
+    // The panel of each door that swings is drawn once; a frame of the swing changes only its scale.
     for (const s of swinging) {
-      const made = makeLeaf(s.door, s.color, 1);
+      const made = makePanel(s.door, 1);
       s.layer.addChild(made.node);
       ctx.fx.leaves.set(s.door.relationId, made.leaf);
     }
-    ctx.fx.setDoorZoom = setZoom;
-    setZoom(ctx.zoom);
   }
-  for (const add of late) add();
+  let shownGrow = 0;
+  // The frames, the openings and the panels follow the zoom in steps of a tenth, so that a door is about 18 px wide on the screen. They are
+  // drawn again only when that step changes (a camera move), never at a frame of a swing.
+  const setZoom = (zoom: number): void => {
+    const grow = doorGrow(zoom);
+    if (grow === shownGrow) return;
+    shownGrow = grow;
+    if (ctx.fx !== undefined) ctx.fx.doorDraws += 1;
+    for (const { sprite, door } of sprites) {
+      if (sprite.destroyed) continue;
+      const w = door.w * grow;
+      const h = door.h * grow;
+      sprite.width = w;
+      sprite.height = h;
+      sprite.position.set(door.x + door.w / 2 - w / 2, door.y + door.h / 2 - h / 2);
+    }
+    for (const g of byLayer.values()) g.clear();
+    for (const s of swinging) drawDoorway(byLayer.get(s.layer) as Graphics, s.door, grow);
+    for (const s of swinging) ctx.fx?.leaves.get(s.door.relationId)?.setGrow(grow);
+  };
+  if (ctx.fx !== undefined) ctx.fx.setDoorZoom = setZoom;
+  setZoom(ctx.zoom);  for (const add of late) add();
   for (const sealed of layout.sealed) {
     const state = ctx.states.sealed.get(sealed.relationId) ?? "default";
     const sprite = new Sprite(ctx.textures.get("sealed", state));

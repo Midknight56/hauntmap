@@ -1,8 +1,9 @@
 import type { Point } from "./layout/types";
 
 // Doors that swing for something that walks past them (the ghost on a loop, the traveling light on a selected path). Pure, no PixiJS.
-// A door is open only while the actor is at it or within one door width of it; it swings open in 120 ms and shuts in 300 ms once the
-// actor is farther. The keeper reads positions and time steps only: it never touches the graph, the selection or the steps.
+// A door is open only while the actor is at it or within its reach of it (the ghost is wider than the door, so the reach is a few door
+// widths: the door is open when the ghost arrives and shuts once the ghost has cleared it); it swings open in 120 ms and shuts in 300 ms once
+// the actor is farther. The keeper reads positions and time steps only: it never touches the graph, the selection or the steps.
 
 export type DoorPhase = "closed" | "opening" | "open" | "closing";
 
@@ -16,8 +17,10 @@ export interface KeptDoor {
   /** The center of the door in scene units. */
   x: number;
   y: number;
-  /** The width of the door: the actor is near it when it is within this distance of the center. */
+  /** The reach of the door: the actor is near it when it is within this distance of the center. */
   w: number;
+  /** The distance within which an actor that stands still opens the door at once (`settle`); the reach when absent. */
+  stand?: number;
 }
 
 export interface DoorReading {
@@ -37,6 +40,8 @@ export interface DoorKeeper {
   /** Put every door fully open or fully shut, at once. */
   setAll(open: boolean): void;
   phase(id: string): DoorPhase;
+  /** Change the reach of every door (the zoom changed: the ghost keeps its size on the screen, so its reach in scene units follows). */
+  setReach(units: number): void;
   /** 0 shut, 1 open. */
   swing(id: string): number;
   list(): DoorReading[];
@@ -45,7 +50,8 @@ export interface DoorKeeper {
 export function createDoorKeeper(doors: readonly KeptDoor[]): DoorKeeper {
   const open = new Map<string, number>(doors.map((d) => [d.id, 0]));
   const nearNow = new Map<string, boolean>(doors.map((d) => [d.id, false]));
-  const isNear = (d: KeptDoor, actor: Point | null): boolean => actor !== null && Math.hypot(actor.x - d.x, actor.y - d.y) <= d.w;
+  const reach = new Map<string, number>(doors.map((d) => [d.id, d.w]));
+  const isNear = (d: KeptDoor, actor: Point | null, within: number): boolean => actor !== null && Math.hypot(actor.x - d.x, actor.y - d.y) <= within;
   const phaseOf = (id: string): DoorPhase => {
     const f = open.get(id) ?? 0;
     if (nearNow.get(id) === true) return f >= 1 ? "open" : "opening";
@@ -55,7 +61,7 @@ export function createDoorKeeper(doors: readonly KeptDoor[]): DoorKeeper {
     update(deltaMs, actor) {
       const dt = Math.max(0, deltaMs);
       for (const d of doors) {
-        const near = isNear(d, actor);
+        const near = isNear(d, actor, reach.get(d.id) ?? d.w);
         nearNow.set(d.id, near);
         const f = open.get(d.id) ?? 0;
         open.set(d.id, near ? Math.min(1, f + dt / DOOR_OPEN_MS) : Math.max(0, f - dt / DOOR_SHUT_MS));
@@ -63,7 +69,7 @@ export function createDoorKeeper(doors: readonly KeptDoor[]): DoorKeeper {
     },
     settle(actor) {
       for (const d of doors) {
-        const near = isNear(d, actor);
+        const near = isNear(d, actor, d.stand ?? reach.get(d.id) ?? d.w);
         nearNow.set(d.id, near);
         open.set(d.id, near ? 1 : 0);
       }
@@ -74,8 +80,11 @@ export function createDoorKeeper(doors: readonly KeptDoor[]): DoorKeeper {
         open.set(d.id, value ? 1 : 0);
       }
     },
+    setReach(units) {
+      for (const d of doors) reach.set(d.id, units);
+    },
     phase: phaseOf,
     swing: (id) => open.get(id) ?? 0,
-    list: () => doors.map((d) => ({ relationId: d.id, x: d.x, y: d.y, w: d.w, state: phaseOf(d.id), swing: open.get(d.id) ?? 0 })),
+    list: () => doors.map((d) => ({ relationId: d.id, x: d.x, y: d.y, w: reach.get(d.id) ?? d.w, state: phaseOf(d.id), swing: open.get(d.id) ?? 0 })),
   };
 }

@@ -42,6 +42,10 @@ export interface RoomLight {
 export interface DoorLeaf {
   /** The width of the drawn leaf in scene units. */
   readonly widthUnits: number;
+  /** How far the panel is open now, 0 shut to 1 open. */
+  readonly open: number;
+  /** The width of the dark opening that shows now, in scene units. */
+  readonly openingUnits: number;
   setOpen(fraction: number): void;
   /** Grow the leaf to `factor` times the 16 unit door (the doorway is drawn by the same step). */
   setGrow(factor: number): void;
@@ -71,6 +75,8 @@ export interface SceneFx {
   leaves: Map<string, DoorLeaf>;
   /** How many dark doorways are drawn behind the swinging leaves. */
   doorways: number;
+  /** How many times the frames and doorways were drawn again since the map was drawn (a camera step does; a swing never does). */
+  doorDraws: number;
   /** Called at every zoom: the doorways and leaves follow it in steps. */
   setDoorZoom: ((zoom: number) => void) | null;
   /** The cobwebs, candles, cracks, fog, bats and spiders. */
@@ -78,7 +84,7 @@ export interface SceneFx {
 }
 
 export function newFx(): SceneFx {
-  return { glows: new Map(), doorSprites: new Map(), lamps: [], added: [], removedOutlines: [], removedSolid: null, openDoor: null, loopRooms: new Map(), leaves: new Map(), doorways: 0, setDoorZoom: null, decor: null };
+  return { glows: new Map(), doorSprites: new Map(), lamps: [], added: [], removedOutlines: [], removedSolid: null, openDoor: null, loopRooms: new Map(), leaves: new Map(), doorways: 0, doorDraws: 0, setDoorZoom: null, decor: null };
 }
 
 /** A pure pseudo-random number in [0, 1) from two integers, so that the motes start in the same places on every run. */

@@ -99,6 +99,16 @@ async function expectStill(page: Page): Promise<void> {
     expect(s.tweens).toBe(0);
     expect(s.particles).toBe(0);
   }
+  // No door swings: a door is shown open while the ghost stands on it and shut otherwise, and the drawn panels do not change.
+  const doors = (await sceneDebug(page)).fx.doorBoxes;
+  const standing = (first.ghost as { x: number; y: number });
+  expect(doors.length, "the doors are drawn").toBeGreaterThanOrEqual(10);
+  for (const door of doors) {
+    const onIt = Math.hypot(standing.x - door.x, standing.y - door.y) <= door.w;
+    expect(door.open, `door ${door.relationId} is open while the ghost stands on it and shut otherwise`).toBe(onIt ? 1 : 0);
+  }
+  await page.waitForTimeout(600);
+  expect((await sceneDebug(page)).fx.doorBoxes.map((d) => d.open), "the panels stay where they are").toEqual(doors.map((d) => d.open));
   // A change of the layout (a wing opens, a wing closes) is applied at once: no tween exists at any moment after it.
   await storeAction(page, "collapseWing", "src/payments");
   const right = await sceneDebug(page);

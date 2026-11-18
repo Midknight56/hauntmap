@@ -122,3 +122,56 @@ describe("a door against the ghost walking a loop", () => {
     expect(closing).toBeGreaterThan(10);
   });
 });
+
+// Door pass: the ghost is wider than the door, so a door that opens only when the ghost is on it swings under the ghost where nobody sees it.
+// A door opens within its reach (a few door widths), so that it is open when the ghost arrives and shuts once the ghost has cleared it.
+describe("the reach of a door", () => {
+  it("opens within the reach, which may be farther than the door width, and not beyond it", () => {
+    const keeper = createDoorKeeper([{ id: "a", x: 100, y: 50, w: 40 }]);
+    keeper.update(16, { x: 139, y: 50 });
+    expect(keeper.phase("a")).toBe("opening");
+    const other = createDoorKeeper([{ id: "a", x: 100, y: 50, w: 40 }]);
+    other.update(16, { x: 141, y: 50 });
+    expect(other.phase("a")).toBe("closed");
+  });
+
+  it("follows a new reach when the zoom changes", () => {
+    const keeper = createDoorKeeper([{ id: "a", x: 100, y: 50, w: 40 }]);
+    keeper.setReach(20);
+    keeper.update(16, { x: 130, y: 50 });
+    expect(keeper.phase("a")).toBe("closed");
+    keeper.setReach(40);
+    keeper.update(16, { x: 130, y: 50 });
+    expect(keeper.phase("a")).toBe("opening");
+    expect(keeper.list()[0]?.w).toBe(40);
+  });
+
+  it("settles by the standing distance: only the door the actor stands on is open", () => {
+    const keeper = createDoorKeeper([
+      { id: "a", x: 100, y: 50, w: 40, stand: 16 },
+      { id: "b", x: 130, y: 50, w: 40, stand: 16 },
+    ]);
+    keeper.settle({ x: 100, y: 50 });
+    expect(keeper.swing("a")).toBe(1);
+    expect(keeper.swing("b")).toBe(0);
+  });
+
+  it("is open when the ghost, which is wider than the door, first touches the door, and shut again once it has cleared it", () => {
+    // On the screen at the first view: a ghost 28 px wide, a door 18 px wide, the ghost walks 60 px/s. Units here are pixels.
+    const reach = 32;
+    const keeper = createDoorKeeper([{ id: "a", x: 0, y: 0, w: reach }]);
+    const touching = 14 + 9;
+    let x = -80;
+    let fullyOpenAtTouch = false;
+    let shutAfterClear = false;
+    for (let t = 0; t < 6000; t += 16) {
+      // The ghost pauses at the door for 400 ms.
+      if (t <= 800 || t >= 1200) x += (60 * 16) / 1000;
+      keeper.update(16, { x, y: 0 });
+      if (Math.abs(x) <= touching + 0.5 && x < 0 && keeper.swing("a") >= 1) fullyOpenAtTouch = true;
+      if (x > touching + 70 && keeper.swing("a") === 0) shutAfterClear = true;
+    }
+    expect(fullyOpenAtTouch).toBe(true);
+    expect(shutAfterClear).toBe(true);
+  });
+});
