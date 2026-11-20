@@ -104,7 +104,7 @@ Our own MCP server, `packages/hauntmap-mcp`, gives Kiro four tools over stdio: `
 
 ### Property based testing (PBT)
 
-61 `fc.assert` calls in 10 files (counted on 19 November 2026). The Kiro CLI has no button that derives properties from a spec, so the analysis properties were written from the acceptance criteria. One property found a real bug: it generated the Windows path `link/C:`, which the MCP loader read wrongly, and the fix went into the loader with that path kept as a fixed example.
+61 `fc.assert` calls in 10 files (counted on 19 November 2026). The analysis properties were written from the acceptance criteria. One property found a real bug: it generated the Windows path `link/C:`, which the MCP loader read wrongly, and the fix went into the loader with that path kept as a fixed example.
 
 ### Kiro powers
 
