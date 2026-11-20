@@ -1,0 +1,26 @@
+{
+  "source": "same as vibe-vs-spec/runs.json",
+  "rate_multiplier_source": "kiro-cli chat --list-models, 20 Nov 2026",
+  "spec_build": {
+    "spec_build_auto": {
+      "credits": 4.379,
+      "seconds": 529,
+      "tool_calls": 30
+    },
+    "spec_build_opus-5.5": {
+      "credits": 11.606,
+      "seconds": 1035,
+      "tool_calls": 47
+    },
+    "spec_build_haiku-5.5": {
+      "credits": 0.497,
+      "seconds": 675,
+      "tool_calls": 41
+    }
+  },
+  "rate_multiplier": {
+    "auto": 1.0,
+    "claude-opus-5.5": 2.0,
+    "claude-haiku-5.5": 0.06
+  }
+}

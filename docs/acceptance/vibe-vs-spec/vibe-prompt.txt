@@ -1,0 +1,3 @@
+Make HauntMap treat URL imports like https://cdn.example.com/lib.js as external dependencies instead of unresolved aliases. Add tests and make pnpm verify pass.
+
+Rules: do not run git commit, git switch, git branch, git checkout, git stash or git reset. Use pnpm. Add no package. UTF-8 with no byte order mark, LF line endings.

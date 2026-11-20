@@ -1,0 +1,96 @@
+import { createHash } from "node:crypto";
+import { describe, expect, it } from "vitest";
+import { analyze } from "../../src/analysis/parser/analyze";
+import { selectSources } from "../../src/analysis/parser/select";
+import { buildModuleIndex, resolveSpecifier } from "../../src/analysis/parser/resolve";
+import { DEFAULT_ANALYSIS_OPTIONS } from "../../src/contracts/options";
+import type { Investigation, SourceFile } from "../../src/contracts/types";
+
+const resolveIn = (ids: string[], from: string, specifier: string) =>
+  resolveSpecifier(from, specifier, buildModuleIndex(ids));
+
+const external = (specifier: string) => {
+  const result = resolveIn(["a.ts"], "a.ts", specifier);
+  expect(result).toEqual({ resolution: "external", to: null });
+  expect("reason" in result).toBe(false);
+};
+
+const aliasUnresolved = (specifier: string) => {
+  expect(resolveIn(["a.ts"], "a.ts", specifier)).toEqual({
+    resolution: "unresolved",
+    to: null,
+    reason: "alias-not-configured",
+  });
+};
+
+describe("URL imports are external", () => {
+  for (const specifier of [
+    "https://cdn.example.com/lib.js",
+    "http://example.com/x.js",
+    "HTTPS://CDN.EXAMPLE.COM/X.JS",
+    "Http://example.com/a/b.mjs?v=1#top",
+    "https://esm.sh/react@18",
+  ]) {
+    it(`records ${specifier} as external with no reason`, () => {
+      external(specifier);
+    });
+  }
+});
+
+describe("malformed or other-scheme specifiers stay unresolved", () => {
+  for (const specifier of [
+    "https://",
+    "https:///x.js",
+    "https://exa mple.com/x.js",
+    "ftp://example.com/x.js",
+    "@/lib/format",
+    "~/config/env",
+    "#internal/x",
+    "@scope",
+    "Bad Name",
+    "_private",
+  ]) {
+    it(`records ${specifier} as unresolved with alias-not-configured`, () => {
+      aliasUnresolved(specifier);
+    });
+  }
+});
+
+describe("unchanged behavior", () => {
+  it("node:fs is external", () => external("node:fs"));
+  it("node:test is external", () => external("node:test"));
+  it("react is external", () => external("react"));
+  it("@scope/pkg/sub is external", () => external("@scope/pkg/sub"));
+  it("a relative ./b resolves local to b.ts", () => {
+    expect(resolveIn(["a.ts", "b.ts"], "a.ts", "./b")).toEqual({ resolution: "local", to: "b.ts" });
+  });
+  it("/abs/path.js is unresolved with absent-file", () => {
+    expect(resolveIn(["a.ts"], "a.ts", "/abs/path.js")).toEqual({
+      resolution: "unresolved",
+      to: null,
+      reason: "absent-file",
+    });
+  });
+});
+
+describe("end to end", () => {
+  it("a URL import gives one external relation and no diagnostic about it", async () => {
+    const text = 'import lib from "https://cdn.example.com/lib.js";\n';
+    const files: SourceFile[] = [{ path: "a.ts", text, bytes: Buffer.byteLength(text, "utf8") }];
+    const selected = selectSources(files, "test", DEFAULT_ANALYSIS_OPTIONS);
+    if (!selected.ok) throw new Error("selection failed");
+    const hash = (t: string): Promise<string> => Promise.resolve(createHash("sha256").update(t, "utf8").digest("hex"));
+    const investigation: Investigation = await analyze(
+      selected.sourceSet,
+      DEFAULT_ANALYSIS_OPTIONS,
+      hash,
+      undefined,
+      selected.diagnostics,
+    );
+    expect(investigation.imports).toHaveLength(1);
+    expect(investigation.imports[0].resolution).toBe("external");
+    expect(
+      investigation.diagnostics.filter((d) => JSON.stringify(d).includes("cdn.example.com")),
+    ).toEqual([]);
+  });
+});

@@ -1,0 +1,35 @@
+{
+  "source": "credits from the session_usage event and seconds from the turn_completion events of `kiro-cli chat --output-format stream-json` (Kiro CLI 3.5.0), one file per run",
+  "runs": {
+    "acceptance_writer": {
+      "credits": 0.801,
+      "seconds": 48,
+      "tool_calls": 6
+    },
+    "vibe": {
+      "credits": 0.718,
+      "seconds": 242,
+      "tool_calls": 7
+    },
+    "spec_write": {
+      "credits": 3.204,
+      "seconds": 244,
+      "tool_calls": 16
+    },
+    "spec_build_auto": {
+      "credits": 4.379,
+      "seconds": 529,
+      "tool_calls": 30
+    },
+    "spec_build_opus-5.5": {
+      "credits": 11.606,
+      "seconds": 1035,
+      "tool_calls": 47
+    },
+    "spec_build_haiku-5.5": {
+      "credits": 0.497,
+      "seconds": 675,
+      "tool_calls": 41
+    }
+  }
+}
