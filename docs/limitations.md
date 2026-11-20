@@ -26,7 +26,7 @@ Not settled:
 - No deployed URL exists in this checkout, so the fetch of `<deployed URL>/demo/live.json` was not run.
 ## Intake
 
-Local lines, read on 2026-11-19. The GitHub lines come with the GitHub route.
+Local lines, read on 2026-11-19. The GitHub lines below were observed on 2026-11-19 (about 9:25 PM AST) from this PC with `curl`, and the listing, the resolve answers, the 404 cases, the old form and the file URL were requested again at 11:29 PM AST the same night and answered the same. They describe what jsDelivr answered then, not a promise about later.
 
 - Local analysis reads the files of one chosen folder, in the browser. It supports at most 1,000 included files and 25 MiB of included text; above either cap the review says so and nothing is read. A subset is never analyzed.
 - Files over 1 MiB, secret or environment files, other file types and the directories `.git`, `node_modules`, `dist`, `build`, `out`, `.next` and `coverage` are skipped, as the command line tool skips them. A file with a NUL in its first 8,192 characters is skipped as binary when it is read.
@@ -36,3 +36,11 @@ Local lines, read on 2026-11-19. The GitHub lines come with the GitHub route.
 - `Save investigation on this device` writes to IndexedDB in this browser only, on request, and the record stays until `Forget`. Source text is saved only when `Include source text` is checked. Clearing the browser's site data removes the records.
 - The request list in `docs/acceptance/intake/local-requests.json` was made by `tests/intake/e2e/local.spec.ts` on this PC and shows the page's own files only. It is a record of one run in one browser, not a proof for other browsers.
 - Subfolders of a repository and private repositories are not supported.
+- GitHub route, requests: `https://data.jsdelivr.com/v1/packages/gh/{owner}/{repo}/resolved` for a version, `https://data.jsdelivr.com/v1/packages/gh/{owner}/{repo}@{ref}?structure=flat` for the listing, and `https://cdn.jsdelivr.net/gh/{owner}/{repo}@{ref}/{path}` for each file. The older form `v1/package/gh/{owner}/{repo}@{ref}/flat` also answered 200 and is not used.
+- GitHub route, listing shape: JSON `{ type, name, version, default, files }`, where each file is `{ name, hash, size }`. Every `name` starts with `/`. `tests/intake/fixtures/gh/listing-small.json` copies this shape with made up entries.
+- GitHub route, refs: the listing answered 200 for a branch (`@main`), a tag (`vitejs/vite@v6.0.0`) and a short commit id (`@0e89edc`). A ref that does not exist answered 404 (`@no-such-branch`), and so did a repository that does not exist. A listing without a ref answered 200 with `tags: {}`, `versions: []` and no files, so a ref is always sent.
+- GitHub route, version without a ref: `/resolved` (also with `?specifier=latest` or `?specifier=main`) returned the newest tag, for example `8.3.8` for `vitejs/vite`, and `"version": null` for a repository with no tags or releases. A repository with tags therefore loads its newest tag and not its default branch, and the result line names the ref that was used. For a repository without tags the dialog tries `main`, then `master`, then asks for the branch name.
+- GitHub route, caching: the listing was served with `Access-Control-Allow-Origin: *` and `Cache-Control: public, max-age=31536000, stale-while-revalidate=86400, stale-if-error=86400`. A branch listing can therefore be a day or more old, and a push may not show at once. The file URL of `package.json` at `@main` answered 200 with `application/json; charset=utf-8`.
+- GitHub route, refs with a slash: a ref typed in `Branch or tag` is sent encoded as one path segment (`feature%2Fx`). jsDelivr was not asked for such a ref, so whether it serves one is not observed.
+- GitHub route, errors: jsDelivr answers 404 with a JSON message for a missing repository or ref. Private repositories are not supported. The dialog shows the status or the error name it got and nothing else.
+- GitHub route, privacy: the repository name, the ref and the file paths go to jsDelivr. Nothing else is sent: requests use `credentials: "omit"` and no custom header.

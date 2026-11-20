@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as messages from "../../src/features/import/messages";
+import * as github from "../../src/features/github/messages";
 
 // 10.7: no text joins two words with a hyphen or dash. Templates are called with sample values that contain none.
 const DASH_BETWEEN_LETTERS = /\p{L}[-\u2010-\u2015\u2212]\p{L}/u;
@@ -107,5 +108,62 @@ describe("local messages", () => {
     expect(messages.skippedListTitle(6)).toBe("Skipped files (6)");
     expect(messages.skippedEntry(".env", "secret or environment file")).toBe(".env \u00b7 secret or environment file");
     expect(messages.moreEntries(7)).toBe("\u2026 and 7 more");
+  });
+});
+
+// The GitHub file (7.x, 8.x). Templates are called with owner, repo and ref values that contain no dash.
+const GITHUB_SAMPLES: Record<string, unknown[][]> = {
+  listFailed: [["octo", "cat", "main", "404"], ["octo", "cat", "main", "TypeError"]],
+  cap: [["octo", "cat", "main", 401, "src/m99.ts"]],
+  capBytes: [["octo", "cat", "main", "25.1 MiB"]],
+  noFilesGh: [["octo", "cat", "main"]],
+  loadingStarted: [["octo", "cat", "main", 3]],
+  progress: [[3, 200]],
+  loadCancelled: [["gh:octo/cat@main"], [null]],
+  fetchFailed: [["src/a.ts", "octo", "cat", "main", "500"]],
+  analyzeFailedGh: [["the worker stopped"]],
+  loaded: [["octo", "cat", "main", 3, 3, 1, 1], ["octo", "cat", "main", 1, 1, 2, 0]],
+};
+
+describe("GitHub messages", () => {
+  const exported = Object.entries(github);
+
+  it("has a sample call for every exported template", () => {
+    const missing = exported.filter(([name, value]) => typeof value === "function" && GITHUB_SAMPLES[name] === undefined).map(([name]) => name);
+    expect(missing).toEqual([]);
+  });
+
+  it("has no dash or hyphen between two letters in any string or template", () => {
+    const offenders: string[] = [];
+    for (const [name, value] of exported) {
+      const texts: string[] = [];
+      if (typeof value === "string") texts.push(value);
+      else if (typeof value === "function") for (const args of GITHUB_SAMPLES[name] ?? []) texts.push(String((value as (...a: unknown[]) => unknown)(...args)));
+      for (const text of texts) if (DASH_BETWEEN_LETTERS.test(text)) offenders.push(`${name}: ${text}`);
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it("uses the exact words of the requirements", () => {
+    expect(github.PRIVACY_NOTE).toBe("The repository name and file paths are sent to the jsDelivr CDN to fetch the files. Local folder analysis sends nothing.");
+    expect(github.SUBFOLDER_REJECTED).toBe("Subfolders are not supported yet. Paste the address of the repository itself.");
+    expect(github.URL_FORMAT).toBe("Enter an address like https://github.com/owner/repo or https://github.com/owner/repo/tree/branch.");
+    expect(github.TYPE_REF).toBe("Type the branch or tag to load.");
+    expect(github.LABEL_URL).toBe("Repository URL");
+    expect(github.LABEL_REF).toBe("Branch or tag");
+    expect(github.BUTTON_LOAD).toBe("Load");
+    expect(github.RESOLVING).toBe("Looking up the version of the repository");
+    expect(github.LISTING).toBe("Listing the files of the repository");
+    expect(github.listFailed("octo", "cat", "main", "404")).toBe("Could not list octo/cat@main: 404. Only public repositories are supported.");
+    expect(github.cap("octo", "cat", "main", 401, "src/m99.ts")).toBe("octo/cat@main has 401 included files; the limit is 400. First excluded: src/m99.ts.");
+    expect(github.capBytes("octo", "cat", "main", "25.1 MiB")).toBe("octo/cat@main has 25.1 MiB of included text; the limit is 25 MiB.");
+    expect(github.noFilesGh("octo", "cat", "main")).toBe("No JavaScript or TypeScript files were found in octo/cat@main.");
+    expect(github.analyzeFailedGh("boom")).toBe("The repository could not be analyzed (boom).");
+    expect(github.progress(3, 200)).toBe("Fetched 3 of 200 files");
+    expect(github.loadCancelled("gh:octo/cat@main")).toBe("Loading cancelled. gh:octo/cat@main is still open.");
+    expect(github.loadCancelled(null)).toBe("Loading cancelled.");
+    expect(github.fetchFailed("src/a.ts", "octo", "cat", "main", "500")).toBe("Could not fetch src/a.ts from octo/cat@main (500). Nothing was loaded.");
+    expect(github.loaded("octo", "cat", "main", 3, 3, 1, 1)).toBe("Loaded octo/cat@main: 3 files, 3 modules, 1 relation, 1 diagnostic.");
+    expect(github.loaded("octo", "cat", "main", 1, 1, 2, 0)).toBe("Loaded octo/cat@main: 1 file, 1 module, 2 relations, 0 diagnostics.");
   });
 });

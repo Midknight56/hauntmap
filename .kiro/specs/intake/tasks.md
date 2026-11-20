@@ -131,7 +131,7 @@ The tasks run in five batches. One Kiro session runs one batch, in order. Every 
 
 ## Batch D: the GitHub route
 
-- [ ] 9. jsDelivr observed, URL parsing and the listing (gate I5, limitations)
+- [x] 9. jsDelivr observed, URL parsing and the listing (gate I5, limitations)
   - Read jsDelivr's current API documentation. Then request, from this PC, the following URLs for one small public repository and save the trimmed responses as the shape of `tests/intake/fixtures/gh/listing-small.json`:
     - the resolve URL without a ref;
     - the listing with a tag;
@@ -146,13 +146,13 @@ The tasks run in five batches. One Kiro session runs one batch, in order. Every 
   - Verify: `pnpm verify` exits 0 with these cases and P3 green.
   - _Requirements: 7.2, 7.3, 7.4, 7.6, 7.7, 10.7, 11.4_
 
-- [ ] 10. Fetching with bounded concurrency and the GitHub state machine
+- [x] 10. Fetching with bounded concurrency and the GitHub state machine
   - Tests first: the fetch cases of `jsdelivr.test.ts`, `tests/intake/github-machine.test.ts`, and P4, P6 and P7 in `properties.test.ts`.
   - Then add `fileUrl` and `fetchFiles` to `jsdelivr.ts`, with the pool of 6, one `AbortController`, `credentials: "omit"`, encoded path segments, the NUL check, the per file failure result and `AbortError` propagation. Create `src/features/github/githubIntake.ts` with `runGithubIntake`, which runs the states url → resolving → listing → classification through `classify` of `src/features/import/review.ts` → cap or none → fetching with progress → analysis with `maxFiles: 400` and the oversized entries → done. It includes the cancel and failure paths and `open` and `after` results.
   - Verify: `pnpm verify` exits 0 with these cases and P4, P6, P7 green; the fake `fetch` never reports more than 6 pending requests on `listingOf(200)`.
   - _Requirements: 7.3, 7.5, 7.6, 8.1, 8.3, 8.4, 8.5, 8.8_
 
-- [ ] 11. The GitHub dialog in the app (gates I1, I2)
+- [x] 11. The GitHub dialog in the app (gates I1, I2)
   - Tests first:
     - `tests/intake/github-intake.test.tsx`;
     - the landing case that `Load a GitHub repository` follows `Analyze a local folder` when `kinds` includes `"github"`;

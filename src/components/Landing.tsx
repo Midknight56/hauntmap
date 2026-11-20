@@ -1,4 +1,4 @@
-import { LANDING_LOCAL } from "../features/import/messages";
+import { LANDING_GITHUB, LANDING_LOCAL } from "../features/import/messages";
 import type { IntakeKind } from "../features/import/types";
 
 export const LANDING_SENTENCE =
@@ -160,6 +160,11 @@ export function Landing({
         {intakeKinds.includes("local") ? (
           <button type="button" onClick={() => onIntake?.("local")}>
             {LANDING_LOCAL}
+          </button>
+        ) : null}
+        {intakeKinds.includes("github") ? (
+          <button type="button" onClick={() => onIntake?.("github")}>
+            {LANDING_GITHUB}
           </button>
         ) : null}
       </div>

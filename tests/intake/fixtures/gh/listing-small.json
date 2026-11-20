@@ -1,0 +1,48 @@
+{
+  "type": "gh",
+  "name": "sample-owner/sample-repo",
+  "version": "main",
+  "default": null,
+  "files": [
+    {
+      "name": "/src/a.ts",
+      "hash": "TY8oftAvxi4oaDpejztTi826uBRWp9NdFCfO7c4gevw=",
+      "size": 70
+    },
+    {
+      "name": "/src/b.ts",
+      "hash": "TWwwWqOGbB1WvrajsjlP6dxLPOXzdWojVxOe/vvZadA=",
+      "size": 20
+    },
+    {
+      "name": "/src/c.tsx",
+      "hash": "x1EZTmswvhzg3x/FuLnp2CWtbhasU4VgO6yXlFNLNtI=",
+      "size": 29
+    },
+    {
+      "name": "/README.md",
+      "hash": "+qW0gWgAuMvhWV5VM/42xT85bAwmo6h23T5AhSMjSKE=",
+      "size": 10
+    },
+    {
+      "name": "/node_modules/pkg/index.js",
+      "hash": "bmbjZvCu+4StgRCvzZsiRXAsZDyDHt+DFv8Ej+xznS4=",
+      "size": 20
+    },
+    {
+      "name": "/dist/out.js",
+      "hash": "jmCbtxwguFjHfw6fkLsTGduEd7E/n5ZfGh4YUkv1CIE=",
+      "size": 11
+    },
+    {
+      "name": "/.env",
+      "hash": "kpwo9UEmDNhpC6vpeuYUcoKc3zbgWcexTmuWPw+e53s=",
+      "size": 6
+    },
+    {
+      "name": "/big.ts",
+      "hash": "t25e1t83gB2GGyf9vOS2al4nT1ITip/c+yjc72uEeHI=",
+      "size": 1048577
+    }
+  ]
+}

@@ -105,3 +105,59 @@ export function recordRequests(page: Page): { requests: RecordedRequest[] } {
   });
   return { requests };
 }
+/** Open the landing page and activate `Load a GitHub repository`; resolves when the dialog is in the page. */
+export async function openGithubDialog(page: Page): Promise<Locator> {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Load a GitHub repository" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  return dialog;
+}
+
+/** Open the GitHub dialog through the development hook, for a page whose investigation is already open. */
+export async function openGithubDialogOver(page: Page): Promise<Locator> {
+  await page.evaluate(() => {
+    const hook = (window as unknown as { __hauntmap?: { intake?: { service: { open(args: { purpose: string; kind: string }): Promise<unknown> } } } }).__hauntmap;
+    if (hook?.intake === undefined) throw new Error("window.__hauntmap.intake is missing: run this case in the dev project");
+    void hook.intake.service.open({ purpose: "open", kind: "github" });
+  });
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  return dialog;
+}
+
+export interface JsdelivrAnswer {
+  status?: number;
+  /** A string as it is; any other value is sent as JSON. */
+  body?: unknown;
+  /** Answer after this many milliseconds. */
+  delayMs?: number;
+}
+
+export interface JsdelivrRecord {
+  method: string;
+  url: string;
+  headers: Record<string, string>;
+}
+
+/**
+ * Answers every request to `data.jsdelivr.com` and `cdn.jsdelivr.net` from `answer`, with the CORS header the real service sends.
+ * A URL the callback does not know gets 404, as jsDelivr gives for a missing file. No request reaches the network.
+ */
+export async function routeJsdelivr(page: Page, answer: (url: string) => JsdelivrAnswer | undefined): Promise<{ requests: JsdelivrRecord[] }> {
+  const requests: JsdelivrRecord[] = [];
+  await page.route(/^https:\/\/(data\.jsdelivr\.com|cdn\.jsdelivr\.net)\//, async (route) => {
+    const request = route.request();
+    requests.push({ method: request.method(), url: request.url(), headers: request.headers() });
+    const found = answer(request.url()) ?? { status: 404, body: { status: 404, message: "Not found" } };
+    if ((found.delayMs ?? 0) > 0) await new Promise((resolve) => setTimeout(resolve, found.delayMs));
+    const body = found.body ?? "";
+    const isText = typeof body === "string";
+    await route.fulfill({
+      status: found.status ?? 200,
+      headers: { "access-control-allow-origin": "*", "content-type": isText ? "text/plain; charset=utf-8" : "application/json; charset=utf-8" },
+      body: isText ? body : JSON.stringify(body),
+    });
+  });
+  return { requests };
+}

@@ -125,7 +125,7 @@ export function createServices(): AppServices {
     defaults: DEFAULT_ANALYSIS_OPTIONS,
     validate: validateInvestigation,
   });
-  // intake task 6 (gate I2): the local route. `saved` and `github` stay null until the tasks that wire them.
+  // intake tasks 6, 7 and 11 (gate I2): the local route, saved investigations and the GitHub route.
   const intake = createIntake({
     store,
     analysisClient,
@@ -133,7 +133,7 @@ export function createServices(): AppServices {
     validate: validateInvestigation,
     saved: createSavedStore(globalThis.indexedDB),
     createReadWorker: () => new Worker(new URL("../features/import/readFiles.worker.ts", import.meta.url), { type: "module" }) as unknown as ReadWorkerLike,
-    github: null,
+    github: { fetchImpl: (input, init) => fetch(input, init) },
   });
   if (DEVHOOK_ENABLED) {
     installDevHook(store, registry);

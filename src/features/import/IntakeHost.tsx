@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { GithubDialog } from "../github/GithubDialog";
 import { LocalFolderDialog } from "./LocalFolderDialog";
 import type { IntakeService } from "./types";
 import "./intake.css";
@@ -13,7 +14,7 @@ export function IntakeHost({ service }: { service: IntakeService }) {
   if (dialog === null) return null;
   return (
     <div className="intake-backdrop">
-      {dialog.kind === "local" ? <LocalFolderDialog service={service} purpose={dialog.purpose} /> : null}
+      {dialog.kind === "local" ? <LocalFolderDialog service={service} purpose={dialog.purpose} /> : <GithubDialog service={service} purpose={dialog.purpose} />}
     </div>
   );
 }

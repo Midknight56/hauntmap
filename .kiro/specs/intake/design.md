@@ -305,7 +305,7 @@ export function parseGithubUrl(input: string): ParsedUrl;
 // "/tree/<ref>" with ref matching [A-Za-z0-9_.-]+ gives ref; "/tree/<ref>/<more>" → SUBFOLDER_REJECTED with showRefField true;
 // any other path after the repository → SUBFOLDER_REJECTED with showRefField false; anything else → URL_FORMAT
 
-// jsdelivr.ts (endpoint forms are *verify* in task 9; the first form tried is jsDelivr's documented v1 API)
+// jsdelivr.ts (endpoint forms and field names observed on 2026-11-19: the documented v1 API answers, and so does the older `v1/package/gh/.../flat` form, which is not used)
 export const resolveUrl = (owner: string, repo: string) => `https://data.jsdelivr.com/v1/packages/gh/${owner}/${repo}/resolved`;
 export const listingUrl = (owner: string, repo: string, ref: string) => `https://data.jsdelivr.com/v1/packages/gh/${owner}/${repo}@${ref}?structure=flat`;
 export const fileUrl = (owner: string, repo: string, ref: string, path: string) =>

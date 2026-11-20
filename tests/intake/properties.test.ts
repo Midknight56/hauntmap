@@ -4,11 +4,19 @@ import { dirname, join } from "node:path";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_ANALYSIS_OPTIONS } from "../../src/contracts/options";
-import { classify } from "../../src/features/import/review";
+import { runGithubIntake } from "../../src/features/github/githubIntake";
+import { fetchFiles, fileUrl, listingUrl, resolveUrl } from "../../src/features/github/jsdelivr";
+import { parseGithubUrl } from "../../src/features/github/url";
+import * as githubText from "../../src/features/github/messages";
+import { SUBFOLDER_REJECTED, URL_FORMAT } from "../../src/features/github/messages";
+import { tooManyFiles } from "../../src/features/import/messages";
+import { capMessage, classify } from "../../src/features/import/review";
 import { createMemorySavedStore } from "../../src/features/import/saved";
 import { loadSourceSet, resolveRoot } from "../../packages/hauntmap-mcp/src/loader";
-import { arbRecord, arbTree } from "./generators";
+import { createFakeFetch } from "./fakes";
+import { arbListing, arbRecord, arbTree, arbUrl, listingOf } from "./generators";
 import type { TreeEntry } from "./generators";
+import { githubDeps, instantAnalysisClient, recordingStore, recordingUi } from "./githubFakes";
 
 // Properties of .kiro/specs/intake/design.md. 200 runs and a fixed seed; fast-check prints the seed on failure.
 const RUNS = { numRuns: 200, seed: 20_261_119 };
@@ -135,4 +143,145 @@ describe("P8 saved round trip (5.2, 5.3)", () => {
       RUNS,
     );
   });
+});
+
+describe("P3 URL parse (7.2)", () => {
+  // The grammar, written here as one pattern and not taken from the code under test.
+  const PART = "[A-Za-z0-9_.-]+";
+  const GRAMMAR = new RegExp(`^https://github\\.com/(${PART})/(${PART})(?:/tree/(${PART}))?/?$`);
+  const dotsOnly = (part: string) => /^\.+$/.test(part);
+  function expected(input: string): { owner: string; repo: string; ref: string | null } | null {
+    const match = GRAMMAR.exec(input.trim());
+    if (match === null) return null;
+    const owner = match[1] ?? "";
+    let repo = match[2] ?? "";
+    const ref = match[3] ?? null;
+    if (ref === null && repo.endsWith(".git")) repo = repo.slice(0, -4);
+    if (repo === "" || dotsOnly(owner) || dotsOnly(repo) || (ref !== null && dotsOnly(ref))) return null;
+    return { owner, repo, ref };
+  }
+
+  it("returns ok only for strings of the grammar, and one of the two messages otherwise", () => {
+    fc.assert(
+      fc.property(arbUrl, (input) => {
+        const result = parseGithubUrl(input);
+        const want = expected(input);
+        if (want === null) {
+          expect(result.ok).toBe(false);
+          if (!result.ok) expect([SUBFOLDER_REJECTED, URL_FORMAT]).toContain(result.message);
+        } else {
+          expect(result).toEqual({ ok: true, ...want });
+        }
+      }),
+      RUNS,
+    );
+  });
+
+  it("a rebuilt address with and without /tree/<ref> parses to the same owner, repo and ref", () => {
+    fc.assert(
+      fc.property(arbUrl, (input) => {
+        const result = parseGithubUrl(input);
+        if (!result.ok) return;
+        const base = `https://github.com/${result.owner}/${result.repo}`;
+        expect(parseGithubUrl(result.ref === null ? base : `${base}/tree/${result.ref}`)).toEqual(result);
+        expect(parseGithubUrl(`${base}/`)).toEqual({ ...result, ref: null });
+      }),
+      RUNS,
+    );
+  });
+
+  it("a rejection that shows the ref field is always a subfolder message", () => {
+    fc.assert(
+      fc.property(arbUrl, (input) => {
+        const result = parseGithubUrl(input);
+        if (!result.ok && result.showRefField) expect(result.message).toBe(SUBFOLDER_REJECTED);
+      }),
+      RUNS,
+    );
+  });
+});
+describe("P4 bounded concurrency (8.1)", () => {
+  it("never has more than 6 file requests pending, and requests each included path once", async () => {
+    await fc.assert(
+      fc.asyncProperty(arbListing, fc.array(fc.integer({ min: 0, max: 2 }), { minLength: 1, maxLength: 8 }), async (listing, delays) => {
+        const review = classify("octo/cat@main", listing.map((entry) => ({ path: entry.path.slice(1), size: entry.size })), options);
+        const included = review.included.slice(0, 60);
+        let next = 0;
+        const fake = createFakeFetch(() => ({ body: "export const x = 1;\n", delayMs: delays[next++ % delays.length] }));
+        const result = await fetchFiles("octo", "cat", "main", included, fake.fetch, new AbortController().signal, () => undefined);
+        expect(result.ok).toBe(true);
+        expect(fake.maxPending).toBeLessThanOrEqual(6);
+        expect(fake.pending).toBe(0);
+        expect(fake.calls.map((call) => call.url)).toEqual(included.map((entry) => fileUrl("octo", "cat", "main", entry.path)));
+      }),
+      RUNS,
+    );
+  }, 120_000);
+});
+
+describe("P6 caps are errors (2.5, 7.5)", () => {
+  it("a listing with more than 400 included files makes no file request and names the count and the 401st path", async () => {
+    await fc.assert(
+      fc.asyncProperty(fc.integer({ min: 401, max: 420 }), fc.array(fc.constantFrom(".env", "a.md", "node_modules/x/i.js", "dist/o.js", "k.pem", "z.png"), { maxLength: 6 }), async (n, noise) => {
+        const entries = [...listingOf(n).map((entry) => ({ name: entry.path, hash: "h", size: entry.size })), ...[...new Set(noise)].map((name) => ({ name: `/${name}`, hash: "h", size: 5 }))];
+        const fake = createFakeFetch({ [listingUrl("octo", "cat", "main")]: { body: { files: entries } } });
+        const store = recordingStore();
+        const outcome = await runGithubIntake(githubDeps(store, instantAnalysisClient(), fake), "open", recordingUi("https://github.com/octo/cat/tree/main"));
+        const first = listingOf(n).map((entry) => entry.path.slice(1)).sort()[400];
+        expect(outcome).toEqual({ ok: false, reason: "failed", message: githubText.cap("octo", "cat", "main", n, first ?? "") });
+        expect(fake.calls.map((call) => call.url)).toEqual([listingUrl("octo", "cat", "main")]);
+        expect(store.calls).toEqual(["setStatus"]);
+      }),
+      RUNS,
+    );
+  });
+
+  it("a folder with more than 1,000 included files is told the count before anything is read", () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 1001, max: 1040 }), (n) => {
+        const review = classify("big", Array.from({ length: n }, (_, i) => ({ path: `src/m${i}.ts`, size: 10 })), options);
+        expect(capMessage(review, 1000, options.maxTotalBytes, "local")).toBe(tooManyFiles(n));
+      }),
+      RUNS,
+    );
+  });
+
+  it("the review's GitHub cap sentences equal the message file's", () => {
+    const review = classify("octo/cat@main", listingOf(401).map((entry) => ({ path: entry.path.slice(1), size: entry.size })), options);
+    expect(capMessage(review, 400, options.maxTotalBytes, "github")).toBe(githubText.cap("octo", "cat", "main", 401, "src/m99.ts"));
+    const heavy = classify("octo/cat@main", Array.from({ length: 26 }, (_, i) => ({ path: `src/h${i}.ts`, size: 1_048_576 })), options);
+    expect(capMessage(heavy, 400, options.maxTotalBytes, "github")).toBe(githubText.capBytes("octo", "cat", "main", "26.0 MiB"));
+    expect(capMessage(classify("octo/cat@main", [{ path: "README.md", size: 3 }], options), 400, options.maxTotalBytes, "github")).toBe(githubText.noFilesGh("octo", "cat", "main"));
+  });
+});
+
+describe("P7 request discipline (4.1, 8.8)", () => {
+  it("the GitHub flow sends the resolve URL only without a ref, the listing URL and the file URLs of the included entries, nothing else", async () => {
+    await fc.assert(
+      fc.asyncProperty(fc.boolean(), arbListing, async (withRef, listing) => {
+        const small = listing.slice(0, 40);
+        const ref = withRef ? "main" : "v9.9.9";
+        const review = classify(`octo/cat@${ref}`, small.map((entry) => ({ path: entry.path.slice(1), size: entry.size })), options);
+        const capped = capMessage(review, 400, options.maxTotalBytes, "github") !== null;
+        const fake = createFakeFetch((url) => {
+          if (url === resolveUrl("octo", "cat")) return { body: { version: "v9.9.9" } };
+          if (url === listingUrl("octo", "cat", ref)) return { body: { files: small.map((entry) => ({ name: entry.path, hash: "h", size: entry.size })) } };
+          return url.startsWith("https://cdn.jsdelivr.net/") ? { body: "export const x = 1;\n" } : undefined;
+        });
+        await runGithubIntake(githubDeps(recordingStore(), instantAnalysisClient(), fake), "open", recordingUi(withRef ? "https://github.com/octo/cat/tree/main" : "https://github.com/octo/cat"));
+        const wanted = [
+          ...(withRef ? [] : [resolveUrl("octo", "cat")]),
+          listingUrl("octo", "cat", ref),
+          ...(capped ? [] : review.included.map((entry) => fileUrl("octo", "cat", ref, entry.path))),
+        ];
+        expect(fake.calls.map((call) => call.url)).toEqual(wanted);
+        for (const call of fake.calls) {
+          expect(call.credentials).toBe("omit");
+          expect(call.headers).toEqual({});
+          expect(call.method).toBe("GET");
+        }
+      }),
+      RUNS,
+    );
+  }, 120_000);
 });

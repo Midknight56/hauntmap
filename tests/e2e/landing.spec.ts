@@ -21,18 +21,20 @@ async function focusedName(page: Page): Promise<string> {
 }
 
 test.describe("landing screen", () => {
-  test("1.1 heading, sentence and three buttons in order (gate I1 of intake); the first Tab lands on Explore the manor", async ({ page }) => {
+  test("1.1 heading, sentence and four buttons in order (gate I1 of intake); the first Tab lands on Explore the manor", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { name: "HauntMap" })).toBeVisible();
     await expect(page.getByText(SENTENCE, { exact: true })).toBeVisible();
     const names = await page.getByRole("button").evaluateAll((els) => els.map((el) => el.textContent?.trim()));
-    expect(names).toEqual(["Explore the manor", "Explore the annex", "Analyze a local folder"]);
+    expect(names).toEqual(["Explore the manor", "Explore the annex", "Analyze a local folder", "Load a GitHub repository"]);
     await page.keyboard.press("Tab");
     expect(await focusedName(page)).toBe("Explore the manor");
     await page.keyboard.press("Tab");
     expect(await focusedName(page)).toBe("Explore the annex");
     await page.keyboard.press("Tab");
     expect(await focusedName(page)).toBe("Analyze a local folder");
+    await page.keyboard.press("Tab");
+    expect(await focusedName(page)).toBe("Load a GitHub repository");
     await shot(page, "docs/acceptance/img/landing.png");
   });
 
