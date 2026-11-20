@@ -113,6 +113,15 @@ Direct dependencies: `@modelcontextprotocol/sdk` (the MCP TypeScript SDK), `esbu
 
 25 optional `@esbuild/<platform>` packages of version 0.28.2 are listed by pnpm but are not installed on this Windows PC (only `@esbuild/win32-x64` is), so their licence field was not read here; this file makes no claim about them.
 
+## Test-time dependencies of the root application (not shipped)
+
+The licence of each row was read from the `license` field of the installed `package.json` on 2026-11-20. Both packages are used only by `tests/e2e/axe.ts`; neither is bundled into `dist/`. The MPL-2.0 applies to the files of these packages, which are used unmodified.
+
+| Package | Version | Licence |
+| --- | --- | --- |
+| `@axe-core/playwright` | 4.14.0 | MPL-2.0 |
+| `axe-core` | 4.14.1 | MPL-2.0 |
+
 ## Fonts
 
 The application loads these typefaces with @font-face from the files in src/styles/fonts/ and requests no font from a remote server. Each is under the SIL Open Font License, Version 1.1, and each licence text is committed beside its font file.

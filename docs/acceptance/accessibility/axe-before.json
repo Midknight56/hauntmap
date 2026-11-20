@@ -1,0 +1,327 @@
+{
+  "screens": [
+    {
+      "name": "landing screen",
+      "violations": []
+    },
+    {
+      "name": "landing screen after a failed sample request",
+      "violations": []
+    },
+    {
+      "name": "manor map with legend and steps open",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        },
+        {
+          "id": "scrollable-region-focusable",
+          "impact": "serious",
+          "nodes": 1,
+          "target": ".legend"
+        }
+      ]
+    },
+    {
+      "name": "search results open",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        },
+        {
+          "id": "scrollable-region-focusable",
+          "impact": "serious",
+          "nodes": 1,
+          "target": ".legend"
+        }
+      ]
+    },
+    {
+      "name": "room selected from the search, with its inspector",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        },
+        {
+          "id": "scrollable-region-focusable",
+          "impact": "serious",
+          "nodes": 1,
+          "target": ".legend"
+        }
+      ]
+    },
+    {
+      "name": "who imports panel",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        },
+        {
+          "id": "scrollable-region-focusable",
+          "impact": "serious",
+          "nodes": 1,
+          "target": ".legend"
+        }
+      ]
+    },
+    {
+      "name": "dependency loops panel",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        },
+        {
+          "id": "scrollable-region-focusable",
+          "impact": "serious",
+          "nodes": 1,
+          "target": ".legend"
+        }
+      ]
+    },
+    {
+      "name": "loop selected, with the evidence trail and the inspector",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        },
+        {
+          "id": "scrollable-region-focusable",
+          "impact": "serious",
+          "nodes": 1,
+          "target": ".legend"
+        }
+      ]
+    },
+    {
+      "name": "relation selected, with its occurrence and source lines",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        },
+        {
+          "id": "scrollable-region-focusable",
+          "impact": "serious",
+          "nodes": 1,
+          "target": ".legend"
+        }
+      ]
+    },
+    {
+      "name": "evidence view",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        },
+        {
+          "id": "scrollable-region-focusable",
+          "impact": "serious",
+          "nodes": 1,
+          "target": ".legend"
+        }
+      ]
+    },
+    {
+      "name": "map with the legend closed",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        }
+      ]
+    },
+    {
+      "name": "steps panel closed",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        }
+      ]
+    },
+    {
+      "name": "show steps panel",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        }
+      ]
+    },
+    {
+      "name": "motion set to reduce",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        }
+      ]
+    },
+    {
+      "name": "compare revisions open",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        }
+      ]
+    },
+    {
+      "name": "comparison after loading the revised manor",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        }
+      ]
+    },
+    {
+      "name": "manor map at 640 x 360 with More open",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        }
+      ]
+    },
+    {
+      "name": "renderer failure banner over the Evidence view",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        }
+      ]
+    },
+    {
+      "name": "result of Open live snapshot",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        }
+      ]
+    },
+    {
+      "name": "Open live snapshot with no snapshot written",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        }
+      ]
+    },
+    {
+      "name": "local folder dialog as opened",
+      "violations": []
+    },
+    {
+      "name": "local folder dialog after a folder is chosen",
+      "violations": []
+    },
+    {
+      "name": "local folder dialog after the analysis",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        }
+      ]
+    },
+    {
+      "name": "local folder dialog with a saved investigation listed",
+      "violations": []
+    },
+    {
+      "name": "local folder dialog with a graph file refused",
+      "violations": []
+    },
+    {
+      "name": "map of an analyzed local folder",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        }
+      ]
+    },
+    {
+      "name": "local folder dialog while the files are read",
+      "violations": []
+    },
+    {
+      "name": "GitHub dialog as opened",
+      "violations": []
+    },
+    {
+      "name": "GitHub dialog asking for a branch or tag",
+      "violations": []
+    },
+    {
+      "name": "GitHub dialog with the cap error alert",
+      "violations": []
+    },
+    {
+      "name": "GitHub dialog while the files are fetched",
+      "violations": []
+    },
+    {
+      "name": "map of a loaded GitHub repository",
+      "violations": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": 1,
+          "target": "button[aria-label=\"Motion\"]"
+        }
+      ]
+    }
+  ]
+}

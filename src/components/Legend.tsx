@@ -30,8 +30,10 @@ export function Legend({ store, registry }: { store: InvestigationStore; registr
   const extra = registry.legendEntries();
   const entries = [...LEGEND_ENTRIES, ...extra];
   const own = LEGEND_ENTRIES.length;
+  // On the desktop layout the section itself scrolls when its entries do not fit, so a keyboard user must be able to focus it
+  // (axe rule scrollable-region-focusable). On a phone the inner group takes that role.
   return (
-    <section className="legend" aria-labelledby={headingId} data-extra={extra.length > 0 ? "" : undefined}>
+    <section className="legend" aria-labelledby={headingId} data-extra={extra.length > 0 ? "" : undefined} {...(phone ? {} : { tabIndex: 0 })}>
       <h2 id={headingId}>Legend</h2>
       <div className="legend-scroll" {...(phone ? { tabIndex: 0, role: "group", "aria-labelledby": headingId } : {})}>
         <ul aria-label="Legend entries">

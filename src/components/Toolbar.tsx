@@ -177,8 +177,8 @@ export function Toolbar({ store, registry, search, trailing }: Props) {
                   Show steps
                 </button>
               ) : null}
-              <button type="button" aria-label="Motion" aria-pressed={reduced} onClick={() => store.actions.setMotion(reduced ? "system" : "reduce")}>
-                Motion: {reduced ? "Reduce" : "System"}
+              <button type="button" aria-label="Motion" aria-pressed={reduced} data-state={reduced ? "Reduce" : "System"} onClick={() => store.actions.setMotion(reduced ? "system" : "reduce")}>
+                Motion
               </button>
             </Group>
             {phone ? presetField : null}

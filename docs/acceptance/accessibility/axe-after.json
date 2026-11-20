@@ -1,0 +1,132 @@
+{
+  "screens": [
+    {
+      "name": "landing screen",
+      "violations": []
+    },
+    {
+      "name": "landing screen after a failed sample request",
+      "violations": []
+    },
+    {
+      "name": "manor map with legend and steps open",
+      "violations": []
+    },
+    {
+      "name": "search results open",
+      "violations": []
+    },
+    {
+      "name": "room selected from the search, with its inspector",
+      "violations": []
+    },
+    {
+      "name": "who imports panel",
+      "violations": []
+    },
+    {
+      "name": "dependency loops panel",
+      "violations": []
+    },
+    {
+      "name": "loop selected, with the evidence trail and the inspector",
+      "violations": []
+    },
+    {
+      "name": "relation selected, with its occurrence and source lines",
+      "violations": []
+    },
+    {
+      "name": "evidence view",
+      "violations": []
+    },
+    {
+      "name": "map with the legend closed",
+      "violations": []
+    },
+    {
+      "name": "steps panel closed",
+      "violations": []
+    },
+    {
+      "name": "show steps panel",
+      "violations": []
+    },
+    {
+      "name": "motion set to reduce",
+      "violations": []
+    },
+    {
+      "name": "compare revisions open",
+      "violations": []
+    },
+    {
+      "name": "comparison after loading the revised manor",
+      "violations": []
+    },
+    {
+      "name": "manor map at 640 x 360 with More open",
+      "violations": []
+    },
+    {
+      "name": "renderer failure banner over the Evidence view",
+      "violations": []
+    },
+    {
+      "name": "result of Open live snapshot",
+      "violations": []
+    },
+    {
+      "name": "Open live snapshot with no snapshot written",
+      "violations": []
+    },
+    {
+      "name": "local folder dialog as opened",
+      "violations": []
+    },
+    {
+      "name": "local folder dialog after a folder is chosen",
+      "violations": []
+    },
+    {
+      "name": "local folder dialog after the analysis",
+      "violations": []
+    },
+    {
+      "name": "local folder dialog with a saved investigation listed",
+      "violations": []
+    },
+    {
+      "name": "local folder dialog with a graph file refused",
+      "violations": []
+    },
+    {
+      "name": "map of an analyzed local folder",
+      "violations": []
+    },
+    {
+      "name": "local folder dialog while the files are read",
+      "violations": []
+    },
+    {
+      "name": "GitHub dialog as opened",
+      "violations": []
+    },
+    {
+      "name": "GitHub dialog asking for a branch or tag",
+      "violations": []
+    },
+    {
+      "name": "GitHub dialog with the cap error alert",
+      "violations": []
+    },
+    {
+      "name": "GitHub dialog while the files are fetched",
+      "violations": []
+    },
+    {
+      "name": "map of a loaded GitHub repository",
+      "violations": []
+    }
+  ]
+}

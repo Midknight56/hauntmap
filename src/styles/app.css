@@ -352,6 +352,11 @@ input::placeholder {
   width: 100%;
 }
 
+/* The state of the Motion toggle is drawn beside its name by CSS, so that the button's visible text is its accessible name (axe: label-content-name-mismatch). The state itself reaches assistive technology through aria-pressed. */
+button[aria-label="Motion"]::after {
+  content: ": " attr(data-state);
+}
+
 /* Restart demo: pinned to the bottom of the side bar. */
 .toolbar-restart {
   grid-column: 1;
