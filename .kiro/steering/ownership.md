@@ -13,6 +13,7 @@ inclusion: always
 | `packages/hauntmap-mcp/**`, `haunts/**`, `scripts/demo-reset.ts`, `scripts/demo-live.ts`, `public/demo/live.json`, `src/features/liveSnapshot/**`, `tests/kiro/**` | `kiro-integration` |
 | `src/scene/**`, `src/features/investigation/**`, `src/features/samples/**`, `src/features/demo/**`, `src/components/**`, `src/styles/**`, `src/workers/layout.worker.ts`, `tests/ui/**`, `tests/e2e/**` | `investigation-ui` |
 | `src/analysis/graph/compare.ts`, `src/features/compare/**`, `src/scene/compare/**`, `tests/compare/**` | `snapshot-comparison` |
+| `src/features/import/**`, `src/features/github/**`, `tests/intake/**`, `docs/acceptance/intake/**` | `intake` |
 
 - `src/contracts/validate.ts` is the one file under `src/contracts` that `kiro-integration` creates (its task 4a).
 - `src/analysis/graph/compare.ts` is the one file under `src/analysis` that belongs to `snapshot-comparison`.
@@ -38,3 +39,14 @@ These are the four gated changes named in the header of its `tasks.md`, one each
 - G2: `src/components/App.tsx` and `src/components/MapView.tsx` may get the `comparison` prop and the compare store wiring.
 - G3: `src/scene/styles.ts`, `src/scene/adapter.ts` and `src/styles/tokens.css` may get the three comparison tokens, `outlineStyle` and the `comparison-*` style entries.
 - G4: the one change its header names for `src/components/Inspector.tsx`, if task 8 needs it.
+
+## Exceptions for `intake`
+
+These are the gates of `.kiro/specs/intake/design.md`, each used only by the tasks that name it and logged in the task row.
+
+- I1: `src/components/Landing.tsx`, `tests/ui/landing.test.tsx`, `tests/e2e/landing.spec.ts` and criterion 1.5 of `investigation-ui` get the intake buttons (`Analyze a local folder`, `Load a GitHub repository`) and their expected Tab order.
+- I2: `src/components/App.tsx` creates the intake service in `createServices()`, renders `<IntakeHost>` next to `<StatusRegion>` and passes `intakeKinds` and `onIntake` to `Landing`.
+- I3: the `dev` project of `playwright.config.ts` may match `tests/intake/e2e/**/*.spec.ts`.
+- I4: `src/features/compare/host.ts`, `store.ts` and `ComparePanel.tsx`, new cases in `tests/compare/`, and the idle panel line of `snapshot-comparison` get the `HostIntake` type, `compareWithIntake(kind)` and the two buttons for the newer snapshot.
+- I5: `README.md`, `docs/limitations.md`, `docs/performance.md`, `docs/write-up.md` and any test that pins the sentence `Comparison accepts the bundled manor pair and the live snapshot` get the intake wording and the `## Intake` sections.
+- I6: this file gets the `intake` row and these gates.

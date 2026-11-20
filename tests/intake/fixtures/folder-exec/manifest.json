@@ -1,0 +1,8 @@
+{
+  "folder": "sample-exec",
+  "files": [
+    { "path": "index.html", "text": "<script>document.cookie=\"marker=1\"</script>\n" },
+    { "path": "postinstall.js", "text": "globalThis.__intakeMarker = 1;\n" },
+    { "path": "src/a.ts", "text": "import { b } from \"./b\";\nexport const a = b; // SENTINEL-LOCAL-4e2b17\n" }
+  ]
+}

@@ -21,7 +21,7 @@ The tasks run in five batches. One Kiro session runs one batch, in order. Every 
 
 ## Batch A: test base and the pure local pieces
 
-- [ ] 1. Ownership, fixtures, generators, materializer and fakes
+- [x] 1. Ownership, fixtures, generators, materializer and fakes
   - Gate I6: add to `.kiro/steering/ownership.md` the row `src/features/import/**`, `src/features/github/**`, `tests/intake/**`, `docs/acceptance/intake/**` → `intake`, and a section `Exceptions for intake` that lists the gates I1 to I5 of `design.md` in one line each.
   - Write `tests/intake/README.md` with what was read on `main` before this task: `DEFAULT_ANALYSIS_OPTIONS` in `src/contracts/options.ts`, the `AnalysisClient` shape and the error names `AnalysisCancelled` and `AnalysisFailed` in `src/workers/client.ts`, `selectSources` in `src/analysis/index.ts`, `validateInvestigation` in `src/contracts/validate.ts`, `runRequest` in `src/workers/analysis.worker.ts`, `analyzeRoot` and `createContext` in `packages/hauntmap-mcp/src/tools.ts`, and the pinned versions of Vitest, jsdom, React Testing Library, fast-check and Playwright from `package.json`.
   - Tests first: `tests/intake/fixtures.test.ts` and `tests/intake/fakes.test.ts` with the cases of `design.md`.
@@ -34,7 +34,7 @@ The tasks run in five batches. One Kiro session runs one batch, in order. Every 
   - Verify: `pnpm verify` exits 0, and `fixtures.test.ts` and `fakes.test.ts` are collected and pass.
   - _Requirements: 2.6, 6.4, 7.5_
 
-- [ ] 2. Classification, the local messages and the boundary checks
+- [x] 2. Classification, the local messages and the boundary checks
   - Tests first:
     - `tests/intake/review.test.ts`;
     - `tests/intake/messages.test.ts` (local file only for now);
@@ -45,7 +45,7 @@ The tasks run in five batches. One Kiro session runs one batch, in order. Every 
   - Verify: `pnpm verify` exits 0 with the new files, P1 and P2 green; the fixture folder gives the review of 2.6 exactly.
   - _Requirements: 1.6, 1.8, 2.2, 2.3, 2.5, 2.6, 10.7_
 
-- [ ] 3. The read worker and the parity with the command line tool
+- [x] 3. The read worker and the parity with the command line tool
   - Tests first: `tests/intake/readFiles.test.ts` and `tests/intake/parity.test.ts`.
   - Then create `src/features/import/readFiles.ts`, with `readAll` and `createReadClient` using the `{ requestId, revision, kind, payload }` envelope, the NUL check, progress at most every 100 ms and on the last file, `delayMs`, a cancel that terminates the worker and creates a new one, and dropping of replies with an older revision. Also create `src/features/import/readFiles.worker.ts`, which registers its entry only inside a worker, as `src/workers/analysis.worker.ts` does. Add the fake read worker to `tests/intake/fakes.ts`.
   - Verify: `pnpm verify` exits 0. The parity test shows that the investigation of the fixture folder from the browser pipeline and from `analyzeRoot` have the same JSON text except `sourceLabel`.

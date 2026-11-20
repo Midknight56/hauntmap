@@ -1,0 +1,15 @@
+{
+  "folder": "sample-local",
+  "files": [
+    { "path": "src/a.ts", "text": "import { b } from \"./b\";\nexport const a = b; // SENTINEL-LOCAL-4e2b17\n" },
+    { "path": "src/b.ts", "text": "export const b = 1;\n" },
+    { "path": "src/c.tsx", "text": "export const C = () => null;\n" },
+    { "path": "bin.ts", "prefixHex": "000102", "text": "export {};\n" },
+    { "path": "big.ts", "fill": "/", "size": 1048577 },
+    { "path": "README.md", "text": "# fixture\n" },
+    { "path": ".env", "text": "KEY=1\n" },
+    { "path": "secret.pem", "text": "-----BEGIN-----\n" },
+    { "path": "node_modules/pkg/index.js", "text": "module.exports = 1;\n" },
+    { "path": "dist/out.js", "text": "export {};\n" }
+  ]
+}
