@@ -35,12 +35,22 @@ Hook files are standalone files under `.kiro/hooks/`. The trigger names `Stop` a
 | Hook | Trigger | Observed | Surface and date | What was seen |
 | --- | --- | --- | --- | --- |
 | Live snapshot, file `.kiro/hooks/analyze-live.json` | `Stop` | Yes, by its side effect | Headless Kiro CLI 3.3.0, 16 November 2026 | `public/demo/live.json` did not exist before the session and existed after it, and the session ran no command itself. The hook's own `analyze:` output line was not seen [log, `kiro-integration, task 7`; `docs/acceptance/hook-analyze-live.md`]. |
-| Verify on stop | `Stop` | Not observed | Kiro CLI | The row records no hook output from the stop. The 26.5 s figure in that row is a manual run of `pnpm verify`, not hook output [log, `kiro-integration, task 2`]. |
+| Verify on stop, file `.kiro/hooks/verify-on-stop.json` | `Stop` | Yes, 20 November 2026 (first try on 16 November: not observed) | Headless Kiro CLI 3.5.0, agent `haunt-reviewer`, one word prompt | `pnpm verify` started 3.6 s after the session did, seen by a process poll, and its output came back to the session, where the agent quoted its first line. The hook run failed (5 failing cases of a test file that the later tasks satisfied). The process that started it was not identified [log, `kiro-extensions, task 4`; `docs/acceptance/hook-verify-on-stop.md`]. The 26.5 s figure of 16 November is a manual run, not hook output [log, `kiro-integration, task 2`]. |
 | Typecheck on save | `PostFileSave` | Not observed | Headless Kiro CLI 3.3.0, 16 November 2026 | One attempt, no hook output reached the session [log, row `Setup: hook observation typecheck-on-save`]. |
 
 A second entry of the live hook, on `PostFileSave`, was deleted because it was never observed. The hook command is `pnpm demo:live`. Its skip rule: when `haunts/manor` is identical to `public/demo/manor/before`, or when the built command line tool is missing, it prints a line that starts with `demo:live: skipped` and exits 0, so the committed `public/demo/live.json` stays as it is. The skip line was seen when the command was run by hand [`.kiro/hooks/README.md`]. The final headless turn that would show it in a Kiro session is left to the person and is not yet in the log [log, `kiro-integration, task 14`].
 
-No hook has been observed in the Kiro IDE.
+No hook has been observed in the Kiro IDE. `typecheck-on-save` has the trigger `PostFileSave`, a file save in an editor; it was not seen in any CLI session and is not claimed to run.
+
+### The power, the custom agent and the hook proof
+
+These three were added on 20 November 2026 by the spec `.kiro/specs/kiro-extensions`, in Kiro CLI 3.5.0, model `auto`, with each test file written first and seen failing [log, `kiro-extensions, tasks 1 to 5`]. The Kiro pages they follow were saved on 20 November 2026 (powers, custom agents, the agent harness).
+
+- **Power.** `power/hauntmap` in the Agent Plugins format: `plugin.json`, `mcp.json` and the skill `refactor-loops`. It was installed with `kiro-cli powers install`, one headless session in a throwaway copy of `haunts/manor` called its `cycles` tool and listed the loop of three files, and it was uninstalled with `kiro-cli powers uninstall hauntmap` [`docs/acceptance/power-session/`]. The first two attempts failed: the tool was not trusted in a headless run, and Kiro starts the power's server in the power's own folder, so it could not see the session folder. `mcp.json` now reads the server file and the workspace from two environment variables, which the power's README names. No power from the Kiro registry was used. Not shown: the other three tools, the skill being followed, the IDE route.
+- **Custom agent.** `.kiro/agents/haunt-reviewer.json` has file reads and the four HauntMap tools. It passed `kiro-cli agent validate`. One headless run on `public/demo/manor/before` and `after` called `cycles` twice and `compare` once and reported the removed relation, the added relation and loops 1 to 0 with the import line. A second run, with every tool trusted, was asked to write a file and run a shell command and refused both [`docs/acceptance/haunt-reviewer-session/`]. One review of one pair of folders.
+- **Hook.** See the table above.
+
+None of these results is a claim that the analyzed code is correct or safe. A loop or a relation is a structural fact about static imports under the `static-value` preset.
 
 ### The steering file
 
@@ -57,7 +67,7 @@ All code, tests and documents in the repository were written by Kiro CLI, versio
 | `src/scene`, `src/features/investigation`, `src/components`, `src/styles`, `tests/ui`, `tests/e2e` | `investigation-ui` | Kiro CLI | `investigation-ui, task 1a` to `task 14`, the theme pass, and its follow up of 17 November |
 | `src/analysis/graph/compare.ts`, `src/features/compare`, `src/scene/compare`, `tests/compare` | `snapshot-comparison` | Kiro CLI | `snapshot-comparison/1a` to `/15` |
 
-The `intake` spec (`src/features/import`, `src/features/github`, `tests/intake`, `docs/acceptance/intake`) was built by Kiro CLI 3.5.0, model setting `auto`, on 19 November 2026 at the owner's request; its rows are `intake, task 1` onward in `docs/kiro-log.md`. The export feature of `snapshot-comparison` was not built, by decision of the revision of 16 November 2026. The Crew definitions of `kiro-integration` were not built either.
+The `intake` spec (`src/features/import`, `src/features/github`, `tests/intake`, `docs/acceptance/intake`) was built by Kiro CLI 3.5.0, model setting `auto`, on 19 November 2026 at the owner's request; its rows are `intake, task 1` onward in `docs/kiro-log.md`. The `kiro-extensions` spec (`power`, `.kiro/agents`, `tests/kiro/extensions.test.ts`, `docs/acceptance/power-session`, `docs/acceptance/haunt-reviewer-session`) was built by Kiro CLI 3.5.0, model setting `auto`, on 20 November 2026; its rows are `kiro-extensions, task 1` to `task 5` in `docs/kiro-log.md`. The export feature of `snapshot-comparison` was not built, by decision of the revision of 16 November 2026. The Crew definitions of `kiro-integration` were not built either.
 
 ### Evidence and credits
 

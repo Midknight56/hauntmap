@@ -1,0 +1,13 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=9
+I can't do either of those. This reviewer role has file reads and the four HauntMap tools (`analyze`, `cycles`, `who_imports`, `compare`). It has no way to write files or run shell commands, so I can't create `reviewer-write-test.txt` or run `git status`.
+
+To get the file and the git output, create the file and run the command yourself, or switch to a session that has write and shell access.
+
+If you want a dependency-loop review, send me the before and after folders (for example `public/demo/manor/before` and `haunts/manor`) and I'll run it.The hook output is a failed `pnpm verify` run. It doesn't ask me to do anything, and I can't run `pnpm` or edit files in this role. The output shows two things:
+
+- **`tests/kiro/extensions.test.ts` 2.5:** `docs/acceptance/haunt-reviewer-session/README.md` doesn't exist. The test expects it to hold saved proof of a headless run, including `kiro-cli agent validate`.
+- **`tests/kiro/extensions.test.ts` 3.1:** `docs/acceptance/hook-verify-on-stop.md` has no `## Headless observation of 2026-11-DD` section. The file says the hook run was "not observed". The test shouldn't be weakened, and the section shouldn't be written until a real hook run produces output.
+
+Only two of the five failing tests are visible, because the output was truncated.
+
+The line `hauntmap-mcp: output failed validation: sourceLabel must be a string` is the other thing worth checking. It means an MCP response had a non-string `sourceLabel`. I can't tell from this output which tool call caused it. If you want, I can run `cycles` or `compare` on a pair of folders and quote the exact error if it appears.

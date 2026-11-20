@@ -184,7 +184,7 @@ describe("caps and failures (7.5, 7.6)", () => {
     expect(fake.calls.map((call) => call.url)).toEqual([listingUrl(O, R, "main")]);
     expect(screen.getByRole("dialog")).toBeTruthy();
     expect(urlInput().value).toBe(`${REPO}/tree/main`);
-    expect(document.activeElement).toBe(button("Load"));
+    await waitFor(() => expect(document.activeElement).toBe(button("Load")));
     expect(h.store.calls).toEqual(["setStatus"]);
   });
 

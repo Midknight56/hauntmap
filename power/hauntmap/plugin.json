@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "hauntmap",
+  "version": "1.0.0",
+  "description": "Find and track circular imports in JavaScript and TypeScript folders. Gives Kiro HauntMap's analyze, cycles, who_imports and compare tools, and a skill that checks loops before and after an import change.",
+  "author": {
+    "name": "HauntMap"
+  },
+  "keywords": ["hauntmap", "dependency cycle", "circular import", "import loop", "dependency loop", "who imports", "refactor imports", "import graph"],
+  "license": "MIT"
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "hauntmap": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "-e",
+        "const { pathToFileURL } = require('node:url'); const dist = process.env.HAUNTMAP_MCP_DIST; const work = process.env.HAUNTMAP_WORKSPACE; if (!dist || !work) { console.error('hauntmap power: set HAUNTMAP_MCP_DIST to packages/hauntmap-mcp/dist/index.js and HAUNTMAP_WORKSPACE to the folder you open in Kiro.'); process.exit(1); } process.chdir(work); import(pathToFileURL(dist).href);"
+      ],
+      "env": {
+        "HAUNTMAP_MCP_DIST": "${HAUNTMAP_MCP_DIST}",
+        "HAUNTMAP_WORKSPACE": "${HAUNTMAP_WORKSPACE}"
+      }
+    }
+  }
+}

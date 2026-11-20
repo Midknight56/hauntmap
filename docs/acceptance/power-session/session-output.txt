@@ -1,0 +1,16 @@
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=7
+[tool] Tool Load
+[tool] status: Completed
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=14
+[tool] @hauntmap/hauntmap/cycles
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=31
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: Completed
+`manor` has one dependency loop under the default `static-value` preset. It links three files, and the paths below are relative to `manor`:
+- `src/notifications/receipt.ts`
+- `src/orders/checkout.ts`
+- `src/payments/charge.ts`
+The imports run in a circle: `receipt.ts` imports `checkout.ts`, `checkout.ts` imports `charge.ts`, and `charge.ts` imports `receipt.ts`.
+[INFO] [KRS] <-- GenerateAssistantResponseCommand done totalEvents=43
+I didn't run the `type-inclusive` or `dynamic-inclusive` presets. They count type-only and dynamic imports as well, so they could show more loops.

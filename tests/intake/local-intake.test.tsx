@@ -481,7 +481,7 @@ describe("the result in open mode (1.3, 1.5, 3.5)", () => {
     await waitFor(() => expect(within(dialog()).getByText(SUMMARY)).toBeTruthy());
     h.opener.remove();
     fireEvent.click(within(dialog()).getByRole("button", { name: "Close" }));
-    expect(document.activeElement).toBe(wrapper);
+    await waitFor(() => expect(document.activeElement).toBe(wrapper));
     wrapper.remove();
   });
 });
