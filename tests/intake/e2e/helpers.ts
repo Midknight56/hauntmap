@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, type Locator, type Page } from "@playwright/test";
+import { folderOf } from "../generators";
 import { readManifest, writeManifest } from "../materialize";
 
 // Helpers for the intake browser specs. They talk to the page through `window.__hauntmap` (development build only) and
@@ -59,4 +60,48 @@ export async function waitForOpenMap(page: Page): Promise<void> {
 /** The text of each list item of the named list in the dialog. */
 export async function listItems(page: Page, name: string): Promise<string[]> {
   return page.getByRole("list", { name }).getByRole("listitem").allTextContents();
+}
+
+/** A generated folder (`folderOf`) written to a temporary folder; `dispose()` removes it. */
+export function materializeGenerated(n: number, folderName: string, bytesEach?: number): { dir: string; dispose(): void } {
+  const parent = mkdtempSync(join(tmpdir(), "hauntmap-intake-"));
+  const dir = writeManifest(folderOf(n, { folder: folderName, ...(bytesEach === undefined ? {} : { bytesEach }) }), parent, folderName);
+  return { dir, dispose: () => rmSync(parent, { recursive: true, force: true }) };
+}
+
+/** Open the local dialog through the development hook, for a page whose investigation is already open (the landing buttons exist only on the landing screen). */
+export async function openLocalDialogOver(page: Page): Promise<Locator> {
+  await page.evaluate(() => {
+    const hook = (window as unknown as { __hauntmap?: { intake?: { service: { open(args: { purpose: string; kind: string }): Promise<unknown> } } } }).__hauntmap;
+    if (hook?.intake === undefined) throw new Error("window.__hauntmap.intake is missing: run this case in the dev project");
+    void hook.intake.service.open({ purpose: "open", kind: "local" });
+  });
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  return dialog;
+}
+
+/** The six store fields that a cancel or a failure must leave alone (3.3), as JSON text. */
+export async function sixFields(page: Page): Promise<string> {
+  return page.evaluate(() => {
+    const state = (window as unknown as { __hauntmap: { store: { getState(): Record<string, unknown> } } }).__hauntmap.store.getState();
+    const { investigation, selection, routeFilter, camera, expandedWings, layout } = state;
+    return JSON.stringify({ investigation, selection, routeFilter, camera, expandedWings, layout });
+  });
+}
+
+export interface RecordedRequest {
+  method: string;
+  url: string;
+  headers: string;
+  body: string;
+}
+
+/** Every request of the page and its workers from now on (method, URL, headers and post body, for the checks of 4.1). */
+export function recordRequests(page: Page): { requests: RecordedRequest[] } {
+  const requests: RecordedRequest[] = [];
+  page.on("request", (request) => {
+    requests.push({ method: request.method(), url: request.url(), headers: JSON.stringify(request.headers()), body: request.postData() ?? "" });
+  });
+  return { requests };
 }

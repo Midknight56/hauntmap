@@ -153,3 +153,31 @@
 .intake-section {
   margin: 12px 0;
 }
+
+.intake-saved {
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.intake-saved li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--wall-line);
+  overflow-wrap: anywhere;
+}
+
+.intake-saved .intake-actions {
+  margin-top: 0;
+}
+
+.intake-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--hit);
+}

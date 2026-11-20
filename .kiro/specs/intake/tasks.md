@@ -101,7 +101,7 @@ The tasks run in five batches. One Kiro session runs one batch, in order. Every 
 
 ## Batch C: saving, graph files and the local evidence
 
-- [ ] 7. Saved investigations and graph file import
+- [x] 7. Saved investigations and graph file import
   - Tests first: `tests/intake/saved.test.ts` (memory store), `tests/intake/graphFile.test.ts`, the 5.x and 6.x cases of `local-intake.test.tsx`, and P8 in `properties.test.ts`.
   - Then create:
     - `src/features/import/saved.ts`, with `SavedStore`, `createSavedStore` over IndexedDB `hauntmap` / `investigations`, `createMemorySavedStore` and `recordSize`;
@@ -113,7 +113,7 @@ The tasks run in five batches. One Kiro session runs one batch, in order. Every 
   - Verify: `pnpm verify` exits 0 with these files and P8 green.
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 6.1, 6.2, 6.3, 6.4_
 
-- [ ] 8. Local browser journeys, the privacy record and the timing (gate I5, performance and limitations)
+- [x] 8. Local browser journeys, the privacy record and the timing (gate I5, performance and limitations)
   - Tests first: fill `tests/intake/e2e/local.spec.ts` with every remaining case of the `design.md` table:
     - 3.2 and 3.3, the cancel near 100 of 400 with `setReadDelay(20)` and the six fields read from `window.__hauntmap.store`;
     - 3.7, the timing;

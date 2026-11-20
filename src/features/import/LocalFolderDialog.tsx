@@ -1,6 +1,7 @@
-import { useId, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
 import type { Investigation, SourceFile } from "../../contracts/types";
 import { DialogFrame } from "./DialogFrame";
+import { readGraphFile } from "./graphFile";
 import { hasDirectoryInput } from "./intake";
 import {
   analyzeFailed,
@@ -11,6 +12,21 @@ import {
   BUTTON_CLOSE,
   cancelled,
   CHOOSE_FOLDER,
+  CHOOSE_GRAPH_FILE,
+  forgetSaved,
+  forgot,
+  imported,
+  INCLUDE_SOURCE,
+  opened,
+  openSaved,
+  SAVE_BUTTON,
+  SAVE_SENTENCE,
+  SAVE_UNAVAILABLE,
+  saveFailed,
+  savedInvalid,
+  savedItem,
+  savedListTitle,
+  savedMessage,
   excludedDirsLine,
   extensionLine,
   folderLine,
@@ -33,7 +49,8 @@ import {
 } from "./messages";
 import type { ReadResult } from "./readFiles";
 import { capMessage, classify, formatSize, reasonWords, stripRoot, type Candidate, type Review } from "./review";
-import type { IntakePurpose, IntakeService } from "./types";
+import { recordSize } from "./saved";
+import type { IntakePurpose, IntakeResult, IntakeService, SavedRecord } from "./types";
 
 // The screens of the local route: choose, review, reading, analyzing and result.
 
@@ -49,7 +66,7 @@ type Screen =
   | { name: "choose" }
   | ({ name: "review" } & Selection)
   | ({ name: "reading" | "analyzing"; done: number; total: number } & Selection)
-  | { name: "result"; summary: string };
+  | { name: "result"; summary: string; investigation: Investigation; files: SourceFile[] };
 
 /** `Analyzed <folder>: ...` (3.5). Relations are counted by relation ID; a failed module is one with `parseStatus: "failed"`. */
 export function summaryMessage(folder: string, investigation: Investigation, review: Review, binary: number): string {
@@ -96,11 +113,47 @@ export function LocalFolderDialog({ service, purpose }: { service: IntakeService
   const folderInputId = useId();
   const graphHeadingId = useId();
   const capId = useId();
+  const graphInputId = useId();
+  const savedHeadingId = useId();
   const doc = deps.doc ?? document;
   /** Each Analyze gets a number; Cancel moves it on, so that whatever a cancelled run still delivers is ignored. */
   const run = useRef(0);
   /** Set while a run is in the analysis step, so that Cancel knows which client to stop. */
   const stage = useRef<"reading" | "analyzing" | null>(null);
+
+  // Saved investigations (Requirement 5). `available` is false when there is no store or its first list rejected.
+  const [saved, setSaved] = useState<{ available: boolean; records: SavedRecord[] }>({ available: deps.saved !== null, records: [] });
+  const [includeSource, setIncludeSource] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const mounted = useRef(true);
+  const openButtons = useRef(new Map<string, HTMLButtonElement>());
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const graphInput = useRef<HTMLInputElement>(null);
+  /** The label whose Open button takes focus once the list has re-rendered, or "" for Close. */
+  const focusAfterList = useRef<string | null>(null);
+
+  const refreshSaved = async (): Promise<void> => {
+    if (deps.saved === null) return;
+    try {
+      const records = await deps.saved.list();
+      if (mounted.current) setSaved({ available: true, records });
+    } catch {
+      if (mounted.current) setSaved({ available: false, records: [] });
+    }
+  };
+  useEffect(() => {
+    mounted.current = true;
+    void refreshSaved();
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  useEffect(() => {
+    const target = focusAfterList.current;
+    if (target === null) return;
+    focusAfterList.current = null;
+    (target === "" ? closeButton.current : (openButtons.current.get(target) ?? closeButton.current))?.focus();
+  }, [saved]);
 
   const close = (): void => service.close({ ok: false, reason: "cancelled" });
 
@@ -181,7 +234,89 @@ export function LocalFolderDialog({ service, purpose }: { service: IntakeService
     store.actions.openInvestigation(investigation, sourceText, { demo: false });
     store.actions.setStatus(text);
     service.resolve(result);
-    setScreen({ name: "result", summary: text });
+    setIncludeSource(false);
+    setScreen({ name: "result", summary: text, investigation, files: read.files });
+  };
+
+  /** Settles the dialog with an investigation that already exists: a graph file or a saved record (1.3). */
+  const finish = (investigation: Investigation, source: ReadonlyMap<string, string> | null, message: string): void => {
+    const result: IntakeResult = { ok: true, investigation, sourceText: source, label: investigation.sourceLabel };
+    if (purpose === "open") {
+      deps.store.actions.openInvestigation(investigation, source, { demo: false });
+      deps.store.actions.setStatus(message);
+    }
+    service.close(result);
+  };
+
+  const onGraphChosen = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    if (file === undefined) return;
+    const outcome = await readGraphFile(file, deps.validate);
+    if (!mounted.current) return;
+    if (!outcome.ok) {
+      if (purpose === "after") service.close({ ok: false, reason: "failed", message: outcome.message });
+      else {
+        deps.store.actions.setStatus(outcome.message);
+        graphInput.current?.focus();
+      }
+      return;
+    }
+    const { investigation, label } = outcome;
+    const relations = new Set(investigation.imports.map((record) => record.relationId)).size;
+    finish(investigation, null, imported(label, investigation.modules.length, relations));
+  };
+
+  const removeRecord = async (label: string): Promise<boolean> => {
+    if (deps.saved === null) return false;
+    const index = saved.records.findIndex((record) => record.label === label);
+    const next = saved.records[index + 1] ?? saved.records[index - 1] ?? null;
+    focusAfterList.current = next === null ? "" : next.label;
+    try {
+      await deps.saved.delete(label);
+    } catch {
+      focusAfterList.current = null;
+      return false;
+    }
+    await refreshSaved();
+    return true;
+  };
+
+  const openRecord = async (record: SavedRecord): Promise<void> => {
+    const checked = deps.validate(record.investigation);
+    if (!checked.ok) {
+      if (await removeRecord(record.label)) deps.store.actions.setStatus(savedInvalid(record.label, checked.errors[0] ?? "unknown error"));
+      return;
+    }
+    const source = record.sourceText === null ? null : new Map(Object.entries(record.sourceText));
+    finish(record.investigation, source, opened(record.label));
+  };
+
+  const forget = async (label: string): Promise<void> => {
+    if (await removeRecord(label)) deps.store.actions.setStatus(forgot(label));
+  };
+
+  const save = async (screen: Extract<Screen, { name: "result" }>): Promise<void> => {
+    if (deps.saved === null || !saved.available || saving) return;
+    const label = screen.investigation.sourceLabel;
+    const record: SavedRecord = {
+      savedVersion: 1,
+      label,
+      savedAt: (deps.now?.() ?? new Date()).toISOString(),
+      investigation: screen.investigation,
+      sourceText: includeSource ? Object.fromEntries(screen.files.map((file) => [file.path, file.text])) : null,
+    };
+    setSaving(true);
+    try {
+      await deps.saved.put(record);
+      deps.store.actions.setStatus(savedMessage(label, formatSize(recordSize(record)), includeSource));
+      void refreshSaved();
+    } catch (error) {
+      const name = (error as { name?: unknown } | null)?.name;
+      deps.store.actions.setStatus(saveFailed(typeof name === "string" && name !== "" ? name : "Error"));
+    } finally {
+      if (mounted.current) setSaving(false);
+    }
   };
 
   const cancelWork = (selection: Selection): void => {
@@ -209,9 +344,42 @@ export function LocalFolderDialog({ service, purpose }: { service: IntakeService
           <h3 id={graphHeadingId} className="intake-subheading">
             {IMPORT_GRAPH_HEADING}
           </h3>
+          <div className="intake-field">
+            <label htmlFor={graphInputId}>{CHOOSE_GRAPH_FILE}</label>
+            <input ref={graphInput} id={graphInputId} type="file" accept=".json,application/json" onChange={(event) => void onGraphChosen(event)} />
+          </div>
         </section>
+        {saved.available && saved.records.length > 0 ? (
+          <section aria-labelledby={savedHeadingId} className="intake-section">
+            <h3 id={savedHeadingId} className="intake-subheading">
+              {savedListTitle(saved.records.length)}
+            </h3>
+            <ul aria-labelledby={savedHeadingId} className="intake-saved">
+              {saved.records.map((record) => (
+                <li key={record.label}>
+                  <span className="intake-mono">{savedItem(record.label, record.investigation.modules?.length ?? 0, record.savedAt.slice(0, 10), record.sourceText !== null)}</span>
+                  <span className="intake-actions">
+                    <button
+                      type="button"
+                      ref={(el) => {
+                        if (el === null) openButtons.current.delete(record.label);
+                        else openButtons.current.set(record.label, el);
+                      }}
+                      onClick={() => void openRecord(record)}
+                    >
+                      {openSaved(record.label)}
+                    </button>
+                    <button type="button" onClick={() => void forget(record.label)}>
+                      {forgetSaved(record.label)}
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
         <div className="intake-actions">
-          <button type="button" onClick={close}>
+          <button type="button" ref={closeButton} onClick={close}>
             {BUTTON_CLOSE}
           </button>
         </div>
@@ -233,6 +401,25 @@ export function LocalFolderDialog({ service, purpose }: { service: IntakeService
     body = (
       <>
         <p>{screen.summary}</p>
+        {purpose === "open" ? (
+          <>
+            <div className="intake-actions">
+              <button type="button" aria-disabled={saved.available ? undefined : "true"} aria-describedby={saved.available ? undefined : capId} onClick={() => void save(screen)}>
+                {SAVE_BUTTON}
+              </button>
+              <label className="intake-check">
+                <input type="checkbox" checked={includeSource} onChange={(event) => setIncludeSource(event.currentTarget.checked)} />
+                {INCLUDE_SOURCE}
+              </label>
+            </div>
+            {saved.available ? null : (
+              <p id={capId} className="intake-muted">
+                {SAVE_UNAVAILABLE}
+              </p>
+            )}
+            <p className="intake-muted">{SAVE_SENTENCE}</p>
+          </>
+        ) : null}
         <div className="intake-actions">
           <button type="button" onClick={close}>
             {BUTTON_CLOSE}

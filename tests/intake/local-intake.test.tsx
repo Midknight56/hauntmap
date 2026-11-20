@@ -4,6 +4,9 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest
 import type { Investigation } from "../../src/contracts/types";
 import { openedStore } from "../ui/storeHarness";
 import { chooseFiles, fakeIntakeStore, folderInput, heldReadWorkers, inlineAnalysisClient, installDirectoryInput, itemsOf, makeHarness, namedError, removeDirectoryInput, sizedFile } from "./dialogHarness";
+import { createMemorySavedStore } from "../../src/features/import/saved";
+import type { SavedRecord, SavedStore } from "../../src/features/import/types";
+import { graphFixture, liveCounts, liveInvestigation, liveText } from "./graphHelpers";
 import { filesOfManifest, readManifest } from "./materialize";
 
 // Component tests of the local dialog (jsdom). This file grows with the tasks: task 4 holds 1.2, 1.4, 2.1, 2.4, 2.5 and the
@@ -43,8 +46,11 @@ describe("the dialog frame (1.2)", () => {
     const h = makeHarness();
     void h.open();
     const input = folderInput();
+    const graph = screen.getByLabelText("Choose a graph file");
     const close = within(dialog()).getByRole("button", { name: "Close" });
     expect(document.activeElement).toBe(input);
+    await user.tab();
+    expect(document.activeElement).toBe(graph);
     await user.tab();
     expect(document.activeElement).toBe(close);
     await user.tab();
@@ -111,10 +117,13 @@ describe("the first screen (2.1)", () => {
     expect(h.store.calls).toEqual([]);
   });
 
-  it("shows the Import a graph file section heading, empty until task 7", () => {
+  it("shows the Import a graph file section with its file input", () => {
     const h = makeHarness();
     void h.open();
     expect(within(dialog()).getByRole("heading", { name: "Import a graph file" })).toBeTruthy();
+    const input = screen.getByLabelText("Choose a graph file") as HTMLInputElement;
+    expect(input.type).toBe("file");
+    expect(input.accept).toBe(".json,application/json");
   });
 
   it("shows the sentence and no folder input when the browser has no folder selection", () => {
@@ -124,7 +133,7 @@ describe("the first screen (2.1)", () => {
       void h.open();
       expect(screen.queryByLabelText("Choose a folder")).toBeNull();
       expect(within(dialog()).getByText("Folder selection is not available in this browser. Import a graph file instead.")).toBeTruthy();
-      expect(document.activeElement).toBe(within(dialog()).getByRole("button", { name: "Close" }));
+      expect(document.activeElement).toBe(screen.getByLabelText("Choose a graph file"));
     } finally {
       installDirectoryInput();
     }
@@ -292,10 +301,10 @@ describe("the Tab order (10.2)", () => {
     return names;
   }
 
-  it("first screen: Choose a folder, then Close", async () => {
+  it("first screen: Choose a folder, Choose a graph file, then Close", async () => {
     const h = makeHarness();
     void h.open();
-    expect(await tabOrder(3)).toEqual(["Choose a folder", "Close", "Choose a folder"]);
+    expect(await tabOrder(4)).toEqual(["Choose a folder", "Choose a graph file", "Close", "Choose a folder"]);
   });
 
   it("review: Analyze is focused first; then Back, Close, then the two list regions", async () => {
@@ -610,5 +619,291 @@ describe("privacy of the dialog (4.3, 4.4)", () => {
     await waitFor(() => expect(h.store.statuses).toHaveLength(2));
     const logged = logs.flatMap((log) => log.mock.calls.map((call) => JSON.stringify(call)));
     for (const text of logged) for (const secret of ["sample-local", "src/a.ts", "SENTINEL-LOCAL-4e2b17"]) expect(text).not.toContain(secret);
+  });
+});
+
+// ---- Task 7: saved investigations and graph files ----
+
+const NOW = new Date("2026-11-19T10:00:00.000Z");
+const saveButton = (): HTMLElement => within(dialog()).getByRole("button", { name: "Save investigation on this device" });
+const includeBox = (): HTMLInputElement => within(dialog()).getByRole("checkbox", { name: "Include source text" }) as HTMLInputElement;
+
+function savedRecord(label: string, savedAt: string, sourceText: Record<string, string> | null = null, investigation: unknown = { ...liveInvestigation(), sourceLabel: label }): SavedRecord {
+  return { savedVersion: 1, label, savedAt, investigation: investigation as SavedRecord["investigation"], sourceText };
+}
+
+async function reachResult(h: ReturnType<typeof makeHarness>): Promise<void> {
+  void h.open();
+  chooseFiles(folderInput(), sampleFiles());
+  clickAnalyze();
+  await waitFor(() => expect(within(dialog()).getByText(SUMMARY)).toBeTruthy());
+}
+
+const withStore = (saved: SavedStore | null) => makeHarness({ deps: { saved, analysisClient: inlineAnalysisClient(), now: () => NOW } });
+
+describe("save on the result screen (5.1, 5.2, 5.4)", () => {
+  it("shows the save button, an unchecked Include source text, the sentence and Close, in that Tab order", async () => {
+    const h = withStore(createMemorySavedStore());
+    await reachResult(h);
+    expect(saveButton().getAttribute("aria-disabled")).toBeNull();
+    expect(includeBox().checked).toBe(false);
+    expect(within(dialog()).getByText("Saved investigations stay in this browser's storage until you forget them.")).toBeTruthy();
+    const order = Array.from(dialog().querySelectorAll<HTMLElement>("button, input[type=checkbox]")).map((el) => (el.tagName === "INPUT" ? "Include source text" : el.textContent));
+    expect(order).toEqual(["Save investigation on this device", "Include source text", "Close"]);
+  });
+
+  it("saves nothing until the button is activated", async () => {
+    const store = createMemorySavedStore();
+    const h = withStore(store);
+    await reachResult(h);
+    expect(await store.list()).toEqual([]);
+  });
+
+  it("writes one record keyed by the label with source text left out when the box is unchecked", async () => {
+    const store = createMemorySavedStore();
+    const h = withStore(store);
+    await reachResult(h);
+    fireEvent.click(saveButton());
+    await waitFor(() => expect(h.store.statuses.at(-1)).toMatch(/^Saved local:sample-local on this device \(/));
+    const [record] = await store.list();
+    expect(record).toMatchObject({ savedVersion: 1, label: "local:sample-local", savedAt: "2026-11-19T10:00:00.000Z", sourceText: null });
+    expect(record?.investigation.sourceLabel).toBe("local:sample-local");
+    expect(h.store.statuses.at(-1)).toMatch(/\(\d+(\.\d)? (B|KB|MiB), source text left out\)\.$/);
+    expect(screen.getByRole("dialog")).toBeTruthy();
+  });
+
+  it("includes the source text of every read file when the box is checked", async () => {
+    const store = createMemorySavedStore();
+    const h = withStore(store);
+    await reachResult(h);
+    fireEvent.click(includeBox());
+    fireEvent.click(saveButton());
+    await waitFor(() => expect(h.store.statuses.at(-1)).toMatch(/source text included\)\.$/));
+    const [record] = await store.list();
+    expect(Object.keys(record?.sourceText ?? {})).toEqual(["src/a.ts", "src/b.ts", "src/c.tsx"]);
+    expect(record?.sourceText?.["src/a.ts"]).toContain("SENTINEL-LOCAL-4e2b17");
+  });
+
+  it("replaces the record with the same label", async () => {
+    const store = createMemorySavedStore();
+    const h = withStore(store);
+    await reachResult(h);
+    fireEvent.click(saveButton());
+    await waitFor(() => expect(h.store.statuses.at(-1)).toMatch(/^Saved /));
+    fireEvent.click(includeBox());
+    fireEvent.click(saveButton());
+    await waitFor(() => expect(h.store.statuses.at(-1)).toMatch(/source text included\)\.$/));
+    expect(await store.list()).toHaveLength(1);
+  });
+
+  it("renders the button aria-disabled with the sentence when no store exists", async () => {
+    const h = withStore(null);
+    await reachResult(h);
+    expect(saveButton().getAttribute("aria-disabled")).toBe("true");
+    expect(within(dialog()).getByText("Saving is not available in this browser.")).toBeTruthy();
+    fireEvent.click(saveButton());
+    expect(h.store.statuses).toHaveLength(2);
+  });
+
+  it("renders the button aria-disabled when the first list rejects", async () => {
+    const broken: SavedStore = { list: () => Promise.reject(namedError("SecurityError", "no")), put: () => Promise.resolve(), delete: () => Promise.resolve() };
+    const h = withStore(broken);
+    await reachResult(h);
+    await waitFor(() => expect(saveButton().getAttribute("aria-disabled")).toBe("true"));
+    expect(within(dialog()).getByText("Saving is not available in this browser.")).toBeTruthy();
+  });
+
+  it("says The investigation could not be saved (<name>) and keeps the dialog and focus when a write fails", async () => {
+    const base = createMemorySavedStore();
+    const failing: SavedStore = { ...base, put: () => Promise.reject(namedError("QuotaExceededError", "full")) };
+    const h = withStore(failing);
+    await reachResult(h);
+    saveButton().focus();
+    fireEvent.click(saveButton());
+    await waitFor(() => expect(h.store.statuses.at(-1)).toBe("The investigation could not be saved (QuotaExceededError)."));
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(document.activeElement).toBe(saveButton());
+  });
+
+  it("has no save controls in after mode", async () => {
+    const h = withStore(createMemorySavedStore());
+    const result = h.open({ purpose: "after" });
+    chooseFiles(folderInput(), sampleFiles());
+    clickAnalyze();
+    await expect(result).resolves.toMatchObject({ ok: true });
+    expect(screen.queryByRole("button", { name: "Save investigation on this device" })).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+describe("the saved list (5.3)", () => {
+  async function withRecords() {
+    const store = createMemorySavedStore();
+    await store.put(savedRecord("local:old", "2026-11-17T08:00:00.000Z", null));
+    await store.put(savedRecord("local:new", "2026-11-19T08:00:00.000Z", { "src/a.ts": "export {};\n" }));
+    return store;
+  }
+
+  it("lists newest first, with the details line and an Open and a Forget button for each", async () => {
+    const h = makeHarness({ deps: { saved: await withRecords() } });
+    void h.open();
+    await screen.findByRole("heading", { name: "Saved on this device (2)" });
+    const items = itemsOf("Saved on this device (2)");
+    const modules = liveCounts().modules;
+    expect(items[0]).toContain(`local:new \u00b7 ${modules} modules \u00b7 saved 2026-11-19 \u00b7 source text included`);
+    expect(items[1]).toContain(`local:old \u00b7 ${modules} modules \u00b7 saved 2026-11-17 \u00b7 source text left out`);
+    for (const label of ["local:new", "local:old"]) {
+      expect(within(dialog()).getByRole("button", { name: `Open ${label}` })).toBeTruthy();
+      expect(within(dialog()).getByRole("button", { name: `Forget ${label}` })).toBeTruthy();
+    }
+  });
+
+  it("keeps the Tab order: folder, graph file, each Open and Forget, Close", async () => {
+    const h = makeHarness({ deps: { saved: await withRecords() } });
+    void h.open();
+    await screen.findByRole("heading", { name: "Saved on this device (2)" });
+    const order = Array.from(dialog().querySelectorAll<HTMLElement>("button, input")).map((el) => (el.tagName === "INPUT" ? (el as HTMLInputElement).labels?.[0]?.textContent : el.textContent));
+    expect(order).toEqual(["Choose a folder", "Choose a graph file", "Open local:new", "Forget local:new", "Open local:old", "Forget local:old", "Close"]);
+  });
+
+  it("shows no saved list when no store exists or the first list rejects", async () => {
+    const h = makeHarness();
+    void h.open();
+    expect(screen.queryByRole("heading", { name: /^Saved on this device/ })).toBeNull();
+    cleanup();
+    const broken: SavedStore = { list: () => Promise.reject(namedError("SecurityError", "no")), put: () => Promise.resolve(), delete: () => Promise.resolve() };
+    const h2 = makeHarness({ deps: { saved: broken } });
+    void h2.open();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.queryByRole("heading", { name: /^Saved on this device/ })).toBeNull();
+  });
+
+  it("Open validates, opens the record with its source map, says so and closes the dialog", async () => {
+    const h = makeHarness({ deps: { saved: await withRecords() } });
+    const result = h.open();
+    fireEvent.click(await screen.findByRole("button", { name: "Open local:new" }));
+    await expect(result).resolves.toMatchObject({ ok: true, label: "local:new" });
+    expect(h.store.calls).toEqual(["openInvestigation", "setStatus"]);
+    expect(h.store.opened[0]?.demo).toBe(false);
+    expect([...(h.store.opened[0]?.source?.keys() ?? [])]).toEqual(["src/a.ts"]);
+    expect(h.store.statuses).toEqual(["Opened local:new from this device."]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("Open of a record with no source text passes null", async () => {
+    const h = makeHarness({ deps: { saved: await withRecords() } });
+    void h.open();
+    fireEvent.click(await screen.findByRole("button", { name: "Open local:old" }));
+    await waitFor(() => expect(h.store.opened).toHaveLength(1));
+    expect(h.store.opened[0]?.source).toBeNull();
+  });
+
+  it("Open of an invalid record deletes it, says why, opens nothing and moves focus on", async () => {
+    const store = await withRecords();
+    await store.put(savedRecord("local:bad", "2026-11-18T08:00:00.000Z", null, { schemaVersion: 2 }));
+    const h = makeHarness({ deps: { saved: store } });
+    void h.open();
+    fireEvent.click(await screen.findByRole("button", { name: "Open local:bad" }));
+    await waitFor(() => expect(h.store.statuses).toHaveLength(1));
+    expect(h.store.statuses[0]).toMatch(/^The saved investigation local:bad is not valid \(schemaVersion must be 1 \(found 2\)\) and was removed\.$/);
+    expect(h.store.opened).toEqual([]);
+    expect((await store.list()).map((r) => r.label)).toEqual(["local:new", "local:old"]);
+    await screen.findByRole("heading", { name: "Saved on this device (2)" });
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Open local:old" }));
+  });
+
+  it("Forget deletes the record, says so and keeps the dialog open", async () => {
+    const store = await withRecords();
+    const h = makeHarness({ deps: { saved: store } });
+    void h.open();
+    fireEvent.click(await screen.findByRole("button", { name: "Forget local:new" }));
+    await screen.findByRole("heading", { name: "Saved on this device (1)" });
+    expect(h.store.statuses).toEqual(["Forgot local:new."]);
+    expect((await store.list()).map((r) => r.label)).toEqual(["local:old"]);
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Open local:old" }));
+  });
+
+  it("Forgetting the last record moves focus to Close", async () => {
+    const store = createMemorySavedStore();
+    await store.put(savedRecord("local:only", "2026-11-19T08:00:00.000Z"));
+    const h = makeHarness({ deps: { saved: store } });
+    void h.open();
+    fireEvent.click(await screen.findByRole("button", { name: "Forget local:only" }));
+    await waitFor(() => expect(h.store.statuses).toEqual(["Forgot local:only."]));
+    await waitFor(() => expect(document.activeElement).toBe(within(dialog()).getByRole("button", { name: "Close" })));
+  });
+
+  it("Open in after mode resolves the record without opening it", async () => {
+    const h = makeHarness({ deps: { saved: await withRecords() } });
+    const result = h.open({ purpose: "after" });
+    fireEvent.click(await screen.findByRole("button", { name: "Open local:new" }));
+    await expect(result).resolves.toMatchObject({ ok: true, label: "local:new" });
+    expect(h.store.calls).not.toContain("openInvestigation");
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+describe("graph file import (6.1 to 6.4)", () => {
+  const graphInput = (): HTMLInputElement => screen.getByLabelText("Choose a graph file") as HTMLInputElement;
+  const chooseGraph = (file: File): void => {
+    Object.defineProperty(graphInput(), "files", { value: [file], configurable: true });
+    fireEvent.change(graphInput());
+  };
+
+  it("opens a valid graph with no source text, says what was imported and closes", async () => {
+    const h = makeHarness();
+    const result = h.open();
+    chooseGraph(new File([liveText()], "live.json", { type: "application/json" }));
+    await expect(result).resolves.toMatchObject({ ok: true, label: "live:haunts/manor", sourceText: null });
+    const { modules, relations } = liveCounts();
+    expect(h.store.calls).toEqual(["openInvestigation", "setStatus"]);
+    expect(h.store.opened[0]?.source).toBeNull();
+    expect(h.store.statuses).toEqual([`Imported live:haunts/manor: ${modules} modules, ${relations} relations. A graph file holds no source text.`]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it.each([
+    ["malformed.json", "The graph file is not valid: schemaVersion must be 1 (found 2)."],
+    ["not-json.txt", "The graph file is not JSON ("],
+  ] as const)("%s shows its message, keeps the dialog open and focus on the input, and opens nothing", async (name, start) => {
+    const h = makeHarness();
+    void h.open();
+    graphInput().focus();
+    chooseGraph(new File([graphFixture(name)], name));
+    await waitFor(() => expect(h.store.statuses).toHaveLength(1));
+    expect(h.store.statuses[0]?.startsWith(start)).toBe(true);
+    expect(h.store.calls).toEqual(["setStatus"]);
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(document.activeElement).toBe(graphInput());
+  });
+
+  it("refuses a file over 25 MiB without reading it", async () => {
+    const h = makeHarness();
+    void h.open();
+    const big = new File([""], "big.json");
+    Object.defineProperty(big, "size", { value: 26_214_401 });
+    const text = vi.fn();
+    Object.defineProperty(big, "text", { value: text });
+    chooseGraph(big);
+    await waitFor(() => expect(h.store.statuses).toEqual(["The graph file is larger than 25 MiB."]));
+    expect(text).not.toHaveBeenCalled();
+  });
+
+  it("in after mode resolves the graph as the result and calls no store action", async () => {
+    const h = makeHarness();
+    const result = h.open({ purpose: "after" });
+    chooseGraph(new File([liveText()], "live.json"));
+    await expect(result).resolves.toMatchObject({ ok: true, label: "live:haunts/manor", sourceText: null });
+    expect(h.store.calls).toEqual([]);
+  });
+
+  it("in after mode a bad graph resolves the bare message and writes no status", async () => {
+    const h = makeHarness();
+    const result = h.open({ purpose: "after" });
+    chooseGraph(new File([graphFixture("malformed.json")], "malformed.json"));
+    await expect(result).resolves.toEqual({ ok: false, reason: "failed", message: "The graph file is not valid: schemaVersion must be 1 (found 2)." });
+    expect(h.store.calls).toEqual([]);
   });
 });

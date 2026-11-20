@@ -59,6 +59,8 @@ export const moreEntries = (m: number) => `\u2026 and ${m} more`;
 export const savedListTitle = (n: number) => `Saved on this device (${n})`;
 export const openSaved = (label: string) => `Open ${label}`;
 export const forgetSaved = (label: string) => `Forget ${label}`;
+export const savedItem = (label: string, modules: number, savedOn: string, included: boolean) => `${label} \u00b7 ${plural(modules, "module")} \u00b7 saved ${savedOn} \u00b7 source text ${included ? "included" : "left out"}`;
+export const INCLUDE_SOURCE = "Include source text";
 
 // Labels of the dialog controls and sections (Requirements 2, 5, 6 and 10.2).
 export const CHOOSE_FOLDER = "Choose a folder";

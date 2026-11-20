@@ -1,0 +1,26 @@
+[
+  {
+    "method": "GET",
+    "url": "http://localhost:4374/assets/SplineSansMono-VariableFont_wght-wNvB_FuL.ttf"
+  },
+  {
+    "method": "GET",
+    "url": "http://localhost:4374/assets/readFiles.worker-Dq18Isuc.js"
+  },
+  {
+    "method": "GET",
+    "url": "http://localhost:4374/assets/analysis.worker-y5V7Vt20.js"
+  },
+  {
+    "method": "GET",
+    "url": "http://localhost:4374/assets/layout.worker-DKeNp2gZ.js"
+  },
+  {
+    "method": "GET",
+    "url": "http://localhost:4374/assets/browserAll-Cc_-IUjF.js"
+  },
+  {
+    "method": "GET",
+    "url": "http://localhost:4374/assets/init-r0PQrXVM.js"
+  }
+]

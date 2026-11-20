@@ -19,6 +19,7 @@ const SAMPLES: Record<string, unknown[][]> = {
   saveFailed: [["QuotaExceededError"]],
   opened: [["local:sample"]],
   forgot: [["local:sample"]],
+  savedItem: [["local:sample", 3, "2026-11-19", true], ["local:sample", 1, "2026-11-19", false]],
   savedInvalid: [["local:sample", "schemaVersion must be 1"]],
   graphNotJson: [["Unexpected end of input"]],
   graphInvalid: [["schemaVersion must be 1"]],

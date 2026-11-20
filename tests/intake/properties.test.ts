@@ -5,8 +5,9 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_ANALYSIS_OPTIONS } from "../../src/contracts/options";
 import { classify } from "../../src/features/import/review";
+import { createMemorySavedStore } from "../../src/features/import/saved";
 import { loadSourceSet, resolveRoot } from "../../packages/hauntmap-mcp/src/loader";
-import { arbTree } from "./generators";
+import { arbRecord, arbTree } from "./generators";
 import type { TreeEntry } from "./generators";
 
 // Properties of .kiro/specs/intake/design.md. 200 runs and a fixed seed; fast-check prints the seed on failure.
@@ -103,6 +104,33 @@ describe("P2 loader parity (2.3, I2)", () => {
         } finally {
           rmSync(parent, { recursive: true, force: true });
         }
+      }),
+      RUNS,
+    );
+  });
+});
+
+describe("P8 saved round trip (5.2, 5.3)", () => {
+  it("put then list returns equal records newest first, delete removes one, and the same label replaces", async () => {
+    await fc.assert(
+      fc.asyncProperty(fc.array(arbRecord, { minLength: 1, maxLength: 6 }), async (records) => {
+        const store = createMemorySavedStore();
+        for (const record of records) await store.put(record);
+        const latest = new Map(records.map((record) => [record.label, record]));
+        const listed = await store.list();
+        expect(listed).toHaveLength(latest.size);
+        for (const record of listed) expect(record).toEqual(latest.get(record.label));
+        const times = listed.map((record) => record.savedAt);
+        expect(times).toEqual([...times].sort().reverse());
+        const first = listed[0];
+        if (first === undefined) return;
+        await store.delete(first.label);
+        expect((await store.list()).some((record) => record.label === first.label)).toBe(false);
+        const replacement = { ...first, savedAt: "2031-01-01T00:00:00.000Z", sourceText: null };
+        await store.put(first);
+        await store.put(replacement);
+        const again = (await store.list()).filter((record) => record.label === first.label);
+        expect(again).toEqual([replacement]);
       }),
       RUNS,
     );

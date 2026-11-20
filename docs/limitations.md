@@ -24,3 +24,15 @@ Not settled:
 - The raw results of `cycles` and `compare` in the H9 session are not in the headless transcript. Consequence: `mcp-cycles.json` and `mcp-compare.json` were regenerated from the same tool code on the same inputs and are labelled so in `docs/acceptance/h9-session/recording.md`.
 - The final headless turn of tasks 12 and 14 (the `identical` skip line) is run by the person. Consequence: until it is logged, the skip rule is checked by `tests/kiro/demo-live.test.ts` and by a manual run of the command, not by a Kiro turn.
 - No deployed URL exists in this checkout, so the fetch of `<deployed URL>/demo/live.json` was not run.
+## Intake
+
+Local lines, read on 2026-11-19. The GitHub lines come with the GitHub route.
+
+- Local analysis reads the files of one chosen folder, in the browser. It supports at most 1,000 included files and 25 MiB of included text; above either cap the review says so and nothing is read. A subset is never analyzed.
+- Files over 1 MiB, secret or environment files, other file types and the directories `.git`, `node_modules`, `dist`, `build`, `out`, `.next` and `coverage` are skipped, as the command line tool skips them. A file with a NUL in its first 8,192 characters is skipped as binary when it is read.
+- Folder selection needs a browser whose file input has `webkitdirectory`. Without it the dialog offers graph file import only.
+- Drag and drop and ZIP intake are not available.
+- Graph file import reads a bare investigation (what `pnpm hauntmap analyze <root> --out <file>` writes), up to 25 MiB. It carries no source text.
+- `Save investigation on this device` writes to IndexedDB in this browser only, on request, and the record stays until `Forget`. Source text is saved only when `Include source text` is checked. Clearing the browser's site data removes the records.
+- The request list in `docs/acceptance/intake/local-requests.json` was made by `tests/intake/e2e/local.spec.ts` on this PC and shows the page's own files only. It is a record of one run in one browser, not a proof for other browsers.
+- Subfolders of a repository and private repositories are not supported.

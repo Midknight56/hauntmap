@@ -15,6 +15,7 @@ import { createInvestigationStore, type InvestigationStore } from "../features/i
 import { installIntakeHook } from "../features/import/devHook";
 import { createIntake } from "../features/import/intake";
 import { IntakeHost } from "../features/import/IntakeHost";
+import { createSavedStore } from "../features/import/saved";
 import type { ReadWorkerLike } from "../features/import/readFiles";
 import type { IntakeService } from "../features/import/types";
 import { registerLiveSnapshot } from "../features/liveSnapshot";
@@ -130,7 +131,7 @@ export function createServices(): AppServices {
     analysisClient,
     defaults: DEFAULT_ANALYSIS_OPTIONS,
     validate: validateInvestigation,
-    saved: null,
+    saved: createSavedStore(globalThis.indexedDB),
     createReadWorker: () => new Worker(new URL("../features/import/readFiles.worker.ts", import.meta.url), { type: "module" }) as unknown as ReadWorkerLike,
     github: null,
   });
