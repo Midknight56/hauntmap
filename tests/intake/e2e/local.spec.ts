@@ -10,7 +10,7 @@ const REPO = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 // The local route in a real browser (headless Chromium, the development build). Task 6 holds 2.1, 2.6, 3.5 and 1.5;
 // the other cases of the design table come with task 8.
 
-const SUMMARY = "Analyzed sample-local: 3 modules, 1 relation, 1 diagnostic; 6 files skipped before reading, 1 binary file skipped, 0 files failed to parse.";
+const SUMMARY = "Analyzed sample-local: 3 modules, 1 relation, 1 diagnostic; 6 files skipped before reading, 1 binary file skipped.";
 
 test.describe("local folder, first journey", () => {
   test("2.1 the dialog opens from the landing button, takes focus, and returns it on Escape", async ({ page }) => {

@@ -83,6 +83,29 @@ test.describe("caps and failures", () => {
     await expect(dialog.getByRole("button", { name: "Load" })).toBeFocused();
   });
 
+  test("12.1 509 listed files: the cap message is an alert inside the dialog, under the address, as well as in the status", async ({ page }) => {
+    const { requests } = await routeJsdelivr(page, bigAnswers(509));
+    const dialog = await openGithubDialog(page);
+    await load(page, `${REPO}/tree/main`);
+    const alert = dialog.getByRole("alert");
+    await expect(alert).toBeVisible();
+    await expect(alert).toHaveText(/^octo\/cat@main has 509 included files; the limit is 400\. First excluded: \S+\. The previous investigation is unchanged\.$/);
+    const text = (await alert.textContent()) ?? "";
+    expect(await readStatus(page)).toBe(text);
+    // The alert sits inside the dialog box, under the address field, and the dialog is still usable.
+    const box = await dialog.boundingBox();
+    const alertBox = await alert.boundingBox();
+    const fieldBox = await page.getByLabel("Repository URL").boundingBox();
+    expect(alertBox?.y ?? 0).toBeGreaterThan((fieldBox?.y ?? 1e9) + (fieldBox?.height ?? 0) - 1);
+    expect((alertBox?.y ?? 1e9) + (alertBox?.height ?? 0)).toBeLessThanOrEqual((box?.y ?? 0) + (box?.height ?? 0));
+    await expect(dialog.getByRole("button", { name: "Load" })).toBeFocused();
+    expect(requests.map((request) => request.url)).toEqual([LISTING]);
+    // The next Load clears it.
+    await page.getByLabel("Repository URL").fill("octo/cat");
+    await dialog.getByRole("button", { name: "Load" }).click();
+    await expect(alert).toHaveText("Enter an address like https://github.com/owner/repo or https://github.com/owner/repo/tree/branch.");
+  });
+
   for (const status of [404, 403]) {
     test(`7.6 a listing that answers ${status} shows its status and sends no file request`, async ({ page }) => {
       const { requests } = await routeJsdelivr(page, (url) => (url === LISTING ? { status, body: { status, message: "no" } } : undefined));
@@ -116,7 +139,7 @@ test.describe("progress and cancel", () => {
     expect(fetched.some((n) => n > 0 && n < 200)).toBe(true);
     expect(fetched).toEqual([...fetched].sort((a, b) => a - b));
     expect(seen.some((text) => /^Analyzing \d+ of 200 files$/.test(text))).toBe(true);
-    expect(await readStatus(page)).toMatch(/^Loaded octo\/cat@main: 200 files, 200 modules, \d+ relations?, \d+ diagnostics?\.$/);
+    expect(await readStatus(page)).toMatch(/^Loaded octo\/cat@main: 200 files, 200 modules(, \d+ relations?)?(, \d+ diagnostics?)?\.$/);
   });
 
   test("8.3 a cancel near 50 of 200 files sends no file request afterwards and leaves the six fields as they were", async ({ page }) => {

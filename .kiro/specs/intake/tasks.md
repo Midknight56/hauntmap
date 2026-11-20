@@ -164,7 +164,7 @@ The tasks run in five batches. One Kiro session runs one batch, in order. Every 
 
 ## Batch E: the newer snapshot, the real network record and the docs
 
-- [ ] 12. `after` mode for both dialogs and the comparison buttons (gates I2, I4)
+- [x] 12. `after` mode for both dialogs and the comparison buttons (gates I2, I4)
   - Tests first:
     - `tests/intake/after-mode.test.tsx` for both dialogs, plus P5 for the GitHub dialog;
     - new cases in the comparison tests for `compareWithIntake` (ok, failed, cancelled) and for the two idle panel buttons in the order of 9.1;
@@ -175,7 +175,7 @@ The tasks run in five batches. One Kiro session runs one batch, in order. Every 
   - Verify: `pnpm verify` exits 0 with `after-mode.test.tsx` and P5 green; `pnpm verify:e2e` exits 0, including the whole of `tests/compare/e2e/compare.spec.ts`.
   - _Requirements: 3.6, 9.1, 9.2, 9.3, 9.4_
 
-- [ ] 13. The real GitHub load on this PC, the docs and the closing check (gate I5)
+- [x] 13. The real GitHub load on this PC, the docs and the closing check (gate I5)
   - Write `tests/intake/e2e/github-live.spec.ts`. It skips unless `HAUNTMAP_LIVE_NETWORK=1`. It loads one public repository with between 150 and 400 included files; check the count from the listing first, and choose another repository if it is outside that range. It measures the time from `Load` to the open map, writes `docs/acceptance/intake/github-live-requests.json` (method and URL) and saves `docs/acceptance/img/intake-github-progress.png` with `HAUNTMAP_SHOTS=1`.
   - Run it once with both variables set, and look at the screenshot. Gate I5: add the figure, the repository, the ref, the included count, the date and the 10,000 ms target under `## Intake` in `docs/performance.md`, as a figure for this PC and its connection. If the run cannot reach jsDelivr, record `not run` and the error in the log row instead of a figure.
   - Gate I5, the other docs:
@@ -187,3 +187,17 @@ The tasks run in five batches. One Kiro session runs one batch, in order. Every 
   - Check that tasks 1 to 12 each have exactly one `intake, task <n>` row in `docs/kiro-log.md`, and that no `*verify*` mark is left in this spec's three files without a line in `docs/limitations.md`.
   - Verify: `pnpm verify` exits 0; `pnpm verify:e2e` exits 0 (the live spec skipped); `pnpm build` exits 0; `(Select-String -Path docs/kiro-log.md -Pattern "\| intake, task ").Count` is 13.
   - _Requirements: 8.6, 11.1, 11.2, 11.3, 11.4_
+
+## Batch F: polish found after batch E
+
+- [x] 14. Refusals shown inside the dialog (requirement 12)
+  - Tests first: the 12.1 and 12.3 cases of `github-intake.test.tsx` and `local-intake.test.tsx`, and `github.spec.ts` 12.1 with jsDelivr routed through `page.route` (a listing of 509 files). Run them and see them fail.
+  - Then make `runGithubIntake` write the failure sentence to the dialog's notice as well as to the status (open mode), give the notice `role="alert"`, and add the `problem` alert to `LocalFolderDialog.tsx` for read, analysis and graph file refusals.
+  - Verify: the new cases pass; `pnpm verify` and `pnpm verify:e2e` exit 0 at the end of the batch.
+  - _Requirements: 12.1, 12.2, 12.3, 12.4_
+
+- [x] 15. Summaries leave out the counts that are 0 (requirement 13)
+  - Tests first: change the expected summaries in `messages.test.ts`, `local-intake.test.tsx` and `local.spec.ts`, and add the zero cases to `messages.test.ts`. Run them and see them fail.
+  - Then change `summary` of `src/features/import/messages.ts` and `loaded` of `src/features/github/messages.ts`.
+  - Verify: the changed cases pass; `pnpm verify` and `pnpm verify:e2e` exit 0 at the end of the batch.
+  - _Requirements: 13.1, 13.2, 13.3_

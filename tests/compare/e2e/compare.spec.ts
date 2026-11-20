@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { DEFAULT_ANALYSIS_OPTIONS, selectSources } from "../../../src/analysis";
 import { assertFocusVisibleAndUnobscured, expandAllWings, focusedName, openManor, readStatus, sceneDebug, settled, shot, snapshot, storeAction } from "../../e2e/helpers";
 import { READY_MANOR_PAIR, roomRects, waitForStatus, waitForStatusStart, wingNames, wingRects, sceneStates } from "./helpers";
+import { chooseFolder, materializeFolder } from "../../intake/e2e/helpers";
 import { camera, compareAction, compareView, fixtureJson, hookCompareWith, liveFromNewer, sampleTweens } from "./scene";
 
 const RECEIPT = "src/notifications/receipt.ts";
@@ -95,6 +96,8 @@ async function tabWithRing(page: Page, name: string): Promise<void> {
   throw new Error(`no element named "${name}" received focus`);
 }
 
+const LOCAL_AFTER = "Local folder as the newer snapshot";
+const GITHUB_AFTER = "GitHub repository as the newer snapshot";
 const PAIR_SENTENCE = "Replaces the current investigation with manor/before and compares it with manor/after.";
 
 async function openAnnex(page: Page): Promise<void> {
@@ -116,14 +119,50 @@ test.describe("comparison panel, keyboard and failure journeys", () => {
     await expect(control).toHaveAttribute("aria-expanded", "true");
     const panel = page.getByRole("region", { name: "Compare revisions" });
     await expect(panel.getByText("Compare manor/before with a newer snapshot.", { exact: true })).toBeVisible();
-    await expect(panel.getByRole("button")).toHaveText(["Revised manor"]);
+    await expect(panel.getByRole("button")).toHaveText(["Revised manor", LOCAL_AFTER, GITHUB_AFTER]);
     await openAnnex(page);
     await page.getByRole("button", { name: "Compare revisions" }).click();
     await expect(panel.getByText("Compare annex with a newer snapshot.", { exact: true })).toBeVisible();
-    await expect(panel.getByRole("button")).toHaveText(["Bundled manor pair"]);
+    await expect(panel.getByRole("button")).toHaveText(["Bundled manor pair", LOCAL_AFTER, GITHUB_AFTER]);
     await expect(panel.getByText(PAIR_SENTENCE, { exact: true })).toBeVisible();
   });
 
+  test("9.1 Local folder as the newer snapshot: a fixture folder chosen in the dialog gives Comparison ready and the folder as the newer side", async ({ page }) => {
+    const folder = materializeFolder("folder", "sample-local");
+    try {
+      await openManor(page);
+      const before = await kept(page);
+      await page.getByRole("button", { name: "Compare revisions" }).click();
+      await page.getByRole("button", { name: LOCAL_AFTER }).click();
+      const dialog = page.getByRole("dialog");
+      await expect(dialog.getByRole("heading", { name: "Analyze a local folder as the newer snapshot" })).toBeVisible();
+      // The current investigation is not replaced while the dialog is open (9.4).
+      expect(await kept(page)).toEqual(before);
+      await chooseFolder(page, folder.dir);
+      await dialog.getByRole("button", { name: "Analyze" }).click();
+      const text = await waitForStatusStart(page, "Comparison ready:");
+      expect(text).toMatch(/^Comparison ready: \d+ removed, \d+ added, \d+ changed modules; loops \d+ \u2192 \d+\. Showing the newer snapshot\.$/);
+      await expect(dialog).toHaveCount(0);
+      const view = await compareView(page);
+      expect(view.status).toBe("active");
+      await expect(page.getByRole("region", { name: "Compare revisions" }).getByText(/^Newer: local:sample-local \u00b7 3 modules/)).toBeVisible();
+    } finally {
+      folder.dispose();
+    }
+  });
+
+  test("9.2 closing the dialog writes nothing and leaves the comparison idle", async ({ page }) => {
+    await openManor(page);
+    const before = await kept(page);
+    const status = await readStatus(page);
+    await page.getByRole("button", { name: "Compare revisions" }).click();
+    await page.getByRole("button", { name: LOCAL_AFTER }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    expect(await readStatus(page)).toBe(status);
+    expect(await kept(page)).toEqual(before);
+    expect((await compareView(page)).status).toBe("idle");
+  });
   test("1.2 and 6.1 Revised manor: one sources.json request, nothing fetched after it, the exact ready status", async ({ page }) => {
     await openManor(page);
     await page.getByRole("button", { name: "Compare revisions" }).click();

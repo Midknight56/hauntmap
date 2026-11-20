@@ -1,9 +1,12 @@
 import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import fc from "fast-check";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { fileUrl, listingUrl } from "../../src/features/github/jsdelivr";
 import { openedStore } from "../ui/storeHarness";
-import { arbTree } from "./generators";
-import { chooseFiles, fakeIntakeStore, folderInput, heldReadWorkers, installDirectoryInput, makeHarness, namedError, removeDirectoryInput, sizedFile } from "./dialogHarness";
+import { createFakeFetch, type FakeRoute } from "./fakes";
+import { arbTree, listingBody, listingOf } from "./generators";
+import { smallRepoRoutes } from "./githubFakes";
+import { chooseFiles, fakeIntakeStore, folderInput, heldReadWorkers, inlineAnalysisClient, installDirectoryInput, makeHarness, namedError, removeDirectoryInput, sizedFile } from "./dialogHarness";
 import { classify } from "../../src/features/import/review";
 import { DEFAULT_ANALYSIS_OPTIONS } from "../../src/contracts/options";
 
@@ -62,6 +65,44 @@ describe("P5 preservation, local dialog (3.3, 3.6)", () => {
         }
       }),
       { numRuns: 200, seed: SEED },
+    );
+  });
+});
+
+// P5, GitHub dialog (3.3, 7.5, 7.6, 8.3, 8.4, 9.4): whatever stops a load short of success, in either mode, the six fields are deep equal.
+const GITHUB_OUTCOMES = ["listing-status", "cap", "file-failed", "cancel-fetching"] as const;
+
+describe("P5 preservation, GitHub dialog (3.3, 8.3, 8.4)", () => {
+  it("leaves the six fields deep equal after a refused listing, the cap, a failed file or a cancel", { timeout: 120_000 }, async () => {
+    await fc.assert(
+      fc.asyncProperty(fc.constantFrom(...GITHUB_OUTCOMES), fc.constantFrom<"open" | "after">("open", "after"), fc.constantFrom(403, 404, 500), fc.integer({ min: 401, max: 430 }), async (outcome, purpose, status, count) => {
+        const routes: Record<string, FakeRoute> = smallRepoRoutes("octo", "cat", "main");
+        if (outcome === "listing-status") routes[listingUrl("octo", "cat", "main")] = { status, body: { status } };
+        if (outcome === "cap") routes[listingUrl("octo", "cat", "main")] = { body: { files: listingOf(count).map((entry) => ({ name: entry.path, hash: "h", size: entry.size })) } };
+        if (outcome === "file-failed") routes[fileUrl("octo", "cat", "main", "src/b.ts")] = { status, body: "" };
+        if (outcome === "cancel-fetching") routes[fileUrl("octo", "cat", "main", "src/a.ts")] = { hold: true, body: listingBody("/src/a.ts") };
+        const fake = createFakeFetch(routes);
+        const real = openedStore("triad");
+        const store = fakeIntakeStore({ over: real.store });
+        const before = sixFields(real.store.getState());
+        const h = makeHarness({ store, github: true, deps: { github: { fetchImpl: fake.fetch }, analysisClient: inlineAnalysisClient() } });
+        try {
+          void h.open({ kind: "github", purpose });
+          fireEvent.change(screen.getByLabelText("Repository URL"), { target: { value: "https://github.com/octo/cat/tree/main" } });
+          fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Load" }));
+          if (outcome === "cancel-fetching") {
+            await waitFor(() => expect(screen.getByRole("button", { name: "Cancel" })).toBeTruthy());
+            fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+          }
+          if (purpose === "open" || outcome === "cancel-fetching") await waitFor(() => expect(screen.getByRole("button", { name: "Load" })).toBeTruthy());
+          else await waitFor(() => expect(h.results).toHaveLength(1));
+          expect(sixFields(real.store.getState())).toEqual(before);
+          expect(store.calls).not.toContain("openInvestigation");
+        } finally {
+          cleanup();
+        }
+      }),
+      { numRuns: 40, seed: SEED },
     );
   });
 });

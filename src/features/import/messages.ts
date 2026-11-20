@@ -26,7 +26,28 @@ export const reading = (done: number, total: number) => `Reading ${done} of ${to
 export const analyzing = (done: number, total: number) => `Analyzing ${done} of ${total} files`;
 export const cancelled = (label: string | null) => (label ? `Analysis cancelled. ${label} is still open.` : "Analysis cancelled.");
 export const summary = (folder: string, m: number, r: number, d: number, k: number, b: number, f: number) =>
-  `Analyzed ${folder}: ${plural(m, "module")}, ${plural(r, "relation")}, ${plural(d, "diagnostic")}; ${plural(k, "file")} skipped before reading, ${plural(b, "binary file")} skipped, ${plural(f, "file")} failed to parse.`;
+  summarySentence(
+    `Analyzed ${folder}`,
+    [
+      [m, (n) => plural(n, "module")],
+      [r, (n) => plural(n, "relation")],
+      [d, (n) => plural(n, "diagnostic")],
+    ],
+    [
+      [k, (n) => `${plural(n, "file")} skipped before reading`],
+      [b, (n) => `${plural(n, "binary file")} skipped`],
+      [f, (n) => `${plural(n, "file")} failed to parse`],
+    ],
+  );
+/** A part whose count is 0 is left out (13.1): the words rule is that a number shows only while it changes what the person does next. */
+type Part = readonly [number, (n: number) => string];
+function summarySentence(head: string, counts: readonly Part[], notes: readonly Part[]): string {
+  const say = (parts: readonly Part[]): string[] => parts.filter(([n]) => n !== 0).map(([n, words]) => words(n));
+  const first = say(counts);
+  const second = say(notes);
+  const body = [first.length > 0 ? first.join(", ") : null, second.length > 0 ? second.join(", ") : null].filter((part): part is string => part !== null);
+  return body.length === 0 ? `${head}.` : `${head}: ${body.join("; ")}.`;
+}
 export const analyzeFailed = (message: string) => `The folder could not be analyzed (${message}).`;
 export const PRESERVED = "The previous investigation is unchanged.";
 export const SAVE_BUTTON = "Save investigation on this device";

@@ -143,6 +143,10 @@ export function ComparePanel({ cs, compare, host, onClose, onEnded }: Props): Re
       if (busy) return;
       void (isManor ? cs.actions.compareWithSample() : cs.actions.compareWithPair());
     };
+    const startIntake = (kind: "local" | "github"): void => {
+      if (busy) return;
+      void cs.actions.compareWithIntake(kind);
+    };
     body = (
       <>
         <p>{`Compare ${label} with a newer snapshot.`}</p>
@@ -150,6 +154,11 @@ export function ComparePanel({ cs, compare, host, onClose, onEnded }: Props): Re
           {isManor ? "Revised manor" : "Bundled manor pair"}
         </button>
         {isManor ? null : <p>{PAIR_NOTE}</p>}
+        {(cs.intakeKinds ?? []).map((kind) => (
+          <button key={kind} type="button" aria-disabled={busy} onClick={() => startIntake(kind)}>
+            {kind === "local" ? "Local folder as the newer snapshot" : "GitHub repository as the newer snapshot"}
+          </button>
+        ))}
       </>
     );
   }

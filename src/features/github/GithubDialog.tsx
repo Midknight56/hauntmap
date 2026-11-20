@@ -135,7 +135,7 @@ export function GithubDialog({ service, purpose }: { service: IntakeService; pur
           </div>
         ) : null}
         {notice !== null ? (
-          <p id={noticeId} className="intake-cap">
+          <p id={noticeId} className="intake-cap" role="alert">
             {notice}
           </p>
         ) : null}

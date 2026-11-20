@@ -1,0 +1,814 @@
+[
+  {
+    "method": "GET",
+    "url": "https://data.jsdelivr.com/v1/packages/gh/reduxjs/redux@5.0.1?structure=flat"
+  },
+  {
+    "method": "GET",
+    "url": "http://localhost:4374/assets/SplineSansMono-VariableFont_wght-wNvB_FuL.ttf"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/docs/components/DetailedExplanation.jsx"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/async/src/actions/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/async/src/components/Picker.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/async/src/components/Posts.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/async/src/containers/App.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/async/src/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/async/src/reducers/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter-ts/src/App.test.tsx"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter-ts/src/App.tsx"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter-ts/src/app/hooks.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter-ts/src/app/store.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter-ts/src/features/counter/Counter.tsx"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter-ts/src/features/counter/counterAPI.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter-ts/src/features/counter/counterSlice.spec.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter-ts/src/features/counter/counterSlice.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter-ts/src/index.tsx"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter-ts/src/react-app-env.d.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter-ts/src/reportWebVitals.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter-ts/src/setupTests.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter/src/App.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter/src/App.test.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter/src/app/store.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter/src/features/counter/Counter.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter/src/features/counter/counterAPI.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter/src/features/counter/counterSlice.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter/src/features/counter/counterSlice.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter/src/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter/src/reportWebVitals.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/counter/src/setupTests.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/actions/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/components/Explore.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/components/List.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/components/Repo.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/components/User.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/containers/App.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/containers/DevTools.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/containers/RepoPage.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/containers/Root.dev.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/containers/Root.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/containers/Root.prod.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/containers/UserPage.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/middleware/api.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/reducers/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/reducers/paginate.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/store/configureStore.dev.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/store/configureStore.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/real-world/src/store/configureStore.prod.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/actions/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/api/shop.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/components/Cart.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/components/Cart.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/components/Product.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/components/Product.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/components/ProductItem.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/components/ProductItem.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/components/ProductsList.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/components/ProductsList.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/constants/ActionTypes.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/containers/App.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/containers/CartContainer.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/containers/ProductsContainer.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/reducers/cart.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/reducers/cart.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/reducers/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/reducers/index.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/reducers/products.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/reducers/products.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/shopping-cart/src/setupTests.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/testAll.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/actions/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/actions/index.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/components/App.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/components/App.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/components/Footer.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/components/Footer.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/components/Header.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/components/Header.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/components/Link.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/components/Link.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/components/MainSection.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/components/MainSection.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/components/TodoItem.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/components/TodoItem.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/components/TodoList.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/components/TodoList.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/components/TodoTextInput.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/components/TodoTextInput.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/constants/ActionTypes.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/constants/TodoFilters.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/containers/FilterLink.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/containers/Header.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/containers/MainSection.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/containers/VisibleTodoList.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/reducers/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/reducers/todos.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/reducers/todos.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/reducers/visibilityFilter.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todomvc/src/selectors/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos-with-undo/src/actions/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos-with-undo/src/components/App.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos-with-undo/src/components/Footer.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos-with-undo/src/components/Link.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos-with-undo/src/components/Todo.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos-with-undo/src/components/TodoList.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos-with-undo/src/containers/AddTodo.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos-with-undo/src/containers/FilterLink.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos-with-undo/src/containers/UndoRedo.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos-with-undo/src/containers/VisibleTodoList.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos-with-undo/src/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos-with-undo/src/reducers/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos-with-undo/src/reducers/todos.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos-with-undo/src/reducers/visibilityFilter.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos/src/actions/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos/src/actions/index.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos/src/components/App.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos/src/components/Footer.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos/src/components/Link.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos/src/components/Todo.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos/src/components/TodoList.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos/src/containers/AddTodo.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos/src/containers/FilterLink.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos/src/containers/VisibleTodoList.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos/src/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos/src/reducers/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos/src/reducers/todos.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos/src/reducers/todos.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/todos/src/reducers/visibilityFilter.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/tree-view/src/actions/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/tree-view/src/containers/Node.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/tree-view/src/containers/Node.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/tree-view/src/generateTree.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/tree-view/src/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/tree-view/src/reducers/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/tree-view/src/reducers/index.spec.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/tree-view/src/setupTests.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/universal/client/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/universal/common/actions/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/universal/common/api/counter.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/universal/common/components/Counter.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/universal/common/containers/App.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/universal/common/reducers/counter.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/universal/common/reducers/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/universal/common/store/configureStore.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/universal/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/universal/server/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/universal/server/server.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/examples/universal/webpack.config.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/rollup.config.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/applyMiddleware.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/bindActionCreators.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/combineReducers.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/compose.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/createStore.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/index.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/types/actions.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/types/middleware.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/types/reducers.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/types/store.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/utils/actionTypes.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/utils/formatProdErrorMessage.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/utils/isAction.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/utils/isPlainObject.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/utils/kindOf.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/utils/symbol-observable.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/src/utils/warning.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/applyMiddleware.spec.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/bindActionCreators.spec.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/combineReducers.spec.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/compose.spec.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/createStore.spec.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/helpers/actionCreators.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/helpers/actionTypes.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/helpers/middleware.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/helpers/reducers.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/typescript/actionCreators.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/typescript/actions.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/typescript/compose.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/typescript/dispatch.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/typescript/enhancers.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/typescript/injectedDispatch.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/typescript/middleware.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/typescript/reducers.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/typescript/store.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/utils/formatProdErrorMessage.spec.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/utils/isAction.spec.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/utils/isPlainObject.spec.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/test/utils/warning.spec.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/tsup.config.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/vitest.config.ts"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/website/docusaurus.config.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/website/sidebars.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/website/src/js/monokaiTheme.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/website/src/pages/errors.js"
+  },
+  {
+    "method": "GET",
+    "url": "https://cdn.jsdelivr.net/gh/reduxjs/redux@5.0.1/website/src/pages/index.js"
+  },
+  {
+    "method": "GET",
+    "url": "http://localhost:4374/assets/analysis.worker-y5V7Vt20.js"
+  },
+  {
+    "method": "GET",
+    "url": "http://localhost:4374/assets/layout.worker-DKeNp2gZ.js"
+  },
+  {
+    "method": "GET",
+    "url": "http://localhost:4374/assets/browserAll-BsOqlyLs.js"
+  },
+  {
+    "method": "GET",
+    "url": "http://localhost:4374/assets/init-C9s3Yy9c.js"
+  }
+]

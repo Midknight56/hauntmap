@@ -24,4 +24,9 @@ export const loadCancelled = (label: string | null) => (label ? `Loading cancell
 export const fetchFailed = (path: string, o: string, r: string, ref: string, status: string) => `Could not fetch ${path} from ${o}/${r}@${ref} (${status}). Nothing was loaded.`;
 export const analyzeFailedGh = (message: string) => `The repository could not be analyzed (${message}).`;
 export const loaded = (o: string, r: string, ref: string, n: number, m: number, rel: number, d: number) =>
-  `Loaded ${o}/${r}@${ref}: ${plural(n, "file")}, ${plural(m, "module")}, ${plural(rel, "relation")}, ${plural(d, "diagnostic")}.`;
+  loadedSentence(`Loaded ${o}/${r}@${ref}`, [plural(n, "file"), plural(m, "module"), plural(rel, "relation"), plural(d, "diagnostic")], [n, m, rel, d]);
+/** A part whose count is 0 is left out (13.2). */
+function loadedSentence(head: string, parts: string[], counts: number[]): string {
+  const said = parts.filter((_, index) => counts[index] !== 0);
+  return said.length === 0 ? `${head}.` : `${head}: ${said.join(", ")}.`;
+}

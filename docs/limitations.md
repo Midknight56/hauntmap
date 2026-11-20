@@ -2,7 +2,7 @@
 
 ## Comparison (snapshot-comparison)
 
-Comparison accepts the bundled manor pair and the live snapshot; comparing two arbitrary folders is not available in this build.
+Comparison accepts the bundled manor pair, the live snapshot, a local folder or a public GitHub repository as the newer snapshot; the earlier side is always the investigation that is open, and a second folder or repository is loaded through the same dialogs as the first.
 
 The export feature is not built.
 
@@ -43,4 +43,6 @@ Local lines, read on 2026-11-19. The GitHub lines below were observed on 2026-11
 - GitHub route, caching: the listing was served with `Access-Control-Allow-Origin: *` and `Cache-Control: public, max-age=31536000, stale-while-revalidate=86400, stale-if-error=86400`. A branch listing can therefore be a day or more old, and a push may not show at once. The file URL of `package.json` at `@main` answered 200 with `application/json; charset=utf-8`.
 - GitHub route, refs with a slash: a ref typed in `Branch or tag` is sent encoded as one path segment (`feature%2Fx`). jsDelivr was not asked for such a ref, so whether it serves one is not observed.
 - GitHub route, errors: jsDelivr answers 404 with a JSON message for a missing repository or ref. Private repositories are not supported. The dialog shows the status or the error name it got and nothing else.
+- GitHub route, size: at most 400 included files and 25 MiB of included text; above either cap nothing is fetched and the dialog says so. The 400 file cap and the six requests in flight are this build's choices, not jsDelivr limits.
+- GitHub route, speed: one real load of `reduxjs/redux@5.0.1` (197 included files) took 25,307 ms on this PC and its connection on 2026-11-19, above the 10,000 ms target. That is one run (`docs/performance.md`); it says nothing about other repositories, connections or times of day.
 - GitHub route, privacy: the repository name, the ref and the file paths go to jsDelivr. Nothing else is sent: requests use `credentials: "omit"` and no custom header.

@@ -57,13 +57,21 @@ All code, tests and documents in the repository were written by Kiro CLI, versio
 | `src/scene`, `src/features/investigation`, `src/components`, `src/styles`, `tests/ui`, `tests/e2e` | `investigation-ui` | Kiro CLI | `investigation-ui, task 1a` to `task 14`, the theme pass, and its follow up of 17 November |
 | `src/analysis/graph/compare.ts`, `src/features/compare`, `src/scene/compare`, `tests/compare` | `snapshot-comparison` | Kiro CLI | `snapshot-comparison/1a` to `/15` |
 
-The export feature of `snapshot-comparison` and the `intake` spec were not built, by decision of the revision of 16 November 2026. The Crew definitions of `kiro-integration` were not built either.
+The `intake` spec (`src/features/import`, `src/features/github`, `tests/intake`, `docs/acceptance/intake`) was built by Kiro CLI 3.5.0, model setting `auto`, on 19 November 2026 at the owner's request; its rows are `intake, task 1` onward in `docs/kiro-log.md`. The export feature of `snapshot-comparison` was not built, by decision of the revision of 16 November 2026. The Crew definitions of `kiro-integration` were not built either.
 
 ### Evidence and credits
 
 Final test runs on 17 November 2026: `pnpm verify` passed with 100 test files and 1,206 tests [log, `kiro-integration, finish of task 12`]. A run of `pnpm verify` took 48 s on an AMD Ryzen 9 9950X under Windows 11 Pro with Node 24.19.0, and the browser suite `pnpm verify:e2e` took 34 s with 117 cases passing on the same machine [log, `snapshot-comparison/15`]. These are times on one named machine, not general performance claims.
 
 The Credits column of `docs/kiro-log.md` is empty in every row. Headless output does not show credits, so the log records no credit figure for any task [`docs/acceptance/h9-session/credits.md`]. Nothing in this write up states a credit total.
+
+### Your own code: local folder and GitHub
+
+A person can analyze a local folder or load a public GitHub repository, and can use either as the newer snapshot of a comparison.
+
+- Local folder: the files are read in the browser and kept in memory. Local analysis sends nothing: `tests/intake/e2e/local.spec.ts` recorded every request of the page and its workers from the moment the dialog opened until the map was open, and none carried the folder name, a path or the file text; the list of requests is `docs/acceptance/intake/local-requests.json`. The record is one run in one headless Chromium on this PC.
+- GitHub repository: the repository name, the ref and the file paths are sent to the jsDelivr CDN, at most six requests at a time, with no cookie and no custom header. One real load of `reduxjs/redux@5.0.1` (197 included files) took 25,307 ms on this PC against a target of 10,000 ms [`tests/intake/e2e/github-live.spec.ts`, `docs/performance.md`, `docs/acceptance/intake/github-live-requests.json`]. It is one run and says nothing about other repositories or connections.
+- The caps are 1,000 files and 25 MiB locally and 400 files on GitHub. Above a cap nothing is analyzed [`docs/limitations.md`].
 
 ### What was not tested
 

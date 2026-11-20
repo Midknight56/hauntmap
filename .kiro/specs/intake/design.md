@@ -372,7 +372,7 @@ export const reading = (done: number, total: number) => `Reading ${done} of ${to
 export const analyzing = (done: number, total: number) => `Analyzing ${done} of ${total} files`;
 export const cancelled = (label: string | null) => (label ? `Analysis cancelled. ${label} is still open.` : "Analysis cancelled.");
 export const summary = (folder: string, m: number, r: number, d: number, k: number, b: number, f: number) =>
-  `Analyzed ${folder}: ${plural(m, "module")}, ${plural(r, "relation")}, ${plural(d, "diagnostic")}; ${plural(k, "file")} skipped before reading, ${plural(b, "binary file")} skipped, ${plural(f, "file")} failed to parse.`;
+  /* each part is left out when its count is 0 (Requirement 13): `Analyzed <folder>: <m modules, r relations, d diagnostics>; <k files skipped before reading, b binary files skipped, f files failed to parse>.` */ summarySentence(folder, m, r, d, k, b, f);
 export const analyzeFailed = (message: string) => `The folder could not be analyzed (${message}).`;
 export const PRESERVED = "The previous investigation is unchanged.";
 export const SAVE_BUTTON = "Save investigation on this device";
@@ -405,7 +405,7 @@ export const progress = (done: number, total: number) => `Fetched ${done} of ${t
 export const loadCancelled = (label: string | null) => (label ? `Loading cancelled. ${label} is still open.` : "Loading cancelled.");
 export const fetchFailed = (path: string, o: string, r: string, ref: string, status: string) => `Could not fetch ${path} from ${o}/${r}@${ref} (${status}). Nothing was loaded.`;
 export const loaded = (o: string, r: string, ref: string, n: number, m: number, rel: number, d: number) =>
-  `Loaded ${o}/${r}@${ref}: ${plural(n, "file")}, ${plural(m, "module")}, ${plural(rel, "relation")}, ${plural(d, "diagnostic")}.`;
+  /* parts whose count is 0 are left out (Requirement 13): `Loaded <o>/<r>@<ref>: <n files, m modules, rel relations, d diagnostics>.` */ loadedSentence(o, r, ref, n, m, rel, d);
 ```
 
 In `open` mode a failure message is followed by ` The previous investigation is unchanged.`, except for 7.2, where nothing was attempted. In `after` mode the bare message is resolved instead (9.2).

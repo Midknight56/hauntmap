@@ -123,6 +123,9 @@ export function LocalFolderDialog({ service, purpose }: { service: IntakeService
 
   // Saved investigations (Requirement 5). `available` is false when there is no store or its first list rejected.
   const [saved, setSaved] = useState<{ available: boolean; records: SavedRecord[] }>({ available: deps.saved !== null, records: [] });
+  /** The last refusal, shown as an alert next to what it concerns as well as in the status region (12.3). Cleared by the next action. */
+  const [problem, setProblem] = useState<string | null>(null);
+  const problemId = useId();
   const [includeSource, setIncludeSource] = useState(false);
   const [saving, setSaving] = useState(false);
   const mounted = useRef(true);
@@ -160,6 +163,7 @@ export function LocalFolderDialog({ service, purpose }: { service: IntakeService
   const onFolderChosen = (event: ChangeEvent<HTMLInputElement>): void => {
     const files = Array.from(event.currentTarget.files ?? []);
     if (files.length === 0) return;
+    setProblem(null);
     const { folder, candidates } = candidatesOf(files);
     setScreen({ name: "review", review: classify(folder, candidates, deps.defaults), sizes: new Map(candidates.map((candidate) => [candidate.path, candidate.size])) });
   };
@@ -179,12 +183,14 @@ export function LocalFolderDialog({ service, purpose }: { service: IntakeService
       return;
     }
     deps.store.actions.setStatus(`${message} ${PRESERVED}`);
+    setProblem(`${message} ${PRESERVED}`);
     backToReview(selection);
   };
 
   const analyze = async (selection: Selection): Promise<void> => {
     const { review, sizes } = selection;
     const { store, analysisClient, defaults } = deps;
+    setProblem(null);
     run.current += 1;
     const mine = run.current;
     const current = (): boolean => run.current === mine;
@@ -252,12 +258,14 @@ export function LocalFolderDialog({ service, purpose }: { service: IntakeService
     const input = event.currentTarget;
     const file = input.files?.[0];
     if (file === undefined) return;
+    setProblem(null);
     const outcome = await readGraphFile(file, deps.validate);
     if (!mounted.current) return;
     if (!outcome.ok) {
       if (purpose === "after") service.close({ ok: false, reason: "failed", message: outcome.message });
       else {
         deps.store.actions.setStatus(outcome.message);
+        setProblem(outcome.message);
         graphInput.current?.focus();
       }
       return;
@@ -346,8 +354,20 @@ export function LocalFolderDialog({ service, purpose }: { service: IntakeService
           </h3>
           <div className="intake-field">
             <label htmlFor={graphInputId}>{CHOOSE_GRAPH_FILE}</label>
-            <input ref={graphInput} id={graphInputId} type="file" accept=".json,application/json" onChange={(event) => void onGraphChosen(event)} />
+            <input
+              ref={graphInput}
+              id={graphInputId}
+              type="file"
+              accept=".json,application/json"
+              aria-describedby={problem !== null ? problemId : undefined}
+              onChange={(event) => void onGraphChosen(event)}
+            />
           </div>
+          {problem !== null ? (
+            <p id={problemId} className="intake-cap" role="alert">
+              {problem}
+            </p>
+          ) : null}
         </section>
         {saved.available && saved.records.length > 0 ? (
           <section aria-labelledby={savedHeadingId} className="intake-section">
@@ -457,6 +477,11 @@ export function LocalFolderDialog({ service, purpose }: { service: IntakeService
             {cap}
           </p>
         ) : null}
+        {problem !== null ? (
+          <p id={problemId} className="intake-cap" role="alert">
+            {problem}
+          </p>
+        ) : null}
         <div className="intake-actions">
           <button
             type="button"
@@ -470,7 +495,13 @@ export function LocalFolderDialog({ service, purpose }: { service: IntakeService
           >
             {BUTTON_ANALYZE}
           </button>
-          <button type="button" onClick={() => setScreen({ name: "choose" })}>
+          <button
+            type="button"
+            onClick={() => {
+              setProblem(null);
+              setScreen({ name: "choose" });
+            }}
+          >
             {BUTTON_BACK}
           </button>
           <button type="button" onClick={close}>

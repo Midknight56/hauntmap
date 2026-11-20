@@ -319,3 +319,57 @@ describe("working screen (8.2, 8.3)", () => {
     expect(h.store.statuses.at(-1)).toBe(text.loadCancelled(liveInvestigation().sourceLabel));
   });
 });
+
+// Task 14 (requirement 12): a refusal is also shown inside the dialog, under the address field, as an alert.
+describe("refusals shown in the dialog (12.1, 12.2)", () => {
+  const alert = (): HTMLElement => within(dialog()).getByRole("alert");
+
+  it("the 400 file cap: the same message as the status, as an alert under Repository URL, with focus on Load", async () => {
+    const { h } = setup(listingRoutes(401), { investigation: true });
+    void h.open({ kind: "github" });
+    typeUrl(`${REPO}/tree/main`);
+    fireEvent.click(button("Load"));
+    const message = `${text.cap(O, R, "main", 401, "src/m99.ts")} ${PRESERVED}`;
+    await waitFor(() => expect(alert().textContent).toBe(message));
+    expect(h.store.statuses).toEqual([message]);
+    expect(alert().compareDocumentPosition(urlInput()) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(urlInput().getAttribute("aria-describedby")).toBe(alert().id);
+    expect(document.activeElement).toBe(button("Load"));
+  });
+
+  it.each([
+    ["no files", { [listingUrl(O, R, "main")]: { body: { files: [{ name: "/README.md", hash: "h", size: 4 }] } } }, text.noFilesGh(O, R, "main")],
+    ["a refused listing", { [listingUrl(O, R, "main")]: { status: 404, body: {} } }, text.listFailed(O, R, "main", "404")],
+    ["a failed file", { ...smallRepoRoutes(O, R, "main"), [fileUrl(O, R, "main", "src/b.ts")]: { status: 500 } }, text.fetchFailed("src/b.ts", O, R, "main", "500")],
+  ] as const)("%s: the message is an alert in the dialog as well as in the status", async (_name, routes, message) => {
+    const { h } = setup(routes as Record<string, FakeRoute>, { investigation: true });
+    void h.open({ kind: "github" });
+    typeUrl(`${REPO}/tree/main`);
+    fireEvent.click(button("Load"));
+    await waitFor(() => expect(alert().textContent).toBe(`${message} ${PRESERVED}`));
+    expect(h.store.statuses.at(-1)).toBe(`${message} ${PRESERVED}`);
+    expect(document.activeElement).toBe(button("Load"));
+  });
+
+  it("a bad address is an alert too, and the next Load clears it", async () => {
+    const { h } = setup(smallRepoRoutes(O, R, "main"), { real: true });
+    void h.open({ kind: "github" });
+    typeUrl("octo/cat");
+    fireEvent.click(button("Load"));
+    expect(alert().textContent).toBe(text.URL_FORMAT);
+    await tick();
+    typeUrl(`${REPO}/tree/main`);
+    fireEvent.click(button("Load"));
+    expect(within(dialog()).queryByRole("alert")).toBeNull();
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("in after mode the dialog closes with the bare message and shows no alert", async () => {
+    const { h } = setup({ [listingUrl(O, R, "main")]: { status: 403, body: {} } });
+    const result = h.open({ kind: "github", purpose: "after" });
+    typeUrl(`${REPO}/tree/main`);
+    fireEvent.click(button("Load"));
+    await expect(result).resolves.toEqual({ ok: false, reason: "failed", message: text.listFailed(O, R, "main", "403") });
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+});

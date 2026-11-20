@@ -55,7 +55,11 @@ export async function runGithubIntake(deps: IntakeDeps & { github: { fetchImpl: 
   };
   /** A failure. In `open` mode the status gets the preservation sentence; in `after` mode the bare message goes to the caller (9.2). */
   const fail = (message: string): GithubOutcome => {
-    if (purpose === "open") store.actions.setStatus(`${message} ${PRESERVED}`);
+    // In `open` mode the dialog stays, so the same sentence is shown inside it as well as in the status region (12.1).
+    if (purpose === "open") {
+      ui.setNotice(`${message} ${PRESERVED}`);
+      store.actions.setStatus(`${message} ${PRESERVED}`);
+    }
     ui.setState("url");
     ui.focus("load");
     return { ok: false, reason: "failed", message };

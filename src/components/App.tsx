@@ -63,6 +63,8 @@ export function createCompareServices(deps: {
   base: string;
   loadSample?: typeof loadSample;
   sha256Hex?: (text: string) => Promise<string>;
+  /** Gate I2 of intake: the intake service, so that the panel can offer a folder or a repository as the newer snapshot. */
+  intake?: IntakeService;
 }): CompareStore {
   const compareStore = createCompareStore({
     store: deps.store,
@@ -71,6 +73,7 @@ export function createCompareServices(deps: {
     loadSample: deps.loadSample ?? ((id, base) => loadSample(id, base)),
     base: deps.base,
     place,
+    ...(deps.intake === undefined ? {} : { intake: deps.intake }),
     ...(deps.sha256Hex === undefined ? {} : { sha256Hex: deps.sha256Hex }),
   });
   registerCompare(deps.registry, compareStore);
@@ -114,17 +117,6 @@ export function createServices(): AppServices {
     compareAvailable: () => registry.getHandoff("compare") !== null,
   });
   const base = import.meta.env.BASE_URL;
-  const compareStore = createCompareServices({ store, registry, analysisClient, base });
-  // kiro-integration task 10: the `Open live snapshot` control (one call, ownership exception).
-  registerLiveSnapshot({
-    store,
-    registry,
-    base,
-    loadSample: (id, root) => loadSample(id, root),
-    analysisClient,
-    defaults: DEFAULT_ANALYSIS_OPTIONS,
-    validate: validateInvestigation,
-  });
   // intake tasks 6, 7 and 11 (gate I2): the local route, saved investigations and the GitHub route.
   const intake = createIntake({
     store,
@@ -134,6 +126,18 @@ export function createServices(): AppServices {
     saved: createSavedStore(globalThis.indexedDB),
     createReadWorker: () => new Worker(new URL("../features/import/readFiles.worker.ts", import.meta.url), { type: "module" }) as unknown as ReadWorkerLike,
     github: { fetchImpl: (input, init) => fetch(input, init) },
+  });
+  // intake task 12 (gates I2, I4): the comparison panel gets the intake service for the newer snapshot.
+  const compareStore = createCompareServices({ store, registry, analysisClient, base, intake });
+  // kiro-integration task 10: the `Open live snapshot` control (one call, ownership exception).
+  registerLiveSnapshot({
+    store,
+    registry,
+    base,
+    loadSample: (id, root) => loadSample(id, root),
+    analysisClient,
+    defaults: DEFAULT_ANALYSIS_OPTIONS,
+    validate: validateInvestigation,
   });
   if (DEVHOOK_ENABLED) {
     installDevHook(store, registry);

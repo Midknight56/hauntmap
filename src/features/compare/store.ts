@@ -3,7 +3,7 @@ import type { ComparisonResult, Investigation } from "../../contracts/types";
 import { compareInvestigations, type ComparisonDetail } from "../../analysis/graph/compare";
 import type { LayoutResult } from "../../scene/layout/types";
 import type { AnalysisClient } from "../../workers/client";
-import type { HostState, HostStore } from "./host";
+import type { HostIntake, HostIntakeKind, HostState, HostStore } from "./host";
 import { UNCHANGED, acquireSnapshot, type AfterSource, type SampleLoader, type Snapshot } from "./sources";
 import {
   buildUnionGraph,
@@ -46,6 +46,8 @@ export interface CompareState {
 }
 
 export interface CompareStore {
+  /** The kinds of newer snapshot the intake service offers; absent when the app wires no intake service (gate I4). */
+  readonly intakeKinds?: readonly HostIntakeKind[];
   getState(): CompareState;
   subscribe(listener: () => void): () => void;
   actions: {
@@ -53,6 +55,8 @@ export interface CompareStore {
     closePanel(): void;
     compareWithSample(): Promise<void>;
     compareWithPair(): Promise<void>;
+    /** Opens the intake dialog in `after` mode and compares the open investigation with its result. Never rejects (gate I4). */
+    compareWithIntake(kind: HostIntakeKind): Promise<void>;
     /** Rejects with the shown message when the comparison cannot be made. `before` defaults to the open investigation. */
     compareWith(after: AfterSource, layoutKey: string | null, before?: Investigation): Promise<void>;
     show(side: Side): void;
@@ -69,6 +73,8 @@ export interface CompareDeps {
   loadSample: SampleLoader;
   base: string;
   place: DoorPlacement;
+  /** The intake service, for the buttons that load a local folder or a GitHub repository as the newer snapshot. */
+  intake?: HostIntake;
   sha256Hex?: (text: string) => Promise<string>;
 }
 
@@ -322,6 +328,22 @@ export function createCompareStore(deps: CompareDeps): CompareStore {
     compareWithPair() {
       return swallow(guarded(pair));
     },
+    compareWithIntake(kind) {
+      const intake = deps.intake;
+      if (intake === undefined) return Promise.resolve();
+      return swallow(
+        guarded(async () => {
+          const result = await intake.open({ purpose: "after", kind });
+          if (!result.ok) {
+            // A failure arrives as the bare sentence (intake 9.2); a cancel writes nothing.
+            if (result.reason === "failed") host.actions.setStatus(`${result.message} ${UNCHANGED}`);
+            return;
+          }
+          const snapshot = { label: result.label, investigation: result.investigation, sourceText: result.sourceText };
+          await run({ kind: "investigation", snapshot }, host.getState().layout?.layoutKey ?? null, undefined, UNCHANGED);
+        }),
+      );
+    },
     compareWith(after, layoutKey, before) {
       return guarded(() => run(after, layoutKey, before, UNCHANGED));
     },
@@ -377,6 +399,7 @@ export function createCompareStore(deps: CompareDeps): CompareStore {
   });
 
   return {
+    ...(deps.intake === undefined ? {} : { intakeKinds: deps.intake.kinds }),
     getState: () => state,
     subscribe(listener) {
       listeners.add(listener);

@@ -325,7 +325,7 @@ describe("the Tab order (10.2)", () => {
 
 // ---- Task 5: reading, analysis, cancel, failure and the summary ----
 
-const SUMMARY = "Analyzed sample-local: 3 modules, 1 relation, 1 diagnostic; 6 files skipped before reading, 1 binary file skipped, 0 files failed to parse.";
+const SUMMARY = "Analyzed sample-local: 3 modules, 1 relation, 1 diagnostic; 6 files skipped before reading, 1 binary file skipped.";
 
 /** The six fields that a cancel, a failure and an `after` call must leave as they were (3.3). */
 function sixFields(state: unknown): unknown {
@@ -822,7 +822,8 @@ describe("the saved list (5.3)", () => {
     await screen.findByRole("heading", { name: "Saved on this device (1)" });
     expect(h.store.statuses).toEqual(["Forgot local:new."]);
     expect((await store.list()).map((r) => r.label)).toEqual(["local:old"]);
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Open local:old" }));
+    // The list is in the DOM before the passive effect that moves focus has run.
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Open local:old" })));
   });
 
   it("Forgetting the last record moves focus to Close", async () => {
@@ -905,5 +906,57 @@ describe("graph file import (6.1 to 6.4)", () => {
     chooseGraph(new File([graphFixture("malformed.json")], "malformed.json"));
     await expect(result).resolves.toEqual({ ok: false, reason: "failed", message: "The graph file is not valid: schemaVersion must be 1 (found 2)." });
     expect(h.store.calls).toEqual([]);
+  });
+});
+
+// Task 14 (requirement 12): the local dialog shows its refusals as an alert next to what they concern.
+describe("refusals shown in the dialog (12.3)", () => {
+  const alert = (): HTMLElement => within(dialog()).getByRole("alert");
+
+  it("a read error: the message of 3.6 is an alert on the review, as well as in the status, and Analyze has focus", async () => {
+    const { h, held } = startHeld();
+    held.workers[0]?.fail("disk unplugged");
+    const message = "The folder could not be analyzed (disk unplugged). The previous investigation is unchanged.";
+    await waitFor(() => expect(alert().textContent).toBe(message));
+    expect(h.store.statuses.at(-1)).toBe(message);
+    await waitFor(() => expect(document.activeElement).toBe(analyzeButton()));
+  });
+
+  it("an analysis failure is an alert too, and Analyze again clears it", async () => {
+    const h = makeHarness();
+    void h.open();
+    chooseFiles(folderInput(), sampleFiles());
+    clickAnalyze();
+    await waitFor(() => expect(h.analysis.calls).toHaveLength(1));
+    act(() => h.analysis.calls[0]?.reject(namedError("AnalysisFailed", "the worker stopped")));
+    await waitFor(() => expect(alert().textContent).toBe("The folder could not be analyzed (the worker stopped). The previous investigation is unchanged."));
+    clickAnalyze();
+    expect(within(dialog()).queryByRole("alert")).toBeNull();
+  });
+
+  it("a graph file that is refused shows the message under Choose a graph file as an alert, with focus on the input", async () => {
+    const h = makeHarness();
+    void h.open();
+    const input = screen.getByLabelText("Choose a graph file") as HTMLInputElement;
+    input.focus();
+    Object.defineProperty(input, "files", { value: [new File([graphFixture("malformed.json")], "malformed.json")], configurable: true });
+    fireEvent.change(input);
+    await waitFor(() => expect(alert().textContent).toBe("The graph file is not valid: schemaVersion must be 1 (found 2)."));
+    expect(h.store.statuses).toEqual(["The graph file is not valid: schemaVersion must be 1 (found 2)."]);
+    expect(input.getAttribute("aria-describedby")).toBe(alert().id);
+    expect(alert().compareDocumentPosition(input) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(document.activeElement).toBe(input);
+  });
+
+  it("a cap on the review is already in the dialog next to Analyze, which is described by it", () => {
+    const h = makeHarness();
+    void h.open();
+    const files = Array.from({ length: 1001 }, (_, i) => sizedFile("big", `src/f${i}.ts`, 10));
+    chooseFiles(folderInput(), files);
+    const message = "This folder has 1,001 included files; the limit is 1,000. Choose a subfolder.";
+    expect(within(dialog()).getByText(message)).toBeTruthy();
+    expect(analyzeButton().getAttribute("aria-describedby")).toBe(within(dialog()).getByText(message).id);
+    expect(analyzeButton().getAttribute("aria-disabled")).toBe("true");
+    expect(h.store.statuses).toEqual([]);
   });
 });

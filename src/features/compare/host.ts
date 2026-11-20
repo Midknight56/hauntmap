@@ -63,3 +63,17 @@ export interface HostRegistry {
   registerHandoff(name: "compare", fn: (args: HostCompareArgs) => Promise<void>): void;
   registerLegendEntries(provider: () => HostLegendEntry[]): void;
 }
+
+// The parts of the intake service the comparison uses to get a newer snapshot (gate I4 of the intake spec). `IntakeService`
+// of `src/features/import` satisfies this structurally; nothing here imports from that folder.
+
+export type HostIntakeKind = "local" | "github";
+
+export interface HostIntake {
+  readonly kinds: readonly HostIntakeKind[];
+  open(args: { purpose: "after"; kind: HostIntakeKind }): Promise<
+    | { ok: true; investigation: Investigation; sourceText: ReadonlyMap<string, string> | null; label: string }
+    | { ok: false; reason: "cancelled" }
+    | { ok: false; reason: "failed"; message: string }
+  >;
+}

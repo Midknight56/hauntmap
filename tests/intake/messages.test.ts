@@ -91,9 +91,18 @@ describe("local messages", () => {
 
   it("writes the summary of the fixture folder exactly (3.5)", () => {
     expect(messages.summary("sample-local", 3, 1, 1, 6, 1, 0)).toBe(
-      "Analyzed sample-local: 3 modules, 1 relation, 1 diagnostic; 6 files skipped before reading, 1 binary file skipped, 0 files failed to parse.",
+      "Analyzed sample-local: 3 modules, 1 relation, 1 diagnostic; 6 files skipped before reading, 1 binary file skipped.",
     );
-    expect(messages.summary("x", 1, 2, 0, 1, 2, 1)).toBe("Analyzed x: 1 module, 2 relations, 0 diagnostics; 1 file skipped before reading, 2 binary files skipped, 1 file failed to parse.");
+    expect(messages.summary("x", 1, 2, 3, 1, 2, 1)).toBe("Analyzed x: 1 module, 2 relations, 3 diagnostics; 1 file skipped before reading, 2 binary files skipped, 1 file failed to parse.");
+  });
+
+  it("leaves out every part of the summary whose count is 0 (13.1)", () => {
+    expect(messages.summary("x", 3, 2, 0, 0, 0, 0)).toBe("Analyzed x: 3 modules, 2 relations.");
+    expect(messages.summary("x", 1, 0, 0, 0, 2, 0)).toBe("Analyzed x: 1 module; 2 binary files skipped.");
+    expect(messages.summary("x", 4, 3, 0, 0, 0, 1)).toBe("Analyzed x: 4 modules, 3 relations; 1 file failed to parse.");
+    expect(messages.summary("x", 0, 0, 0, 2, 0, 0)).toBe("Analyzed x: 2 files skipped before reading.");
+    expect(messages.summary("x", 0, 0, 0, 0, 0, 0)).toBe("Analyzed x.");
+    for (const text of [messages.summary("x", 3, 0, 0, 0, 0, 0), messages.summary("x", 3, 2, 1, 4, 5, 6)]) expect(text).not.toMatch(/(^|[^0-9.,])0 /);
   });
 
   it("writes the review lines of 2.4", () => {
@@ -164,6 +173,8 @@ describe("GitHub messages", () => {
     expect(github.loadCancelled(null)).toBe("Loading cancelled.");
     expect(github.fetchFailed("src/a.ts", "octo", "cat", "main", "500")).toBe("Could not fetch src/a.ts from octo/cat@main (500). Nothing was loaded.");
     expect(github.loaded("octo", "cat", "main", 3, 3, 1, 1)).toBe("Loaded octo/cat@main: 3 files, 3 modules, 1 relation, 1 diagnostic.");
-    expect(github.loaded("octo", "cat", "main", 1, 1, 2, 0)).toBe("Loaded octo/cat@main: 1 file, 1 module, 2 relations, 0 diagnostics.");
+    expect(github.loaded("octo", "cat", "main", 1, 1, 2, 0)).toBe("Loaded octo/cat@main: 1 file, 1 module, 2 relations.");
+    expect(github.loaded("octo", "cat", "main", 200, 200, 0, 0)).toBe("Loaded octo/cat@main: 200 files, 200 modules.");
+    expect(github.loaded("octo", "cat", "main", 0, 0, 0, 0)).toBe("Loaded octo/cat@main.");
   });
 });
