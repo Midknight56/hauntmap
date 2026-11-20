@@ -10,5 +10,3 @@ Kiro Web (app.kiro.dev) was connected to the repository `Midknight56/hauntmap` t
 | Merge | Pull request 1 was merged into `kiro-breadth` (merge commit `dd1f733`). |
 
 Screenshot: `02-pull-request-opened.jpg` (the session page with the pull request link and the new text).
-
-Not shown here: how Kiro Web handles a task with an open pull request review, a task that runs the test suite, or autonomous mode. None of these was used.
