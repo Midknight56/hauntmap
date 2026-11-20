@@ -169,7 +169,7 @@ describe("requirements 3.4 and 3.5: bare specifiers", () => {
   });
 
   it("records alias-not-configured for a bare specifier that is not a valid package name", () => {
-    for (const specifier of ["@/lib/format", "~/config/env", "#internal/x", "@scope", "http://example.com/x.js", "Bad Name", "_private"]) {
+    for (const specifier of ["@/lib/format", "~/config/env", "#internal/x", "@scope", "Bad Name", "_private"]) {
       expect(resolveIn(["a.ts"], "a.ts", specifier), specifier).toEqual({
         resolution: "unresolved",
         to: null,
@@ -200,6 +200,64 @@ describe("requirements 3.4 and 3.5: bare specifiers", () => {
         reason: "alias-not-configured",
       });
     }
+  });
+
+  it("records external with a null target and no reason for an http or https URL (requirement 1.2)", () => {
+    for (const specifier of [
+      "https://cdn.example.com/lib.js",
+      "http://cdn.example.com/lib.js",
+      "https://cdn.example.com",
+      "https://cdn.example.com:8443/a/b.mjs",
+      "https://cdn.example.com/lib.js?v=2#top",
+      "https://user@cdn.example.com/lib.js",
+    ]) {
+      const result = resolveIn(["a.ts"], "a.ts", specifier);
+      expect(result, specifier).toEqual({ resolution: "external", to: null });
+      expect(result, specifier).not.toHaveProperty("reason");
+    }
+  });
+
+  it("keeps a URL external even when a local module has a path that looks like it (requirement 1.3)", () => {
+    expect(resolveIn(["a.ts", "https:/cdn.example.com/lib.js.ts"], "a.ts", "https://cdn.example.com/lib.js")).toEqual({
+      resolution: "external",
+      to: null,
+    });
+  });
+
+  it("keeps malformed URLs and other schemes unresolved (requirements 2.1 to 2.5)", () => {
+    for (const specifier of [
+      "https://",
+      "http://",
+      "https:///lib.js",
+      "https://?x",
+      "https://#x",
+      "https://cdn.example.com/my lib.js",
+      "HTTPS://cdn.example.com/lib.js",
+      "Http://cdn.example.com/lib.js",
+      "https:/cdn.example.com/lib.js",
+      "file:///a/b.js",
+      "data:text/javascript,export default 1",
+      "blob:https://cdn.example.com/x",
+      "jsr:@std/path",
+      "npm:left-pad",
+      "ftp://cdn.example.com/x.js",
+      "wss://cdn.example.com/x",
+    ]) {
+      expect(resolveIn(["a.ts"], "a.ts", specifier), specifier).toEqual({
+        resolution: "unresolved",
+        to: null,
+        reason: "alias-not-configured",
+      });
+    }
+    expect(resolveIn(["a.ts"], "a.ts", "//cdn.example.com/lib.js")).toEqual({
+      resolution: "unresolved",
+      to: null,
+      reason: "absent-file",
+    });
+  });
+
+  it("does not take a URL for a package name (requirement 3.2)", () => {
+    expect(isValidPackageName("https://cdn.example.com/lib.js")).toBe(false);
   });
 
   it("validates package names", () => {

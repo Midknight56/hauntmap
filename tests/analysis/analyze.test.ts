@@ -90,6 +90,28 @@ describe("analyze", () => {
     expect(investigation.imports[0]?.relationId).toBe('["a.ts",["external","react"],"import","value"]');
   });
 
+  it("records an http or https URL import as external with no reason and no diagnostic", async () => {
+    const investigation = await run([
+      file("a.ts", 'import { x } from "https://cdn.example.com/lib.js";\n'),
+      file("b.ts", 'import { y } from "https://cdn.example.com/lib.js";\nimport { z } from "./gone";\n'),
+    ]);
+    const urlRecords = investigation.imports.filter((i) => i.specifier === "https://cdn.example.com/lib.js");
+    expect(urlRecords).toHaveLength(2);
+    for (const record of urlRecords) {
+      expect(record.resolution).toBe("external");
+      expect(record.to).toBeNull();
+      expect(record).not.toHaveProperty("reason");
+    }
+    expect(urlRecords.find((i) => i.from === "a.ts")?.relationId).toBe(
+      relationId("a.ts", ["external", "https://cdn.example.com/lib.js"], "import", "value"),
+    );
+    expect(investigation.diagnostics.filter((d) => d.specifier?.startsWith("https://"))).toEqual([]);
+    const unresolved = investigation.diagnostics.filter((d) => d.code === "unresolved");
+    expect(unresolved).toHaveLength(1);
+    expect(unresolved[0]).toMatchObject({ module: "b.ts", specifier: "./gone" });
+    expect(investigation.modules.map((m) => m.id)).toEqual(["a.ts", "b.ts"]);
+  });
+
   it("keeps a failed module with no imports and still analyzes the others", async () => {
     const investigation = await run([file("bad.ts", "export const = 1;\n"), file("ok.ts", 'import "./bad";\n')]);
     expect(investigation.modules.map((m) => [m.id, m.parseStatus])).toEqual([
