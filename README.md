@@ -16,7 +16,7 @@ Live app: https://hauntmap.midknight-ent-llc.workers.dev
 
 **Innovation/Idea.** The manor is not decoration: it is the data model. A file is a room you can enter, an import is a door with its line number, and a cycle is a corridor that returns to where it began. Rooms keep their place across two versions, so a change reads as one door closing. The same analysis runs in the browser and in the MCP server, so the agent that edits the code and the person who reads the map see the same facts.
 
-**Presentation.** The demo video (under three minutes, VIDEO_LINK) shows the whole journey in the release build: the tour, the loop and its ghost, the evidence behind a door, search, the Evidence view, the comparison and the live snapshot. The live app opens with no account and no install. This README and `docs/write-up.md` give a source for each figure.
+**Presentation.** The demo video (under three minutes, https://youtu.be/7Larlko9x4M) shows the whole journey in the release build: the tour, the loop and its ghost, the evidence behind a door, search, the Evidence view, the comparison and the live snapshot. The live app opens with no account and no install. This README and `docs/write-up.md` give a source for each figure.
 
 ## Try it
 
@@ -45,8 +45,8 @@ pnpm verify:e2e
 
 | Suite | Count | Result |
 | --- | --- | --- |
-| unit, component and property tests (`pnpm verify`) | 1,300 | pass |
-| browser tests, headless Chromium (`pnpm verify:e2e`) | 187 | pass |
+| unit, component and property tests (`pnpm verify`) | 1,374 | pass |
+| browser tests, headless Chromium (`pnpm verify:e2e`) | 211 | pass |
 
 The MCP server and the command line tool:
 
@@ -63,7 +63,7 @@ pnpm hauntmap analyze haunts/manor --out public/demo/live.json
 
 ### Kiro IDE, CLI, Web, Crew
 
-We used the Kiro CLI only: version 3.3.0 on 16 November 2026 and 3.4.0 on 17 November, model `auto`, one written prompt per batch of tasks, 30 runs in all. Every task is a row in `docs/kiro-log.md`. The Kiro IDE, Web and Crew were not used in this build.
+We used the Kiro CLI only: version 3.3.0 on 16 November 2026 and 3.4.0 on 17 November, model `auto`, one written prompt per batch of tasks, 92 logged tasks in all. Every task is a row in `docs/kiro-log.md`. The Kiro IDE, Web and Crew were not used in this build.
 
 ### Custom agents
 
