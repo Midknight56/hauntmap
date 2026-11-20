@@ -5,8 +5,12 @@
       "name": "typecheck-on-save",
       "trigger": "PostFileSave",
       "matcher": "\\.(ts|tsx)$",
-      "action": { "type": "command", "command": "pnpm typecheck" },
-      "timeout": 120
+      "action": {
+        "type": "command",
+        "command": "pnpm typecheck"
+      },
+      "timeout": 120,
+      "enabled": true
     }
   ]
 }

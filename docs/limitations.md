@@ -46,3 +46,7 @@ Local lines, read on 2026-11-19. The GitHub lines below were observed on 2026-11
 - GitHub route, size: at most 400 included files and 25 MiB of included text; above either cap nothing is fetched and the dialog says so. The 400 file cap and the six requests in flight are this build's choices, not jsDelivr limits.
 - GitHub route, speed: one real load of `reduxjs/redux@5.0.1` (197 included files) took 25,307 ms on this PC and its connection on 2026-11-19, above the 10,000 ms target. That is one run (`docs/performance.md`); it says nothing about other repositories, connections or times of day.
 - GitHub route, privacy: the repository name, the ref and the file paths go to jsDelivr. Nothing else is sent: requests use `credentials: "omit"` and no custom header.
+
+## Resolver
+
+- A specifier of the form `node:` followed by letters, digits, `_`, `/` or `-` (`node:fs`, `node:fs/promises`) is recorded as external with no target; the name is not checked against a list of real Node modules, so `node:nothing` is external too, and the analysis reports the syntax and not the Node version of the analyzed project. Malformed forms (`node:`, `node: fs`, `Node:fs`) stay unresolved with the reason `alias-not-configured`.

@@ -1,0 +1,41 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. Failing tests : add cases to tests/analysis/resolve.test.ts for node:fs, node:fs/promises, node:test (external), and node:, \"node: fs\", Node:fs (alias-not-configured). Run `pnpm exec vitest run tests/analysis/resolve.test.ts` and see the new external cases fail.": [
+      {
+        "executionId": "3c30f92a-961f-46a6-84c9-de468efcf277",
+        "chatSessionId": "sess_9c61189f-36ae-4d83-9ea1-383d156c7c44",
+        "timestamp": 1795199911934
+      },
+      {
+        "executionId": "3c30f92a-961f-46a6-84c9-de468efcf277",
+        "chatSessionId": "sess_9c61189f-36ae-4d83-9ea1-383d156c7c44",
+        "timestamp": 1795200038420
+      }
+    ],
+    "2. The fix : change src/analysis/parser/resolve.ts so the node: cases resolve as external. Run the same test file until it passes, then `pnpm typecheck`.": [
+      {
+        "executionId": "595fd34d-ff7b-490f-b8d0-ea814f693a09",
+        "chatSessionId": "sess_1aa19844-4405-4fd9-a608-fa8c60f49869",
+        "timestamp": 1795200071798
+      },
+      {
+        "executionId": "595fd34d-ff7b-490f-b8d0-ea814f693a09",
+        "chatSessionId": "sess_1aa19844-4405-4fd9-a608-fa8c60f49869",
+        "timestamp": 1795200167435
+      }
+    ],
+    "3. Docs : add one line to docs/limitations.md (the Intake or a new \"Resolver\" heading, your choice) saying what node: specifiers do now, and the doc comment above resolveSpecifier.": [
+      {
+        "executionId": "e7a015c7-1667-447a-b159-c4423c304aec",
+        "chatSessionId": "sess_4f0fb486-104f-4bf7-926d-4137f59e2be9",
+        "timestamp": 1795200200198
+      },
+      {
+        "executionId": "e7a015c7-1667-447a-b159-c4423c304aec",
+        "chatSessionId": "sess_4f0fb486-104f-4bf7-926d-4137f59e2be9",
+        "timestamp": 1795200267557
+      }
+    ]
+  }
+}

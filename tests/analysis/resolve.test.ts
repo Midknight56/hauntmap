@@ -169,7 +169,31 @@ describe("requirements 3.4 and 3.5: bare specifiers", () => {
   });
 
   it("records alias-not-configured for a bare specifier that is not a valid package name", () => {
-    for (const specifier of ["@/lib/format", "~/config/env", "#internal/x", "@scope", "node:fs", "http://example.com/x.js", "Bad Name", "_private"]) {
+    for (const specifier of ["@/lib/format", "~/config/env", "#internal/x", "@scope", "http://example.com/x.js", "Bad Name", "_private"]) {
+      expect(resolveIn(["a.ts"], "a.ts", specifier), specifier).toEqual({
+        resolution: "unresolved",
+        to: null,
+        reason: "alias-not-configured",
+      });
+    }
+  });
+
+  it("records external with a null target and no reason for a node: built-in specifier", () => {
+    for (const specifier of ["node:fs", "node:fs/promises", "node:test"]) {
+      const result = resolveIn(["a.ts"], "a.ts", specifier);
+      expect(result, specifier).toEqual({ resolution: "external", to: null });
+      expect(result, specifier).not.toHaveProperty("reason");
+    }
+  });
+
+  it("records external with a null target and no reason for node:crypto", () => {
+    const result = resolveIn(["a.ts"], "a.ts", "node:crypto");
+    expect(result).toEqual({ resolution: "external", to: null });
+    expect(result).not.toHaveProperty("reason");
+  });
+
+  it("keeps a malformed node: specifier unresolved with alias-not-configured", () => {
+    for (const specifier of ["node:", "node: fs", "Node:fs"]) {
       expect(resolveIn(["a.ts"], "a.ts", specifier), specifier).toEqual({
         resolution: "unresolved",
         to: null,

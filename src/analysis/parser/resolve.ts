@@ -31,6 +31,9 @@ const JS_TO_TS: Record<string, string[]> = { ".js": [".ts", ".tsx"], ".mjs": [".
 // then optional subpath segments. Names may use letters, digits and . _ ~ -.
 const PACKAGE_NAME = /^(?:@[A-Za-z0-9][A-Za-z0-9._~-]*\/)?[A-Za-z0-9][A-Za-z0-9._~-]*(?:\/[^/\s]+)*$/;
 
+// A Node built-in module specifier: the node: prefix, then a non empty name that may have subpath segments.
+const NODE_BUILTIN = /^node:[A-Za-z0-9_/-]+$/;
+
 export function isValidPackageName(specifier: string): boolean {
   return PACKAGE_NAME.test(specifier);
 }
@@ -80,7 +83,10 @@ function candidatesFor(base: string): string[] {
 /**
  * Resolves one specifier of module `from` by the documented rules:
  * relative specifiers inside the root (exact file, the JS to TS fallback, the suffixes, the directory
- * index); a valid npm package name is external; any other bare specifier is an unconfigured alias.
+ * index); `node:` followed by one or more of A-Z, a-z, 0-9, `_`, `/` or `-` is external (the name is
+ * not checked against a list of Node modules, so `node:nothing` is external); a valid npm package name
+ * is external; any other bare specifier, including a malformed `node:` form such as `node:`,
+ * `node: fs` or `Node:fs`, is an unconfigured alias.
  * An absolute path or a path above the root is an absent file.
  */
 export function resolveSpecifier(from: string, specifier: string, index: ModuleIndex): Resolution {
@@ -95,6 +101,7 @@ export function resolveSpecifier(from: string, specifier: string, index: ModuleI
     return { resolution: "unresolved", to: null, reason: "absent-file" };
   }
   if (specifier.startsWith("/")) return { resolution: "unresolved", to: null, reason: "absent-file" };
+  if (NODE_BUILTIN.test(specifier)) return { resolution: "external", to: null };
   if (isValidPackageName(specifier)) return { resolution: "external", to: null };
   return { resolution: "unresolved", to: null, reason: "alias-not-configured" };
 }

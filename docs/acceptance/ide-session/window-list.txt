@@ -1,0 +1,1 @@
+pid 43532 'hauntmap - Kiro' left=-1998 top=40 right=-98 bottom=1090

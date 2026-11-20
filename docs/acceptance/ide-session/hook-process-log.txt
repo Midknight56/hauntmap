@@ -1,0 +1,4 @@
+1:47:18.125 PM pid 52624 parent 54176 :: C:\Windows\system32\cmd.exe /d /s /c "pnpm typecheck"
+1:47:18.150 PM pid 54248 parent 49028 :: C:\Users\adria\AppData\Local\node\corepack\v1\pnpm\12.3.4\pnpm-native.exe typecheck
+1:47:41.217 PM pid 48812 parent 57288 :: "C:\Windows\system32\cmd.exe" /d /s /c pnpm typecheck && pnpm lint && pnpm test && pnpm pack:samples --check && pnpm check:expected
+1:47:41.220 PM pid 48852 parent 43996 :: C:\Users\adria\AppData\Local\node\corepack\v1\pnpm\12.3.4\pnpm-native.exe typecheck
