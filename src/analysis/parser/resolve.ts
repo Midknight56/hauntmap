@@ -34,6 +34,9 @@ const PACKAGE_NAME = /^(?:@[A-Za-z0-9][A-Za-z0-9._~-]*\/)?[A-Za-z0-9][A-Za-z0-9.
 // A Node built-in module specifier: the node: prefix, then a non empty name that may have subpath segments.
 const NODE_BUILTIN = /^node:[A-Za-z0-9_/-]+$/;
 
+// A remote URL specifier: lower case http:// or https://, a non empty host, then an optional path, query or hash; no whitespace.
+const REMOTE_URL = /^https?:\/\/[^\s/?#]+(?:[/?#]\S*)?$/;
+
 export function isValidPackageName(specifier: string): boolean {
   return PACKAGE_NAME.test(specifier);
 }
@@ -85,8 +88,11 @@ function candidatesFor(base: string): string[] {
  * relative specifiers inside the root (exact file, the JS to TS fallback, the suffixes, the directory
  * index); `node:` followed by one or more of A-Z, a-z, 0-9, `_`, `/` or `-` is external (the name is
  * not checked against a list of Node modules, so `node:nothing` is external); a valid npm package name
- * is external; any other bare specifier, including a malformed `node:` form such as `node:`,
- * `node: fs` or `Node:fs`, is an unconfigured alias.
+ * is external; an `http://` or `https://` URL with a non empty host and no whitespace is external
+ * (the text only is classified: the URL is never fetched, parsed or normalized); any other bare
+ * specifier is an unconfigured alias, including a malformed `node:` form such as `node:`, `node: fs`
+ * or `Node:fs`, `HTTPS://` in capitals, a URL with a missing or empty host or with whitespace, and
+ * other schemes such as `file:`, `data:`, `jsr:` and `npm:`.
  * An absolute path or a path above the root is an absent file.
  */
 export function resolveSpecifier(from: string, specifier: string, index: ModuleIndex): Resolution {
@@ -102,6 +108,7 @@ export function resolveSpecifier(from: string, specifier: string, index: ModuleI
   }
   if (specifier.startsWith("/")) return { resolution: "unresolved", to: null, reason: "absent-file" };
   if (NODE_BUILTIN.test(specifier)) return { resolution: "external", to: null };
+  if (REMOTE_URL.test(specifier)) return { resolution: "external", to: null };
   if (isValidPackageName(specifier)) return { resolution: "external", to: null };
   return { resolution: "unresolved", to: null, reason: "alias-not-configured" };
 }
