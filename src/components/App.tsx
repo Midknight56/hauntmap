@@ -12,6 +12,11 @@ import { createLayoutClient, type LayoutWorkerLike } from "../features/investiga
 import { createPrefsStore } from "../features/investigation/prefs";
 import { registry as defaultRegistry, type Registry } from "../features/investigation/registry";
 import { createInvestigationStore, type InvestigationStore } from "../features/investigation/store";
+import { installIntakeHook } from "../features/import/devHook";
+import { createIntake } from "../features/import/intake";
+import { IntakeHost } from "../features/import/IntakeHost";
+import type { ReadWorkerLike } from "../features/import/readFiles";
+import type { IntakeService } from "../features/import/types";
 import { registerLiveSnapshot } from "../features/liveSnapshot";
 import { loadSample, openSample, type SampleId } from "../features/samples/loadSample";
 import { createScene } from "../scene/adapter";
@@ -42,6 +47,8 @@ export interface AppServices {
   createScene?: typeof createScene;
   /** The comparison store (snapshot-comparison, gate G2); absent in tests that do not need it. */
   compareStore?: CompareStore;
+  /** The intake service (`intake`, gate I2); absent in tests that do not need it, and then the landing screen offers no intake button. */
+  intake?: IntakeService;
 }
 
 /**
@@ -117,11 +124,22 @@ export function createServices(): AppServices {
     defaults: DEFAULT_ANALYSIS_OPTIONS,
     validate: validateInvestigation,
   });
+  // intake task 6 (gate I2): the local route. `saved` and `github` stay null until the tasks that wire them.
+  const intake = createIntake({
+    store,
+    analysisClient,
+    defaults: DEFAULT_ANALYSIS_OPTIONS,
+    validate: validateInvestigation,
+    saved: null,
+    createReadWorker: () => new Worker(new URL("../features/import/readFiles.worker.ts", import.meta.url), { type: "module" }) as unknown as ReadWorkerLike,
+    github: null,
+  });
   if (DEVHOOK_ENABLED) {
     installDevHook(store, registry);
     installCompareHook(store, registry, compareStore);
+    installIntakeHook(intake);
   }
-  return { store, registry, analysisClient, base, compareStore };
+  return { store, registry, analysisClient, base, compareStore, intake };
 }
 
 /** `data-motion` on the root element is what the CSS reduced-motion rules follow. */
@@ -190,13 +208,20 @@ export function App({ services }: { services: AppServices }) {
   return (
     <>
       {state.screen === "landing" ? (
-        <Landing onSample={onSample} />
+        <Landing
+          onSample={onSample}
+          intakeKinds={services.intake?.kinds ?? []}
+          onIntake={(kind) => {
+            void services.intake?.open({ purpose: "open", kind });
+          }}
+        />
       ) : (
         <ErrorBoundary>
           <InvestigationScreen services={services} />
         </ErrorBoundary>
       )}
       <StatusRegion store={store} />
+      {services.intake === undefined ? null : <IntakeHost service={services.intake} />}
     </>
   );
 }

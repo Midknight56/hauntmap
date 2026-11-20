@@ -1,0 +1,155 @@
+/* The two intake dialogs (Requirement 10.4). Manor tokens and faces only: no color literal, no new token, no font size
+   under 12 px, no outline removal, no animation and no transition. */
+
+.intake-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--edge-pad);
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--floor) 88%, transparent);
+}
+
+.intake-dialog {
+  box-sizing: border-box;
+  width: 640px;
+  max-width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px 24px;
+  background: var(--panel);
+  border: 1px solid var(--wall-line);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.intake-dialog p {
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}
+
+.intake-heading {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: var(--focus);
+  overflow-wrap: anywhere;
+}
+
+.intake-subheading {
+  margin: 12px 0 6px;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.intake-mono {
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.intake-muted {
+  color: var(--ink-muted);
+}
+
+.intake-cap {
+  color: var(--ink);
+  border-left: 3px solid var(--focus);
+  padding-left: 10px;
+}
+
+.intake-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.intake-field label {
+  font-weight: 600;
+}
+
+.intake-dialog input[type="file"] {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-height: var(--hit);
+  padding: 6px 12px;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--floor);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+}
+
+.intake-dialog input[type="file"]::file-selector-button {
+  min-height: 32px;
+  margin-right: 12px;
+  padding: 4px 12px;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--on-fill);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+}
+
+.intake-dialog input[type="text"] {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.intake-reasons {
+  margin: 4px 0 8px;
+  padding-left: 20px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.intake-list {
+  box-sizing: border-box;
+  margin: 10px 0;
+  max-height: 160px;
+  overflow: auto;
+  padding: 4px 12px;
+  background: var(--floor);
+  border: 1px solid var(--wall-line);
+  border-radius: var(--radius);
+}
+
+.intake-list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.intake-list li {
+  padding: 2px 0;
+  overflow-wrap: anywhere;
+}
+
+.intake-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.intake-progress {
+  margin: 12px 0;
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.intake-section {
+  margin: 12px 0;
+}

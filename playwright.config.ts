@@ -36,9 +36,9 @@ export default defineConfig({
     {
       name: "dev",
       // G1 of snapshot-comparison: the dev project also collects tests/compare/e2e/**, and tests/kiro/e2e/** (kiro-integration
-      // task 10). Its testDir is `tests`, and the patterns name the folders so that tests/pending/** is never collected.
+      // task 10), and tests/intake/e2e/** (gate I3 of intake). Its testDir is `tests`, and the patterns name the folders so that tests/pending/** is never collected.
       testDir: "tests",
-      testMatch: ["**/tests/e2e/**/*.spec.ts", "**/tests/compare/e2e/**/*.spec.ts", "**/tests/kiro/e2e/**/*.spec.ts"],
+      testMatch: ["**/tests/e2e/**/*.spec.ts", "**/tests/compare/e2e/**/*.spec.ts", "**/tests/kiro/e2e/**/*.spec.ts", "**/tests/intake/e2e/**/*.spec.ts"],
       testIgnore: [...PROD_SPECS, ...PERF_SPECS],
       use: { baseURL: `http://localhost:${DEV_PORT}` },
     },

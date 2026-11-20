@@ -53,7 +53,7 @@ The tasks run in five batches. One Kiro session runs one batch, in order. Every 
 
 ## Batch B: the local dialog in the app
 
-- [ ] 4. The intake service, the dialog frame, the first screen and the review
+- [x] 4. The intake service, the dialog frame, the first screen and the review
   - Tests first:
     - `tests/intake/intake.test.ts`;
     - `tests/intake/styles.test.ts`;
@@ -71,7 +71,7 @@ The tasks run in five batches. One Kiro session runs one batch, in order. Every 
   - Verify: `pnpm verify` exits 0 with the new cases green.
   - _Requirements: 1.1, 1.2, 1.4, 1.6, 1.7, 2.1, 2.2, 2.4, 2.5, 10.2, 10.4, 10.5, 10.6_
 
-- [ ] 5. Reading, analyzing, cancel, failure and the summary
+- [x] 5. Reading, analyzing, cancel, failure and the summary
   - Tests first: the 1.3, 1.5, 3.2, 3.3, 3.5, 3.6, 4.3 and 4.4 cases of `local-intake.test.tsx`, `tests/intake/no-execution.test.tsx`, and P5 (local dialog) in `properties.test.ts`.
   - Then add to `LocalFolderDialog.tsx` the following:
     - the `reading`, `analyzing` and `result` screens, with progress text from the read client and from the analysis client's `onProgress`, `Cancel` (`readClient.cancel()` or `analysisClient.cancel()`), and the summary through `summaryMessage`;
@@ -83,7 +83,7 @@ The tasks run in five batches. One Kiro session runs one batch, in order. Every 
   - Verify: `pnpm verify` exits 0 with these cases and P5 green.
   - _Requirements: 1.3, 1.5, 3.2, 3.3, 3.4, 3.5, 3.6, 4.3, 4.4, 4.5_
 
-- [ ] 6. Wire the local route into the app (gates I1, I2, I3)
+- [x] 6. Wire the local route into the app (gates I1, I2, I3)
   - Tests first:
     - change `tests/ui/landing.test.tsx` and `tests/e2e/landing.spec.ts` 1.1 so that the button list and the Tab order are `Explore the manor`, `Explore the annex`, `Analyze a local folder` (gate I1);
     - add a case to `landing.test.tsx` that `onIntake("local")` is called and that the button is absent when `intakeKinds` is empty;

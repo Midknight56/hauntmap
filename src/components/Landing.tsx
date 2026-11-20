@@ -1,3 +1,6 @@
+import { LANDING_LOCAL } from "../features/import/messages";
+import type { IntakeKind } from "../features/import/types";
+
 export const LANDING_SENTENCE =
   "Find how the modules of a JavaScript or TypeScript project import each other: rooms are files, doors are imports, and a corridor that returns to its start is a dependency cycle.";
 
@@ -131,7 +134,16 @@ function LivingManor() {
   );
 }
 
-export function Landing({ onSample }: { onSample(id: LandingSample): void }) {
+export function Landing({
+  onSample,
+  intakeKinds = [],
+  onIntake,
+}: {
+  onSample(id: LandingSample): void;
+  /** The intake routes that are wired. Empty or absent: only the two sample buttons are shown. */
+  intakeKinds?: readonly IntakeKind[];
+  onIntake?(kind: IntakeKind): void;
+}) {
   return (
     <main className="landing">
       <LivingManor />
@@ -145,6 +157,11 @@ export function Landing({ onSample }: { onSample(id: LandingSample): void }) {
         <button type="button" onClick={() => onSample("annex")}>
           Explore the annex
         </button>
+        {intakeKinds.includes("local") ? (
+          <button type="button" onClick={() => onIntake?.("local")}>
+            {LANDING_LOCAL}
+          </button>
+        ) : null}
       </div>
     </main>
   );

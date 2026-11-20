@@ -90,10 +90,12 @@ interface Pending {
  * the next `read` creates a fresh one. A reply counts only when it comes from the current worker and carries the
  * current revision and the pending request id; anything else is dropped.
  */
-export function createReadClient(createWorker: () => ReadWorkerLike): {
+export interface ReadClient {
   read(files: ReadInput[], onProgress: (done: number, total: number) => void, delayMs?: number): Promise<ReadResult>;
   cancel(): void;
-} {
+}
+
+export function createReadClient(createWorker: () => ReadWorkerLike): ReadClient {
   let worker: ReadWorkerLike | null = null;
   let pending: Pending | null = null;
   let revision = 0;

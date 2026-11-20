@@ -1,6 +1,6 @@
 # Intake tests
 
-Tests of `.kiro/specs/intake`. Unit and property tests run in the Vitest `node` project (`*.test.ts`), component tests in the `jsdom` project (`*.test.tsx`). Browser specs live in `tests/intake/e2e` and run in the `dev` Playwright project once task 6 adds gate I3.
+Tests of `.kiro/specs/intake`. Unit and property tests run in the Vitest `node` project (`*.test.ts`), component tests in the `jsdom` project (`*.test.tsx`). Browser specs live in `tests/intake/e2e` and run in the `dev` Playwright project (gate I3, added in task 6).
 
 ## What was read on `main` before task 1
 
@@ -23,4 +23,4 @@ Read on 2026-11-19, from the files themselves.
 
 ## Open questions recorded by later tasks
 
-- Task 6: whether Playwright 1.65.1 `setInputFiles` selects a folder on a `webkitdirectory` input. Not yet recorded.
+- Task 6: whether Playwright 1.65.1 `setInputFiles` selects a folder on a `webkitdirectory` input: `yes`. `chooseFolder` in `tests/intake/e2e/helpers.ts` calls `page.getByLabel("Choose a folder").setInputFiles(<directory>)`, and headless Chromium gives each `File` the `webkitRelativePath` `<folder name>/<path>` (checked by `local.spec.ts` 2.6, which reads the review of the fixture folder). No `selectFiles` hook is needed, and `DevHookIntake` has only `service` and `setReadDelay`.

@@ -59,3 +59,12 @@ export const moreEntries = (m: number) => `\u2026 and ${m} more`;
 export const savedListTitle = (n: number) => `Saved on this device (${n})`;
 export const openSaved = (label: string) => `Open ${label}`;
 export const forgetSaved = (label: string) => `Forget ${label}`;
+
+// Labels of the dialog controls and sections (Requirements 2, 5, 6 and 10.2).
+export const CHOOSE_FOLDER = "Choose a folder";
+export const CHOOSE_GRAPH_FILE = "Choose a graph file";
+export const IMPORT_GRAPH_HEADING = "Import a graph file";
+export const BUTTON_ANALYZE = "Analyze";
+export const BUTTON_BACK = "Back";
+export const BUTTON_CLOSE = "Close";
+export const BUTTON_CANCEL = "Cancel";
