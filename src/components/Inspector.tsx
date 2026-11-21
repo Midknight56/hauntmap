@@ -182,15 +182,21 @@ export function Inspector({ store, api = analysisApi }: Props): ReactElement {
   const fade = useRef({ key: JSON.stringify(selection), n: 0 });
   const key = JSON.stringify(selection);
   if (fade.current.key !== key) fade.current = { key, n: fade.current.n + 1 };
-  // On a phone the inspector is the evidence sheet: a new selection opens it at its heading, even when the tap that made it
-  // (a trail step at the bottom of the sheet) scrolled the sheet down to the button (design 4d, design pass 2 item 9).
+  // On a phone the inspector is the evidence sheet, a card in the page under the map: a new selection brings the map and the
+  // heading of the sheet back on the screen, even when the tap that made it (a trail step at the bottom of the sheet) scrolled
+  // the page down to the button (design 4d, design pass 2 item 9). A step of the tour that has just taken focus keeps it on the
+  // screen (blind test fixes of 20 November 2026).
   useLayoutEffect(() => {
     const sheet = sheetRef.current;
     if (!phone || sheet === null) return;
-    sheet.scrollTop = 0;
-    const frame = requestAnimationFrame(() => {
+    const toTop = (): void => {
+      if (document.activeElement?.closest(".steps-panel") != null) return;
       sheet.scrollTop = 0;
-    });
+      const page = document.scrollingElement;
+      if (page !== null) page.scrollTop = 0;
+    };
+    toTop();
+    const frame = requestAnimationFrame(toTop);
     return () => cancelAnimationFrame(frame);
   }, [phone, selection]);
   return (

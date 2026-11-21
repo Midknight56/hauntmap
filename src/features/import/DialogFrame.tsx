@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from "react";
+import { useId, useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
 
 // The frame both dialogs share (Requirements 1.2, 10.3): role, label, Tab trap, Escape, aria-busy and focus on each screen.
 
@@ -26,7 +26,8 @@ export function DialogFrame({ title, busy, screenKey, onEscape, children }: Dial
   const ref = useRef<HTMLElement>(null);
 
   // A screen marks its own first control with data-autofocus (the review focuses Analyze); otherwise the first focusable element gets focus.
-  useEffect(() => {
+  // A layout effect, so that focus is on the new screen in the same commit that shows it, never one task later.
+  useLayoutEffect(() => {
     const root = ref.current;
     if (root === null) return;
     const target = root.querySelector<HTMLElement>("[data-autofocus]") ?? focusables(root)[0] ?? null;

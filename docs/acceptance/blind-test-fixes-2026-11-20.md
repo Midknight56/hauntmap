@@ -9,7 +9,7 @@ The browser tests are in `tests/e2e/blind-test.spec.ts` (B), `tests/intake/e2e/b
 | # | Tester | Problem | State | Test | Fix | Files |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | haiku, sonnet-a, sonnet-b | `Do it` on step 1, `Follow a dependency`, selected `checkout.ts` but did not complete the step. The counter stayed at `0 of 3 steps`. | REPRODUCED: after `Do it` the step read `To do`. | B `Do it on Follow a dependency completes the step and the counter reads 1 of 3 steps`; `tests/e2e/demo-steps.spec.ts` 8.2 and 8.3, rewritten to the changed requirement | This was the lead's pick. `Do it` now selects `checkout.ts` and opens its first door (`checkout.ts imports cart.ts`), which completes the step. `Do it` on step 2 now also chooses the loop through `checkout.ts`. Focus then moves to the `Do it` of the next step. Requirement 8.2 and 8.3 of `investigation-ui` were changed to match. | `src/components/DemoSteps.tsx`, `src/features/demo/steps.ts`, `.kiro/specs/investigation-ui/requirements.md`, `tests/e2e/demo-steps.spec.ts` |
-| 2 | haiku | On a phone the lesson checklist was hidden. Bringing it back needed `More`. | REPRODUCED: at 360 x 640 the steps showed under the map at first, but any selection hid them (`display: none`). | B `the step list shows without opening More, also after Do it on step 1` | This was the lead's pick. With a selection, the phone sheet under the map now holds the current step first and the evidence under it. | `src/styles/app.css` |
+| 2 | haiku | On a phone the lesson checklist was hidden. Bringing it back needed `More`. | REPRODUCED: at 360 x 640 the steps showed under the map at first, but any selection hid them (`display: none`). | B `the step list shows without opening More, also after Do it on step 1` | This was the lead's pick. With a selection, the phone page under the map now holds the evidence card and, under it, the step the reader is on. See "Verify result" for the final phone layout. | `src/styles/app.css`, `src/components/Inspector.tsx` |
 | 3 | sonnet-a, sonnet-b | On the annex, the ghost covered the `5 modules`, `3 modules` and `4 modules` labels of the closed wings Widgets, Util and Models. | REPRODUCED: three ghosts covered the three counts at 1440 x 900 and at 1920 x 1080. | B `no ghost covers the module count of a closed wing` (both sizes) | This was the lead's pick. A loop that lies wholly inside one closed wing now puts its ghost in the wing's arched door, below the count. The dev scene debug data now reports each ghost's box (`fx.ghosts`). | `src/scene/walk.ts`, `src/scene/adapter.ts`, `src/scene/types.ts`, `tests/e2e/helpers.ts`, `tests/ui/fakeScene.ts` |
 | 4 | sonnet-a, sonnet-b | In step 1 the file name broke mid-word: `src/orders/checkout.t` / `s`. | REPRODUCED: `checkout.ts` lay on two lines at 1440 x 900. | B `the file name in step 1 breaks only after a slash` | The buttons now sit under the words, so the text has the whole panel width. The path may break only after a slash. | `src/components/DemoSteps.tsx`, `src/styles/app.css` |
 | 5 | sonnet-a | `Reveal a loop: To do` wrapped as `To` / `do`. | REPRODUCED: `: To do` lay on two lines. | B `the status of every step stays on one line with its colon` | The status, with its colon, no longer wraps. | `src/components/DemoSteps.tsx`, `src/styles/app.css` |
@@ -54,9 +54,36 @@ The browser tests are in `tests/e2e/blind-test.spec.ts` (B), `tests/intake/e2e/b
   - `tests/e2e/demo-steps.spec.ts` 8.1, 8.2, 8.3 and 8.5. The new 8.2 checks more: the door is open, the step is Done and focus is on the next `Do it`. A second 8.2 case keeps the selection by hand.
   - `tests/ui/demo-steps.test.ts`, the copy of 8.1.
 
-## Verify result: not passing
+## Verify result: passing
 
-The job stopped here: one check failed twice after repairs.
+The second run of this job (Kiro CLI 3.5.0, claude-opus-5.5) finished the open failure.
+
+### The phone evidence panel
+
+- The lead's pick: keep both rules (12 px between controls, and no line cut at the top or bottom of a scrolling box) and change the phone layout.
+- First failure, seen again before any change: `tests/e2e/spacing.spec.ts > spacing at 360 x 640 (phone) > a selected room and its evidence`, with the same message as below (`templates.ts` cut at the bottom of the sheet).
+- Cause, from one measurement: the sheet was a fixed box from y = 268 to the bottom of the screen, 372 px tall, that scrolled its own content (996 px at 360 x 640). The bottom edge of such a box always lies across some line unless it falls in a gap by chance. The 12 px gap only moved which line that was.
+- Change: on a phone, the evidence is now a card in the page under the map, with the manor's panel colors, border and radius, and the step the reader is on is a second card under it. The cards have no scrolling box of their own; the page scrolls, as it already did with no selection. The three buttons keep 12 px between them and wrap onto a second row at 360 px. A new selection on a phone scrolls the page back to the top, so that the map and the heading of the evidence are on the screen (this replaces the old reset of the sheet's own scroll). When focus has just moved to a step of the tour, the page stays where focus put it. Fonts, tokens, text sizes, 44 px targets and the reduced motion rules are unchanged, and every rule changed is inside `@media (max-width: 720px)`, so the desktop layout does not change.
+- Files: `src/styles/app.css` (the phone `.inspector` and step rules), `src/components/Inspector.tsx` (the scroll on a new selection).
+- No test was changed for this.
+
+### `tests/intake/github-intake.test.tsx`
+
+- The file is in `tests/intake/`, not `tests/ui/`.
+- Alone, before any change: 10 of 10 runs passed (26 of 26 tests each).
+- Under load, before any change: 8 copies at once, 1 failed: `refusals shown in the dialog (12.1, 12.2) > the 400 file cap ...`, where focus was on `body`, not on `Load`.
+- Cause: the dialog moved focus in a passive effect (`useEffect`), which React runs a task after the screen changes. The tests wait for the alert, the status or the `Load` button, which appear at the commit, and then check focus at once. Under load the check could run between the two.
+- Fix in the app: the focus moves of `DialogFrame.tsx` and `GithubDialog.tsx` are now layout effects, so focus is on its control in the same commit that shows the screen. The order stays the same: the frame focuses first, then the GitHub dialog's own request wins. The test was not changed.
+- After the fix: 24 of 24 runs passed under the same load (3 rounds of 8 copies at once), and 10 of 10 passed alone.
+
+### Final runs
+
+- `pnpm verify` exit 0: typecheck, lint, 144 test files and 1,744 tests passed, `pack:samples --check` passed, `check:expected` 72 of 72, 72 of 72 and 26 of 26. The line `hauntmap-mcp: output failed validation: sourceLabel must be a string` is printed by an existing test.
+- `pnpm verify:e2e`, first full run, exit 1: 258 passed, 1 failed, 1 skipped, 2 did not run. The spacing case passed. The failure was `tests/e2e/motion.spec.ts > with motion allowed > 6 compare: ...`: the smallest sampled scale of a growing doorway was 0.624, against a ceiling of 0.6. The test reads the scale once each animation frame, and with four software rendered browsers at once the first frame came late in the grow. This case runs at 1,280 x 720, where nothing changed. It passed 5 of 5 runs alone.
+- `pnpm verify:e2e`, second full run, exit 0: 261 passed, 1 skipped.
+### The first run of this job
+
+The first run stopped here: one check failed twice after repairs. The runs below are of that tree, not the final one.
 
 - `pnpm verify` exits 0 on the final tree: 144 files, 1,744 tests, `check:expected` 72 of 72, 72 of 72 and 26 of 26. It ran after the other projects' test runs on this PC had ended (no node process of theirs was left). Before that, the stop hook's run also failed in this file: `working screen (8.2, 8.3) > Cancel aborts the requests ... with Load focused`, where focus was not yet on `Load`. With the final tree the file passed 8 of 8 runs alone. None of the cases that failed opens an investigation, which is the one line of `githubIntake.ts` this job changed. An earlier run exited 1. Its one failure was `tests/intake/github-intake.test.tsx > refusals shown in the dialog (12.1, 12.2) > no files: the message ...`. Earlier runs failed on two other cases of the same file, and once on the timing case `tests/compare/union-layout.test.ts > extendLayout timing (4.9)` (1,334.5 ms against a 1,000 ms ceiling). Every run that failed had test runs of other projects on this PC going at the same time. The GitHub file passes alone (26 of 26, twice). No GitHub dialog code was changed, but `githubIntake.ts` now imports `openOptions`.
 - `pnpm verify:e2e` exited 1: 258 passed, 1 failed, 1 skipped, 2 did not run (the `perf` project waits on the others). The failing case is `tests/e2e/spacing.spec.ts > spacing at 360 x 640 (phone) > a selected room and its evidence`. Its message: `the text "src/notifications/templates.ts · import · value" is cut off at the top or bottom of div "Investigate the manor0 of 3 stepsFollow a dependency: To doS"`.
@@ -64,7 +91,7 @@ The job stopped here: one check failed twice after repairs.
 - Repairs tried for the phone sheet:
   1. Step first, then evidence, in one fixed sheet. Result: `keyboard-journey` 11.6 failed at 640 x 360 (heading not in view), and later the spacing case failed.
   2. Evidence first in an in-page sheet. Result: 11.6 and `design-pass-2` 'the evidence sheet opens at its import heading' failed.
-  3. Evidence first in a fixed sheet (the current state). Result: only the spacing case fails.
+  3. Evidence first in a fixed sheet (the state at the end of the first run). Result: only the spacing case failed.
 
 ## Limits
 

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { DialogFrame } from "../import/DialogFrame";
 import { analyzing, BUTTON_CANCEL, BUTTON_CLOSE, heading } from "../import/messages";
 import type { IntakePurpose, IntakeService } from "../import/types";
@@ -41,7 +41,8 @@ export function GithubDialog({ service, purpose }: { service: IntakeService; pur
   }, []);
 
   // The machine asks for focus after it has changed the screen. This effect runs after the frame's own focus move, so it wins.
-  useEffect(() => {
+  // Both are layout effects: focus is in place in the same commit that shows the form again, so the alert and the focused Load appear together.
+  useLayoutEffect(() => {
     const target = wanted.current;
     if (target === null || phase !== "url") return;
     wanted.current = null;

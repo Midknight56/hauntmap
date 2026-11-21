@@ -1487,51 +1487,22 @@ button.toolbar-main {
     height: 200px;
   }
 
+  /* The evidence sheet is a card in the page under the map, and the page scrolls. It has no scrolling box of its own, so no line of
+     the evidence is ever cut by the edge of one, whatever the space between its buttons (blind test fixes of 20 November 2026). A new
+     selection brings the map and the heading of the sheet back on the screen (Inspector.tsx). */
   .inspector {
-    position: fixed;
-    z-index: 10;
-    top: 268px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 16px var(--edge-pad);
-    overflow-y: auto;
-    border-top: 1px solid var(--wall-line);
-    background: var(--panel);
-  }
-
-  /* While the manor's steps are open, a selection opens one sheet with the evidence and the step the reader is on, so that the
-     steps stay on the page without More (blind test fixes of 20 November 2026). */
-  .investigation[data-selection="on"]:not([data-comparing]):has(.steps-panel) .side-column {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    z-index: 10;
-    top: 268px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    overflow-y: auto;
-    border-top: 1px solid var(--wall-line);
-    background: var(--panel);
-  }
-
-  .investigation[data-selection="on"]:not([data-comparing]):has(.steps-panel) .side-column .steps-panel {
-    margin: 12px var(--edge-pad) 0;
-  }
-
-  .investigation[data-selection="on"]:not([data-comparing]):has(.steps-panel) .side-column .inspector {
-    position: static;
+    order: 6;
     flex: none;
-    overflow: visible;
-    border-top: 0;
+    padding: 12px;
+    border: 1px solid var(--wall-line);
+    border-radius: var(--radius);
+    background: var(--panel);
   }
 
-  /* The evidence comes first, as in the sheet without steps, and the step the reader is on follows it; after `Do it` focus moves to the
-     next step, which scrolls the sheet to it. */
-  .investigation[data-selection="on"]:not([data-comparing]):has(.steps-panel) .side-column .steps-panel {
-    order: 2;
-    margin-bottom: 12px;
+  /* While the manor's steps are open, a selection keeps the step the reader is on in the page, under the evidence, so that the steps
+     stay on the page without More; after `Do it` focus moves to the next step, which scrolls the page to it. */
+  .investigation[data-selection="on"]:not([data-comparing]) .steps-panel {
+    order: 7;
   }
 
   .inspector h2 {
