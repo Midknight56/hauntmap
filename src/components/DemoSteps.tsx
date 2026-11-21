@@ -1,36 +1,48 @@
-import { useEffect, useId, useState, useSyncExternalStore, type ReactElement } from "react";
-import { CHECKOUT_ID, STEP_COPY, statusLabel, stepsSummary, syncStepCompletion, visibleSteps, withCompareStep } from "../features/demo/steps";
+import { Fragment, useEffect, useId, useState, useSyncExternalStore, type ReactElement } from "react";
+import { CHECKOUT_ID, checkoutLoopIndex, firstCheckoutDoor, STEP_COPY, statusLabel, stepsSummary, syncStepCompletion, visibleSteps, withCompareStep } from "../features/demo/steps";
+import { analysisApi } from "../features/investigation/analysisApi";
 import type { DemoStepId } from "../features/demo/types";
 import { callCompareHandoff, type HandoffLookup } from "../features/investigation/handoffs";
 import type { Registry } from "../features/investigation/registry";
 import type { InvestigationStore } from "../features/investigation/store";
 import { watchRegistry } from "./registryBridge";
-import { selectModule } from "./selecting";
+import { selectModule, selectRelation } from "./selecting";
 import { useViewState } from "./useStore";
 
 export const SHOW_STEPS_ID = "show-steps";
 
-type FocusRequest = "imports" | "loops" | "toggle";
+type FocusRequest = "next" | "toggle";
 
-/** The first `Imports` button of the inspector, or the inspector heading when the module imports nothing. */
-function focusFirstImports(): void {
-  const headings = document.querySelectorAll<HTMLElement>("aside[aria-label='Inspector'] h3");
-  for (const h of headings) {
-    if (!(h.textContent ?? "").startsWith("Imports (")) continue;
-    const button = h.parentElement?.querySelector("button");
-    if (button instanceof HTMLElement) {
-      button.focus();
-      return;
-    }
-  }
-  document.getElementById("inspector-heading")?.focus();
+/**
+ * After `Do it`, focus goes to the `Do it` of the next step still to do, or to `Close` when every step is done, so that the
+ * step list stays on the screen and the next key press goes on with the tour (blind test fixes of 20 November 2026).
+ */
+function focusNextStep(): void {
+  const panel = document.querySelector<HTMLElement>("section[aria-label='Investigation steps']");
+  if (panel === null) return;
+  const next = panel.querySelector<HTMLElement>("li[data-status='todo'] .step-actions button") ?? panel.querySelector<HTMLElement>(".steps-close");
+  next?.focus();
 }
 
-function focusFirstLoop(): boolean {
-  const first = document.querySelector<HTMLElement>("ul[aria-label='Loops'] button");
-  if (first === null) return false;
-  first.focus();
-  return true;
+/** The instruction with the module path in a span that may break only after a slash, never inside a file name. */
+function Instruction({ text }: { text: string }): ReactElement {
+  const at = text.indexOf(CHECKOUT_ID);
+  if (at < 0) return <p>{text}</p>;
+  const parts = CHECKOUT_ID.split("/");
+  return (
+    <p>
+      {text.slice(0, at)}
+      <span className="step-path">
+        {parts.map((part, i) => (
+          <Fragment key={i}>
+            {i < parts.length - 1 ? `${part}/` : part}
+            {i < parts.length - 1 ? <wbr /> : null}
+          </Fragment>
+        ))}
+      </span>
+      {text.slice(at + CHECKOUT_ID.length)}
+    </p>
+  );
 }
 
 interface Props {
@@ -55,12 +67,9 @@ export function DemoSteps({ store, registry }: Props): ReactElement | null {
 
   useEffect(() => {
     if (request === null) return;
-    // The loops list is on the first screen already, so focus can move at once; the key the reader presses next reaches it.
-    if (request.kind === "loops" && focusFirstLoop()) return;
-    // One frame later, so that the inspector or the loops panel has rendered what is to receive focus.
+    // One frame later, so that the panel shows the new state of the steps when focus moves.
     const frame = requestAnimationFrame(() => {
-      if (request.kind === "imports") focusFirstImports();
-      else if (request.kind === "loops") focusFirstLoop();
+      if (request.kind === "next") focusNextStep();
       else document.getElementById(SHOW_STEPS_ID)?.focus();
     });
     return () => cancelAnimationFrame(frame);
@@ -70,12 +79,21 @@ export function DemoSteps({ store, registry }: Props): ReactElement | null {
   const ask = (kind: FocusRequest): void => setRequest((r) => ({ kind, n: (r?.n ?? 0) + 1 }));
 
   const doIt = (id: DemoStepId): void => {
+    // Every `Do it` does the whole step, so that the step becomes Done by the same rule as when the reader does it by hand.
     if (id === "follow") {
       selectModule(store, CHECKOUT_ID);
-      ask("imports");
+      const s = store.getState();
+      const door = s.investigation === null ? null : firstCheckoutDoor(s.investigation, s.preset, analysisApi);
+      if (door !== null) selectRelation(store, door);
+      syncStepCompletion(store);
+      ask("next");
     } else if (id === "loop") {
       store.actions.openLoops({ focus: false });
-      ask("loops");
+      const panel = store.getState().panel;
+      const index = panel.kind === "loops" && panel.report !== null ? checkoutLoopIndex(panel.report.components) : null;
+      if (index !== null) store.actions.chooseLoop(index);
+      syncStepCompletion(store);
+      ask("next");
     } else {
       void callCompareHandoff(store, registry, { sample: "manor/after" }).then((result) => {
         if (result === "done") store.actions.stepAction("compare", "done");
@@ -99,10 +117,9 @@ export function DemoSteps({ store, registry }: Props): ReactElement | null {
             <div className="step-text">
               <h3>
                 {STEP_COPY[step.id].title}
-                {": "}
-                <span>{statusLabel(step.status)}</span>
+                <span className="step-status">{`: ${statusLabel(step.status)}`}</span>
               </h3>
-              <p>{STEP_COPY[step.id].instruction}</p>
+              <Instruction text={STEP_COPY[step.id].instruction} />
             </div>
             <div className="step-actions">
               <button type="button" onClick={() => doIt(step.id)}>

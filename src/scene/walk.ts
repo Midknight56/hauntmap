@@ -39,6 +39,8 @@ export function pointOnPolyline(points: readonly Point[], distance: number): Poi
  * One leg for each relation of a witness, in step order: from the door of step k, along the passage that door
  * opens, to the door of step k + 1 (the last leg returns to the door of step 1). A door that is not drawn is
  * replaced by the center of its room, and a room that is not drawn (its wing is closed) by the center of its wing.
+ * A loop that lies wholly inside one closed wing stands in the arched door of that wing instead (`closedWingDoor`), so
+ * that its ghost never covers the module count written at the center of the wing.
  */
 export function witnessLegs(layout: Pick<LayoutResult, "rooms" | "doors" | "wings">, route: { modules: readonly string[]; relationIds: readonly string[] }): Leg[] {
   const rooms = new Map(layout.rooms.map((r) => [r.id, r] as const));
@@ -51,9 +53,14 @@ export function witnessLegs(layout: Pick<LayoutResult, "rooms" | "doors" | "wing
     const module = route.modules[k] as string;
     const room = rooms.get(module);
     if (room !== undefined) return centerOf(room);
-    const wing = wings.get(module.slice(0, Math.max(0, module.lastIndexOf("/"))) || "(root)");
+    const wing = wings.get(wingKey(module));
     return wing === undefined ? null : centerOf(wing);
   };
+  const onlyWing = closedWingOf(route, rooms, doors, wings);
+  if (onlyWing !== null) {
+    const door = closedWingDoor(onlyWing);
+    return route.relationIds.map((_, k) => ({ points: [door, door], length: 0, from: k }));
+  }
   const legs: Leg[] = [];
   for (let k = 0; k < n; k++) {
     const from = anchor(k);
@@ -64,6 +71,29 @@ export function witnessLegs(layout: Pick<LayoutResult, "rooms" | "doors" | "wing
     legs.push({ points, length: polylineLength(points), from: k });
   }
   return legs;
+}
+
+function wingKey(module: string): string {
+  return module.slice(0, Math.max(0, module.lastIndexOf("/"))) || "(root)";
+}
+
+/** The wing that holds every module of the route when none of its rooms and none of its doors is drawn; null otherwise. */
+function closedWingOf(
+  route: { modules: readonly string[]; relationIds: readonly string[] },
+  rooms: ReadonlyMap<string, unknown>,
+  doors: ReadonlyMap<string, unknown>,
+  wings: ReadonlyMap<string, { x: number; y: number; w: number; h: number }>,
+): { x: number; y: number; w: number; h: number } | null {
+  if (route.modules.length === 0) return null;
+  if (route.relationIds.some((id) => doors.has(id)) || route.modules.some((m) => rooms.has(m))) return null;
+  const keys = new Set(route.modules.map(wingKey));
+  if (keys.size !== 1) return null;
+  return wings.get([...keys][0] as string) ?? null;
+}
+
+/** The middle of the small arched door that a closed wing draws at the bottom of its hall (src/scene/rooms.ts: base 14 units over the bottom, 32 units tall). */
+export function closedWingDoor(wing: { x: number; y: number; w: number; h: number }): Point {
+  return { x: wing.x + wing.w / 2, y: wing.y + wing.h - 14 - 16 };
 }
 
 /** The ghost walks at a steady 60 px per second on screen and pauses 400 ms at each door (the README, "Motion"). */

@@ -113,6 +113,8 @@ export interface SceneDebug {
     doorBoxes: { relationId: string; x: number; y: number; w: number; rect: { x: number; y: number; width: number; height: number }; widthPx: number; open: number; openingPx: number }[];
     /** How many times the frames and doorways of the doors were drawn again since the map was drawn: a camera step does, a swing never does. */
     doorDraws: number;
+    /** The body of every ghost drawn now, in client pixels (blind test fixes of 20 November 2026). */
+    ghosts: { x: number; y: number; width: number; height: number }[];
     /** The milliseconds per frame that the update of each effect takes (a running mean over the last frames); zero in the release build. */
     cost: Record<"fog" | "bats" | "spiders" | "motes" | "doors" | "loopLights" | "candles" | "ghost", number>;
     decor: { kind: "web" | "crack" | "candle" | "fog" | "bat" | "spider"; moving: boolean; visible: boolean; rect: { x: number; y: number; width: number; height: number } }[];

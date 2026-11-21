@@ -36,8 +36,8 @@ const state = (statuses: ("todo" | "done" | "skipped")[], ids = ["follow", "loop
 
 describe("investigation steps (8.1 to 8.7)", () => {
   it("states the three titles and instructions of 8.1", () => {
-    expect(STEP_COPY.follow).toEqual({ title: "Follow a dependency", instruction: "Select src/orders/checkout.ts and open one of its doors." });
-    expect(STEP_COPY.loop).toEqual({ title: "Reveal a loop", instruction: "Open Dependency loops and choose the 3-module loop." });
+    expect(STEP_COPY.follow).toEqual({ title: "Follow a dependency", instruction: "Select src/orders/checkout.ts and open one of its doors. A door is one import from that file to another file." });
+    expect(STEP_COPY.loop).toEqual({ title: "Reveal a loop", instruction: "Open Dependency loops and choose the loop of 3 modules." });
     expect(STEP_COPY.compare).toEqual({ title: "Compare revisions", instruction: "Load the revised manor and watch which door disappears." });
   });
 

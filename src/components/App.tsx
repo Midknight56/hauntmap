@@ -193,6 +193,7 @@ function InvestigationScreen({ services }: { services: AppServices }) {
       <div className="dock">
         <div className="dock-left">
           <ComparisonDock />
+          {!comparing && state.panel.kind === "none" ? <p className="dock-hint">{DOCK_HINT}</p> : null}
           <LoopsPanel store={store} />
           <WhoImportsPanel store={store} />
         </div>
@@ -201,6 +202,9 @@ function InvestigationScreen({ services }: { services: AppServices }) {
     </div>
   );
 }
+
+/** The words in the place of the loops list while no panel is open there (blind test fixes of 20 November 2026). */
+export const DOCK_HINT = "Press Dependency loops to list the loops of this map.";
 
 const noopSubscribe = (): (() => void) => () => undefined;
 export function App({ services }: { services: AppServices }) {

@@ -50,7 +50,7 @@ function live(node: { alpha: number; destroyed: boolean }): { alpha: number } {
   };
 }
 
-const emptyFx = (): SceneDebug["fx"] => ({ clock: 0, camera: { x: 0, y: 0, zoom: 1 }, motes: [], lamps: [], roomAlphas: {}, layerAlpha: 1, addedScales: [], farewell: null, removed: [], door: null, doors: [], loop: null, decor: [], doorPx: [], doorways: 0, doorBoxes: [], doorDraws: 0, haunts: [], hauntSeed: null, cost: { fog: 0, bats: 0, spiders: 0, motes: 0, doors: 0, loopLights: 0, candles: 0, ghost: 0 } });
+const emptyFx = (): SceneDebug["fx"] => ({ clock: 0, camera: { x: 0, y: 0, zoom: 1 }, motes: [], lamps: [], roomAlphas: {}, layerAlpha: 1, addedScales: [], farewell: null, removed: [], door: null, doors: [], loop: null, decor: [], doorPx: [], doorways: 0, doorBoxes: [], doorDraws: 0, ghosts: [], haunts: [], hauntSeed: null, cost: { fog: 0, bats: 0, spiders: 0, motes: 0, doors: 0, loopLights: 0, candles: 0, ghost: 0 } });
 
 /** Wait for the committed Almendra SC and Spline Sans Mono files, for at most two seconds; the plaques and names then measure and draw with the real faces. */
 async function ensureDisplayFont(): Promise<void> {
@@ -690,6 +690,14 @@ export async function createScene(opts: SceneOptions): Promise<SceneInit> {
           doorways: fx.doorways,
           doorDraws: fx.doorDraws,
           doorBoxes: doorBoxes(),
+          ghosts: layers.selected.children
+            .filter((node) => node.label === "ghost" && node.visible && node.alpha > 0)
+            .map((node) => {
+              // The body of the ghost (its second child), without the faint halo: what hides the words under it.
+              const b = (node.children[1] ?? node).getBounds();
+              const origin = container.getBoundingClientRect();
+              return { x: origin.left + b.x, y: origin.top + b.y, width: b.width, height: b.height };
+            }),
           haunts: hauntReadings(),
           hauntSeed: opts.hauntsOff === true ? null : hauntSeed,
           cost: { ...meanCost },

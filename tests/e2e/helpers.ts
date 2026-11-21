@@ -82,6 +82,8 @@ export interface HookFx {
   doorBoxes: HookDoorBox[];
   /** How many times the frames and doorways of the doors were drawn again since the map was drawn (a camera step does; a swing never does). */
   doorDraws: number;
+  /** The body of every ghost drawn now, in client pixels. */
+  ghosts: HookRect[];
   cost: Record<"fog" | "bats" | "spiders" | "motes" | "doors" | "loopLights" | "candles" | "ghost", number>;
   /** The haunt of each loop the ghost walks: the phase, the door, the opacity of the ghost, the rattle of the door and what is on screen. */
   haunts: HookHaunt[];

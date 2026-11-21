@@ -22,7 +22,7 @@ export type IntakeResult =
 export interface IntakeStore {
   getState(): { investigation: Investigation | null; preset: Preset };
   actions: {
-    openInvestigation(investigation: Investigation, source: ReadonlyMap<string, string> | null, opts: { demo: boolean }): void;
+    openInvestigation(investigation: Investigation, source: ReadonlyMap<string, string> | null, opts: { demo: boolean; expandWings?: string[] }): void;
     setStatus(message: string): void;
   };
 }

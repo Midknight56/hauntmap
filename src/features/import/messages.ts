@@ -17,6 +17,8 @@ export const COMPARE_GITHUB = "GitHub repository as the newer snapshot";
 export const heading = (kind: Kind, purpose: Purpose) =>
   `${kind === "local" ? "Analyze a local folder" : "Load a GitHub repository"}${purpose === "after" ? " as the newer snapshot" : ""}`;
 export const NO_DIRECTORY_INPUT = "Folder selection is not available in this browser. Import a graph file instead.";
+/** Under the folder field of the first screen (blind test fixes of 20 November 2026). */
+export const CHOOSE_FOLDER_NOTE = "Choose the folder of the whole project. Its files are read in this browser and are not uploaded.";
 export const REVIEW_SENTENCE = "Included files are read in this browser and kept in memory.";
 export const tooManyFiles = (n: number) => `This folder has ${n.toLocaleString("en-US")} included files; the limit is 1,000. Choose a subfolder.`;
 export const tooManyBytes = (size: string) => `This folder has ${size} of included text; the limit is 25 MiB. Choose a subfolder.`;

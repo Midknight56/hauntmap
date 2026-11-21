@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, type ReactElement } from "react";
 import type { ImportRecord, Investigation } from "../contracts/types";
 import { analysisApi, type AnalysisApi } from "../features/investigation/analysisApi";
-import { compareText, languageLabel, occurrencesOf, presetLine, relationHeading, targetText } from "../features/investigation/facts";
+import { compareText, languageLabel, occurrencesOf, presetLine, relationHeading, relationSentence, targetText } from "../features/investigation/facts";
 import type { InvestigationStore, ViewState } from "../features/investigation/store";
 import { boundaryRelations, drawnRelations, wingOf, wingsOf } from "../features/investigation/wings";
 import { EvidenceTrail } from "./EvidenceTrail";
@@ -100,6 +100,7 @@ function RelationCard({ store, state, api }: { store: InvestigationStore; state:
   const chosen = occurrences.find((o) => o.occurrenceId === selection.occurrenceId);
   return (
     <>
+      <p className="relation-sentence">{relationSentence(record, occurrences.length)}</p>
       <div className="facts">
         <p>{`Syntax: ${record.syntaxKind}`}</p>
         <p>{`Dependency: ${record.dependencyKind}`}</p>

@@ -6,6 +6,8 @@ import { relationTip, selectRelation } from "./selecting";
 import { useViewState } from "./useStore";
 
 export const EMPTY_TRAIL_TEXT = "Select a loop or a module to build an evidence trail.";
+/** What the steps are, over the list (blind test fixes of 20 November 2026). */
+export const TRAIL_TEXT = "Each step is one import on the path, in order. Choose a step to see it on the map.";
 
 /** The relations of the route filter as an ordered list of buttons with a roving tabindex (6.4, 11.2). */
 export function EvidenceTrail({ store }: { store: InvestigationStore }): ReactElement {
@@ -48,6 +50,9 @@ export function EvidenceTrail({ store }: { store: InvestigationStore }): ReactEl
       {items.length === 0 ? (
         <p>{EMPTY_TRAIL_TEXT}</p>
       ) : (
+        <p>{TRAIL_TEXT}</p>
+      )}
+      {items.length === 0 ? null : (
         <ol aria-labelledby={headingId}>
           {items.map((record, index) => (
             <li key={`${record.relationId}:${index}`}>

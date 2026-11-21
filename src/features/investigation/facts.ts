@@ -31,3 +31,22 @@ export function compareText(a: string, b: string): number {
 export function occurrencesOf(imports: readonly ImportRecord[], relationId: string): ImportRecord[] {
   return imports.filter((r) => r.relationId === relationId).sort((a, b) => a.line - b.line || a.column - b.column);
 }
+const USES: Record<ImportRecord["dependencyKind"], string> = { value: "uses code from", type: "uses types from", mixed: "uses code and types from" };
+
+/**
+ * One plain sentence that says what a relation is, for a reader who does not know the words of the lines under it
+ * (blind test fixes of 20 November 2026): where the import points and how often it is written.
+ */
+export function relationSentence(record: Pick<ImportRecord, "from" | "to" | "specifier" | "resolution" | "dependencyKind">, occurrences: number): string {
+  const target = targetText(record);
+  const what =
+    record.resolution === "local"
+      ? `${record.from} ${USES[record.dependencyKind]} ${target}, a file in this project.`
+      : record.resolution === "external"
+        ? `${record.from} ${USES[record.dependencyKind]} ${target}, a package from outside this project.`
+        : record.resolution === "unresolved"
+          ? `${record.from} imports ${target}, a file HauntMap could not find.`
+          : `${record.from} imports ${target} in a way HauntMap does not read.`;
+  const times = occurrences === 1 ? "once" : `${occurrences} times`;
+  return `${what} The import is written ${times} in the source, listed under Occurrences.`;
+}

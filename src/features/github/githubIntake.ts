@@ -1,5 +1,6 @@
 import type { Investigation, SourceFile } from "../../contracts/types";
 import { PRESERVED } from "../import/messages";
+import { openOptions } from "../import/openOptions";
 import { capMessage, classify } from "../import/review";
 import type { IntakeDeps, IntakePurpose, IntakeResult } from "../import/types";
 import { fetchFiles, listRepository, resolveVersion, type FetchResult, type ListingEntry } from "./jsdelivr";
@@ -165,7 +166,7 @@ export async function runGithubIntake(deps: IntakeDeps & { github: { fetchImpl: 
   const sourceText = new Map(fetched.files.map((file) => [file.path, file.text] as const));
   const result: IntakeResult = { ok: true, investigation, sourceText, label: investigation.sourceLabel };
   if (purpose === "open") {
-    store.actions.openInvestigation(investigation, sourceText, { demo: false });
+    store.actions.openInvestigation(investigation, sourceText, openOptions(investigation));
     const relations = new Set(investigation.imports.map((record) => record.relationId)).size;
     store.actions.setStatus(loaded(owner, repo, ref, fetched.files.length, investigation.modules.length, relations, investigation.diagnostics.length));
   }

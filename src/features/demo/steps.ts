@@ -1,4 +1,7 @@
+import type { Investigation, Preset } from "../../contracts/types";
+import type { AnalysisApi } from "../investigation/analysisApi";
 import type { InvestigationStore, ViewState } from "../investigation/store";
+import { drawnRelations } from "../investigation/wings";
 import type { DemoStepId, DemoStepState } from "./types";
 
 // The investigation steps of the manor demo (requirement 8): the wording, the completion rules and the
@@ -7,8 +10,8 @@ import type { DemoStepId, DemoStepState } from "./types";
 export const CHECKOUT_ID = "src/orders/checkout.ts";
 
 export const STEP_COPY: Record<DemoStepId, { title: string; instruction: string }> = {
-  follow: { title: "Follow a dependency", instruction: "Select src/orders/checkout.ts and open one of its doors." },
-  loop: { title: "Reveal a loop", instruction: "Open Dependency loops and choose the 3-module loop." },
+  follow: { title: "Follow a dependency", instruction: "Select src/orders/checkout.ts and open one of its doors. A door is one import from that file to another file." },
+  loop: { title: "Reveal a loop", instruction: "Open Dependency loops and choose the loop of 3 modules." },
   compare: { title: "Compare revisions", instruction: "Load the revised manor and watch which door disappears." },
 };
 
@@ -59,4 +62,20 @@ export function syncStepCompletion(store: InvestigationStore): void {
     const step = steps.steps.find((s) => s.id === id);
     if (step !== undefined && step.status !== "done") store.actions.stepAction(id, "done");
   }
+}
+
+/**
+ * The relation that `Do it` of step 1 opens: the first drawn import of `src/orders/checkout.ts` under the preset, by
+ * relation ID (the first door of its Imports list that leads to another room); null when it has none.
+ */
+export function firstCheckoutDoor(inv: Investigation, preset: Preset, api: AnalysisApi): { relationId: string; occurrenceId: string } | null {
+  const first = drawnRelations(inv, preset, api).find((r) => r.from === CHECKOUT_ID);
+  return first === undefined ? null : { relationId: first.relationId, occurrenceId: first.occurrenceId };
+}
+
+/** The index of the loop that `Do it` of step 2 chooses: the loop through `src/orders/checkout.ts`, else the first; null without a loop. */
+export function checkoutLoopIndex(components: readonly { members: readonly string[] }[]): number | null {
+  if (components.length === 0) return null;
+  const index = components.findIndex((c) => c.members.includes(CHECKOUT_ID));
+  return index < 0 ? 0 : index;
 }

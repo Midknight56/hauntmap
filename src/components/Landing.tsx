@@ -6,6 +6,14 @@ export const LANDING_SENTENCE =
 
 export type LandingSample = "manor/before" | "annex";
 
+/** What each landing button opens, under the button (blind test fixes of 20 November 2026). */
+export const LANDING_ABOUT = {
+  manor: "A small shop project with a guided tour: find its one import loop, then see the fix. Start here.",
+  annex: "A second sample with three separate loops and two imports HauntMap cannot follow. No tour.",
+  local: "Choose a project folder on this computer. Its files are read in this browser and are not uploaded.",
+  github: "Enter the address of a public GitHub repository. Its name and file paths are sent to the jsDelivr CDN.",
+} as const;
+
 /**
  * The moon, the fog and the bats behind the title (halloween detail pass): all drawing, no text. The moon stands behind the wings (it is
  * drawn first), the fog drifts low over the floor, and a few bats cross the top of the page now and then. Where each bat rests when
@@ -151,21 +159,33 @@ export function Landing({
       <h1>HauntMap</h1>
       <p>{LANDING_SENTENCE}</p>
       <div className="landing-actions">
-        <button type="button" className="primary" onClick={() => onSample("manor/before")}>
-          Explore the manor
-        </button>
-        <button type="button" onClick={() => onSample("annex")}>
-          Explore the annex
-        </button>
-        {intakeKinds.includes("local") ? (
-          <button type="button" onClick={() => onIntake?.("local")}>
-            {LANDING_LOCAL}
+        <div className="landing-choice">
+          <button type="button" className="primary" aria-describedby="landing-about-manor" onClick={() => onSample("manor/before")}>
+            Explore the manor
           </button>
+          <p id="landing-about-manor">{LANDING_ABOUT.manor}</p>
+        </div>
+        <div className="landing-choice">
+          <button type="button" aria-describedby="landing-about-annex" onClick={() => onSample("annex")}>
+            Explore the annex
+          </button>
+          <p id="landing-about-annex">{LANDING_ABOUT.annex}</p>
+        </div>
+        {intakeKinds.includes("local") ? (
+          <div className="landing-choice">
+            <button type="button" aria-describedby="landing-about-local" onClick={() => onIntake?.("local")}>
+              {LANDING_LOCAL}
+            </button>
+            <p id="landing-about-local">{LANDING_ABOUT.local}</p>
+          </div>
         ) : null}
         {intakeKinds.includes("github") ? (
-          <button type="button" onClick={() => onIntake?.("github")}>
-            {LANDING_GITHUB}
-          </button>
+          <div className="landing-choice">
+            <button type="button" aria-describedby="landing-about-github" onClick={() => onIntake?.("github")}>
+              {LANDING_GITHUB}
+            </button>
+            <p id="landing-about-github">{LANDING_ABOUT.github}</p>
+          </div>
         ) : null}
       </div>
     </main>

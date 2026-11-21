@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
+import { openOptions } from "./openOptions";
 import type { Investigation, SourceFile } from "../../contracts/types";
 import { DialogFrame } from "./DialogFrame";
 import { readGraphFile } from "./graphFile";
@@ -12,6 +13,7 @@ import {
   BUTTON_CLOSE,
   cancelled,
   CHOOSE_FOLDER,
+  CHOOSE_FOLDER_NOTE,
   CHOOSE_GRAPH_FILE,
   forgetSaved,
   forgot,
@@ -111,6 +113,7 @@ export function LocalFolderDialog({ service, purpose }: { service: IntakeService
   const { deps } = service;
   const [screen, setScreen] = useState<Screen>({ name: "choose" });
   const folderInputId = useId();
+  const folderNoteId = useId();
   const graphHeadingId = useId();
   const capId = useId();
   const graphInputId = useId();
@@ -237,7 +240,7 @@ export function LocalFolderDialog({ service, purpose }: { service: IntakeService
       return;
     }
     const text = summaryMessage(review.folder, investigation, review, read.binary.length);
-    store.actions.openInvestigation(investigation, sourceText, { demo: false });
+    store.actions.openInvestigation(investigation, sourceText, openOptions(investigation));
     store.actions.setStatus(text);
     service.resolve(result);
     setIncludeSource(false);
@@ -248,7 +251,7 @@ export function LocalFolderDialog({ service, purpose }: { service: IntakeService
   const finish = (investigation: Investigation, source: ReadonlyMap<string, string> | null, message: string): void => {
     const result: IntakeResult = { ok: true, investigation, sourceText: source, label: investigation.sourceLabel };
     if (purpose === "open") {
-      deps.store.actions.openInvestigation(investigation, source, { demo: false });
+      deps.store.actions.openInvestigation(investigation, source, openOptions(investigation));
       deps.store.actions.setStatus(message);
     }
     service.close(result);
@@ -343,7 +346,10 @@ export function LocalFolderDialog({ service, purpose }: { service: IntakeService
         {hasDirectoryInput(doc) ? (
           <div className="intake-field">
             <label htmlFor={folderInputId}>{CHOOSE_FOLDER}</label>
-            <input id={folderInputId} type="file" multiple {...{ webkitdirectory: "" }} onChange={onFolderChosen} />
+            <input id={folderInputId} type="file" multiple aria-describedby={folderNoteId} {...{ webkitdirectory: "" }} onChange={onFolderChosen} />
+            <p id={folderNoteId} className="intake-muted">
+              {CHOOSE_FOLDER_NOTE}
+            </p>
           </div>
         ) : (
           <p>{NO_DIRECTORY_INPUT}</p>

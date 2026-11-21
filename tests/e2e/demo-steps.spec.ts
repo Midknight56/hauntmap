@@ -42,40 +42,43 @@ test.describe("investigation steps (dev build)", () => {
     await expect(panel(page).locator("[data-step]")).toHaveCount(3);
     await expect(step(page, "compare")).toContainText("Compare revisions");
     await expect(step(page, "follow")).toContainText("Follow a dependency");
-    await expect(step(page, "follow")).toContainText("Select src/orders/checkout.ts and open one of its doors.");
+    await expect(step(page, "follow")).toContainText("Select src/orders/checkout.ts and open one of its doors. A door is one import from that file to another file.");
     await expect(step(page, "follow")).toContainText("To do");
     await expect(step(page, "loop")).toContainText("Reveal a loop");
-    await expect(step(page, "loop")).toContainText("Open Dependency loops and choose the 3-module loop.");
+    await expect(step(page, "loop")).toContainText("Open Dependency loops and choose the loop of 3 modules.");
     await expect(panel(page).getByRole("button", { name: "Do it" })).toHaveCount(3);
     await expect(panel(page).getByRole("button", { name: "Skip" })).toHaveCount(3);
     await expect(panel(page).getByRole("button", { name: "Close" })).toBeVisible();
     await expect(page.locator('[role="dialog"], [aria-modal="true"]')).toHaveCount(0);
   });
 
-  test("8.2 Do it on step 1 selects checkout.ts, centers it, focuses the first Imports button and completes on a door", async ({ page }) => {
+  test("8.2 Do it on step 1 selects checkout.ts, opens its first door, completes the step and moves focus to the next Do it", async ({ page }) => {
     await openManor(page);
     await step(page, "follow").getByRole("button", { name: "Do it" }).click();
-    await expect(inspectorHeading(page)).toHaveText(CHECKOUT);
+    await expect(inspectorHeading(page)).toHaveText(`${CHECKOUT} imports src/orders/cart.ts`);
     await settled(page);
-    await expect(page.locator('[aria-label="Inspector"] h3', { hasText: /^Imports \(/ })).toBeVisible();
-    await expect.poll(() => page.evaluate(() => document.activeElement?.closest('[aria-label="Inspector"]') !== null)).toBe(true);
-    const firstImports = page.locator('[aria-label="Inspector"] section', { has: page.locator("h3", { hasText: /^Imports \(/ }) }).getByRole("button").first();
-    await expect(firstImports).toBeFocused();
-    await expect(step(page, "follow")).toContainText("To do");
-    await firstImports.click();
     await expect(step(page, "follow")).toContainText("Done");
     await expect(panel(page).getByText("1 of 3 steps")).toBeVisible();
+    await expect(page.evaluate(() => (window as unknown as { __hauntmap: { store: { getState(): { expandedWings: string[] } } } }).__hauntmap.store.getState().expandedWings)).resolves.toContain("src/orders");
+    await expect(step(page, "loop").getByRole("button", { name: "Do it" })).toBeFocused();
   });
 
-  test("8.3 Do it on step 2 opens the loops panel with focus on its first component, and choosing it completes the step", async ({ page }) => {
+  test("8.2 selecting a door of checkout.ts by hand also completes step 1", async ({ page }) => {
+    await openManor(page);
+    await page.evaluate((id) => (window as unknown as { __hauntmap: { store: { actions: { select(s: unknown, o: unknown): void } } } }).__hauntmap.store.actions.select({ kind: "module", id }, { from: "dom" }), CHECKOUT);
+    await expect(inspectorHeading(page)).toHaveText(CHECKOUT);
+    await expect(step(page, "follow")).toContainText("To do");
+    await page.locator('[aria-label="Inspector"] section', { has: page.locator("h3", { hasText: /^Imports \(/ }) }).getByRole("button").first().click();
+    await expect(step(page, "follow")).toContainText("Done");
+  });
+
+  test("8.3 Do it on step 2 opens the loops panel, chooses the loop through checkout.ts and completes the step", async ({ page }) => {
     await openManor(page);
     await step(page, "loop").getByRole("button", { name: "Do it" }).click();
-    const first = page.getByRole("list", { name: "Loops" }).getByRole("button").first();
-    await expect(first).toBeFocused();
-    await expect(step(page, "loop")).toContainText("To do");
-    await page.keyboard.press("Enter");
+    await expect(page.getByRole("list", { name: "Loops" }).getByRole("button").first()).toHaveAttribute("aria-current", "true");
     await expect(step(page, "loop")).toContainText("Done");
     await expect(panel(page).getByText("1 of 3 steps")).toBeVisible();
+    await expect(step(page, "follow").getByRole("button", { name: "Do it" })).toBeFocused();
   });
 
   test("8.5 steps can be done in any order; Skip marks Skipped as text and a skipped step can still become Done", async ({ page }) => {
@@ -84,10 +87,8 @@ test.describe("investigation steps (dev build)", () => {
     await expect(step(page, "follow")).toContainText("Skipped");
     await expect(panel(page).getByText("0 of 3 steps")).toBeVisible();
     await step(page, "loop").getByRole("button", { name: "Do it" }).click();
-    await page.keyboard.press("Enter");
     await expect(step(page, "loop")).toContainText("Done");
     await step(page, "follow").getByRole("button", { name: "Do it" }).click();
-    await page.locator('[aria-label="Inspector"] section', { has: page.locator("h3", { hasText: /^Imports \(/ }) }).getByRole("button").first().click();
     await expect(step(page, "follow")).toContainText("Done");
     await expect(panel(page).getByText("2 of 3 steps")).toBeVisible();
   });

@@ -9,6 +9,12 @@ import { usePhone } from "./useMediaQuery";
 
 const PRESETS: Preset[] = ["static-value", "type-inclusive", "dynamic-inclusive"];
 const SLOTS: Slot[] = ["export", "compare", "live-snapshot"];
+/** What each preset shows, in plain words, under the select (blind test fixes of 20 November 2026). */
+export const PRESET_HINTS: Record<Preset, string> = {
+  "static-value": "static-value: imports that run. Imports of types only are left out.",
+  "type-inclusive": "type-inclusive: imports that run and imports of types only.",
+  "dynamic-inclusive": "dynamic-inclusive: imports that run and import() calls with a fixed path.",
+};
 
 interface Props {
   store: InvestigationStore;
@@ -55,6 +61,7 @@ export function Toolbar({ store, registry, search, trailing }: Props) {
   const watcher = watchRegistry(registry);
   useSyncExternalStore(watcher.subscribe, watcher.getVersion, watcher.getVersion);
   const presetId = useId();
+  const presetHintId = useId();
   const moreId = useId();
   const tabs = useRef<Record<string, HTMLButtonElement | null>>({});
   const moreButton = useRef<HTMLButtonElement>(null);
@@ -90,16 +97,24 @@ export function Toolbar({ store, registry, search, trailing }: Props) {
 
   const hasSlot = SLOTS.some((slot) => registry.getControl(slot) !== null);
 
+  // On a desktop the hint is the first thing of the second row of the top bar, next to the breadcrumb, so that the bar keeps its height.
+  const presetHint = (
+    <span id={presetHintId} className="preset-hint">
+      {PRESET_HINTS[state.preset]}
+    </span>
+  );
+
   const presetField = (
     <span className="toolbar-field">
       <label htmlFor={presetId}>Relation preset</label>
-      <select id={presetId} aria-label="Relation preset" value={state.preset} onChange={(e) => store.actions.setPreset(e.target.value as Preset)}>
+      <select id={presetId} aria-label="Relation preset" aria-describedby={presetHintId} value={state.preset} onChange={(e) => store.actions.setPreset(e.target.value as Preset)}>
         {PRESETS.map((preset) => (
           <option key={preset} value={preset}>
             {preset}
           </option>
         ))}
       </select>
+      {phone ? presetHint : null}
     </span>
   );
 
@@ -197,6 +212,7 @@ export function Toolbar({ store, registry, search, trailing }: Props) {
             Dependency loops
           </button>
         </Group>
+        {phone ? null : presetHint}
         {trailing}
       </div>
       {phone ? null : zoom}
